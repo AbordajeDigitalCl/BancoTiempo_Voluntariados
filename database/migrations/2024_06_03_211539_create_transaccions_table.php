@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('transaccions', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('id_usuario_origen')->unsigned();
+            $table->foreign('id_usuario_origen')->references('id')->on('users')->onDelete('cascade');
+            $table->bigInteger('id_usuario_destino')->unsigned();
+            $table->foreign('id_usuario_destino')->references('id')->on('users')->onDelete('cascade');
+            $table->tinyInteger('Tipo_Transaccion');
             $table->timestamps();
         });
     }

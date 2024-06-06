@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('imagens', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('id_usuario_origen')->unsigned();
+            $table->foreign('id_usuario_origen')->references('id')->on('users')->onDelete('cascade');
+            $table->tinyInteger('Tipo');
+            $table->string('Direccion');
             $table->timestamps();
         });
     }

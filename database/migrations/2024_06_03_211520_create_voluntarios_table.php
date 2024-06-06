@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('voluntarios', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('id_voluntario')->unsigned();
+            $table->foreign('id_voluntario')->references('id')->on('proyectos')->onDelete('cascade');
+            $table->bigInteger('id_usuario')->unsigned();
+            $table->foreign('id_usuario')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -25,3 +29,5 @@ return new class extends Migration
         Schema::dropIfExists('voluntarios');
     }
 };
+
+

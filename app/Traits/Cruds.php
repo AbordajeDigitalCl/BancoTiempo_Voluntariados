@@ -8,27 +8,27 @@ use Illuminate\Http\Request;
 //use Illuminate\Support\Facades\Storage;
 use App\Models\User;
 //use App\Models\Producto;
-use App\Models\Venta;
-//use App\Models\Venta__detalles;
-//use App\Models\Correos_Firmas;
-use App\Models\Modulos_Contrato;
-use App\Models\Venta_Detalle;
-use App\Models\Contrato;
-use App\Models\Doc_Tipo;
-use App\Models\Inter_Mod_DocTipo;
-use App\Models\Inter_Mod_Contrat;
-//use App\Models\Rechazo_Contrato;
-use App\Models\Detalle_Mod_Contrato;
-use App\Models\Inter_Perf_Perm;
-use App\Models\Inter_User_Perf;
-use App\Models\Inter_User_Perm;
-use App\Models\Inter_Perm_Doc_Tipos;
-use App\Models\Inter_Perm_Contratos;
-use App\Models\Inter_Mod_Perm;
-use App\Models\Tipos_Contrato;
-use App\Models\Permisos;
-use App\Models\Perfiles;
-use App\Models\PdfStorage;
+use App\Models\Transaccion;
+use App\Models\Inter_Transa_Public;
+use App\Models\Proyecto;
+use App\Models\Voluntario;
+use App\Models\Tipo_Usuario;
+use App\Models\Mensaje;
+use App\Models\Publicacion;
+use App\Models\Demanda;
+use App\Models\Oferta;
+use App\Models\Imagen;
+use App\Models\Inter_Calif_Public;
+use App\Models\Calificacion;
+// use App\Models\Inter_User_Perf;
+// use App\Models\Inter_User_Perm;
+// use App\Models\Inter_Perm_Doc_Tipos;
+// use App\Models\Inter_Perm_Contratos;
+// use App\Models\Inter_Mod_Perm;
+// use App\Models\Tipos_Contrato;
+// use App\Models\Permisos;
+// use App\Models\Perfiles;
+// use App\Models\PdfStorage;
 //use Validator;
 
 use Illuminate\Support\Facades\DB;
@@ -44,1396 +44,406 @@ trait Cruds
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos
-    public function Obtener_venta(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    public function Obtener_transaccions(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
 
-            $ventas = null;
+            $Transaccion = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
-                $ventas = Venta::where([['id', $request->input("id")]])->get();
+                $Transaccion = Transaccion::where([['id', $request->input("id")]])->get();
             } else {
                 //Si es obtener normal y sin filtro
-                if ($use_for == 0) {
-                    $ventas = DB::select('select * from DocuSwift.ventas LIMIT ' . $offset . ',' . $ammount);
-                } else if ($use_for == 1) {
-                    $ventas = DB::select('select * from DocuSwift.ventas WHERE Is_Vigente = 1 LIMIT ' . $offset . ',' . $ammount);
-                } else if ($use_for == 2) {
-                    $ventas = DB::select('select * from DocuSwift.ventas WHERE Is_Vigente != 1 LIMIT ' . $offset . ',' . $ammount);
+                if ($use_for == "A") {
+                    $Transaccion = Transaccion::get();
+                } else if (is_numeric($use_for)) {
+                    $Transaccion = DB::select('select * from transaccions WHERE Tipo_Transaccion = ' . $use_for . ' LIMIT ' . $offset . ',' . $ammount);
                 } else {
                     //Si es obtener TODO
-                    $ventas = Venta::get();
+                    $Transaccion = DB::select('select * from transaccions LIMIT ' . $offset . ',' . $ammount);
                 }
             }
 
-            return $ventas;
+            return $Transaccion;
         } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener la venta, por favor intente nuevamente");
+            session()->flash('failure', "Error al obtener la transaccion, por favor intente nuevamente");
             //print_r("Error ---: " . $e->getMessage());
             return "{}";
         }
     }
 
     //Este hace de Crear/Editar y Borrar
-    public function Editar_venta(Request $request)
+    public function Editar_transaccions(Request $request)
     {
         try {
-            $venta = null;
+            $Transaccion = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
-                $venta = new Venta();
-                $venta->id_users = $request->has("id_users") ? $request->input("id_users") : $venta->id_users;
-                $venta->Is_Factura_O_Boleta =  $request->has("Is_Factura_O_Boleta") ? $request->input("Is_Factura_O_Boleta") : $venta->Is_Factura_O_Boleta;
-                $venta->Is_Vigente =  $request->has("Is_Vigente") ? $request->input("Is_Vigente") : $venta->Is_Vigente;
-                $venta->Total =  $request->has("Total") ? $request->input("Total") : $venta->Total;
-                $venta->Fecha = $request->has("Fecha") ? $request->input("Fecha") : $venta->Fecha;
-                $venta->Giro =  $request->has("Giro") ? $request->input("Giro") : $venta->Giro;
-                $venta->save();
+                $Transaccion = new Transaccion();
+                $Transaccion->id_usuario_origen = $request->has("id_usuario_origen") ? $request->input("id_usuario_origen") : $Transaccion->id_usuario_origen;
+                $Transaccion->id_usuario_destino =  $request->has("id_usuario_destino") ? $request->input("id_usuario_destino") : $Transaccion->id_usuario_destino;
+                $Transaccion->Tipo_Transaccion =  $request->has("Tipo_Transaccion") ? $request->input("Tipo_Transaccion") : $Transaccion->Tipo_Transaccion;
+                $Transaccion->save();
             }
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
-                $venta = Venta::where([['id', $request->input("id")]])->first();
-                if ($venta != null) {
-                    $venta->id_users = $request->has("id_users") ? $request->input("id_users") : $venta->id_users;
-                    $venta->Is_Factura_O_Boleta =  $request->has("Is_Factura_O_Boleta") ? $request->input("Is_Factura_O_Boleta") : $venta->Is_Factura_O_Boleta;
-                    $venta->Is_Vigente =  $request->has("Is_Vigente") ? $request->input("Is_Vigente") : $venta->Is_Vigente;
-                    $venta->Total =  $request->has("Total") ? $request->input("Total") : $venta->Total;
-                    $venta->Fecha = $request->has("Fecha") ? $request->input("Fecha") : $venta->Fecha;
-                    $venta->Giro =  $request->has("Giro") ? $request->input("Giro") : $venta->Giro;
-                    $venta->update();
+                $Transaccion = Transaccion::where([['id', $request->input("id")]])->first();
+                if ($Transaccion != null) {
+                    $Transaccion->id_usuario_origen = $request->has("id_usuario_origen") ? $request->input("id_usuario_origen") : $Transaccion->id_usuario_origen;
+                    $Transaccion->id_usuario_destino =  $request->has("id_usuario_destino") ? $request->input("id_usuario_destino") : $Transaccion->id_usuario_destino;
+                    $Transaccion->Tipo_Transaccion =  $request->has("Tipo_Transaccion") ? $request->input("Tipo_Transaccion") : $Transaccion->Tipo_Transaccion;
+                    $Transaccion->update();
                 }
             }
 
             if ($request->isMethod('delete')) {
-                $venta = Venta::where([['id', $request->input("id")]])->first();
-                if ($venta == null) {
-                    return false;
-                }
-
-                $Venta_Detalle = Venta_Detalle::where('id_Venta', $venta->id);
-                if ($Venta_Detalle != null) {
-                    $Venta_Detalle->delete();
-                }
-
-                $venta = $venta->delete();
-            }
-
-            return $venta;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos
-    public function Obtener_modulos__contratos(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $modulo__contrato = null;
-
-            //Si es obtener con filtro
-            if ($request->has("id") && $request->filled("id")) {
-                $modulo__contrato = Modulos_Contrato::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("Rama")) {
-                $modulo__contrato = DB::table('modulos__contratos')->where('Rama', 'like', '%' . $request->input("Rama") . '%')->get();
-            } else if ($request->has("id_contrato") && $request->filled("id_contrato")) {
-                $modulo__contrato = DB::table('inter__mod__contrats')
-                    ->Join('modulos__contratos', 'inter__mod__contrats.id_modulos__contratos', '=', 'modulos__contratos.id')
-                    ->where([
-                        'inter__mod__contrats.id_contratos' => $request->input("id_contrato"),
-                    ])
-                    ->select('inter__mod__contrats.*', 'modulos__contratos.Nombre', 'modulos__contratos.Descripcion', 'modulos__contratos.Rama', 'modulos__contratos.id_tipos__modulos')
-                    ->orderBy('inter__mod__contrats.Posicion', 'ASC')
-                    ->get();
-            } else if ($request->has("id_doctipo") && $request->filled("id_doctipo")) {
-                $modulo__contrato = DB::table('inter__mod__doc_tipos')
-                    ->Join('modulos__contratos', 'inter__mod__doc_tipos.id_modulos__contratos', '=', 'modulos__contratos.id')
-                    ->where([
-                        'inter__mod__doc_tipos.id_doc__tipos' => $request->input("id_doctipo"),
-                    ])
-                    ->select('inter__mod__doc_tipos.*', 'modulos__contratos.Nombre', 'modulos__contratos.Descripcion', 'modulos__contratos.Rama', 'modulos__contratos.id_tipos__modulos')
-                    ->orderBy('inter__mod__doc_tipos.Posicion', 'ASC')
-                    ->get();
-            } else if ($use_for == 'A') {
-                //Si es obtener TODO
-                $modulo__contrato = Modulos_Contrato::get();
-            }  else if(is_numeric($use_for)) {
-                $modulo__contrato = DB::select('SELECT DISTINCT DocuSwift.modulos__contratos.* FROM DocuSwift.modulos__contratos JOIN DocuSwift.inter_mod_perms ON DocuSwift.modulos__contratos.id = DocuSwift.inter_mod_perms.id_modulos__contratos JOIN DocuSwift.inter_user_perms ON DocuSwift.inter_mod_perms.id_permisos = DocuSwift.inter_user_perms.id_permisos WHERE inter_user_perms.id_user = '.$use_for.' LIMIT '. $offset . ',' . $ammount);
-            }
-            else 
-            {
-                $modulo__contrato = DB::select('select * from DocuSwift.modulos__contratos LIMIT ' . $offset . ',' . $ammount);
-            }
-
-            if ($modulo__contrato != null) {
-                // if (!$modulo__contrato instanceof Modulos_Contrato) {
-                //dd($modulo__contrato);
-                $varTemp = "";
-                if (!is_object($modulo__contrato)) {
-                    //dd(is_object($modulo__contrato));
-                    foreach ($modulo__contrato as $key => $value) {
-                        if (!$modulo__contrato[0] instanceof Modulos_Contrato) {   //dd(gettype($value));
-                            $varTemp = Detalle_Mod_Contrato::where('id_modulos__contratos', $value->id)->first();
-                        }
-                        if ($varTemp != null) {
-                            $modulo__contrato[$key]->Detalle = $varTemp->Detalle;
-                        }
-                    }
-                } else {
-                    //dd(gettype($modulo__contrato));
-                    //dd("entro 3");
-                    if ($modulo__contrato instanceof Collection) {
-                        //dd("entro collection");
-                        foreach ($modulo__contrato as $key => $value) {
-                            if($value instanceof Modulos_Contrato){
-                                //dd("entro mc");
-                                $varTemp = Detalle_Mod_Contrato::where('id_modulos__contratos', $value->id)->first();
-                            } else {
-                                //dd($value);
-                                $varTemp = Detalle_Mod_Contrato::where('id_modulos__contratos', $value->id_modulos__contratos)->first();
-                            }
-                            if ($varTemp != null) {
-                                $modulo__contrato[$key]->Detalle = $varTemp->Detalle;
-                            }
-                        }
-                    } else {
-                        $varTemp = Detalle_Mod_Contrato::where('id_modulos__contratos', $modulo__contrato->id)->first();
-                        if ($varTemp != null) {
-                            $modulo__contrato->Detalle = $varTemp->Detalle;
-                        }
-                    }
-                }
-            }
-            return $modulo__contrato;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el Modulo__contrato, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    public function Editar_modulos__contratos(Request $request)
-    {
-        try {
-            $modulos__contratos = null;
-
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                $modulos__contratos = new Modulos_Contrato();
-                $modulos__contratos->id_tipos__modulos = $request->has("id_tipos__modulos") ? $request->input("id_tipos__modulos") : $modulos__contratos->id_tipos__modulos;
-                $modulos__contratos->Nombre =  $request->has("Nombre") ? $request->input("Nombre") : $modulos__contratos->Nombre;
-                //$modulos__contratos->Detalle =  $request->has("Detalle") ? $request->input("Detalle") : $modulos__contratos->Detalle;
-                $modulos__contratos->Rama =  $request->has("Rama") ? $request->input("Rama") : $modulos__contratos->Rama;
-                $modulos__contratos->save();
-
-                $permiso = new Permisos();
-                $permiso->Nombre = "Perm_".$modulos__contratos->Nombre."_".$modulos__contratos->getKey();
-                $permiso->Type = 1;
-                $permiso->save();
-
-                $imp = new Inter_Mod_Perm();
-                $imp->id_modulos__contratos = $modulos__contratos->getKey();
-                $imp->id_permisos = $permiso->id;
-                $imp->save();
-
-                $user = Auth::user();
-                //$user = 1;
-
-                $iup = new Inter_User_Perm();
-                $iup->id_user = $user->id;
-                //$iup->id_user = $user;
-                $iup->id_permisos = $permiso->getKey();
-                $iup->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $modulos__contratos = Modulos_Contrato::where([['id', $request->input("id")]])->first();
-                if ($modulos__contratos != null) {
-                    $modulos__contratos->id_tipos__modulos = $request->has("id_tipos__modulos") ? $request->input("id_tipos__modulos") : $modulos__contratos->id_tipos__modulos;
-                    $modulos__contratos->Nombre =  $request->has("Nombre") ? $request->input("Nombre") : $modulos__contratos->Nombre;
-                    //$modulos__contratos->Detalle =  $request->has("Detalle") ? $request->input("Detalle") : $modulos__contratos->Detalle;
-                    $modulos__contratos->Rama =  $request->has("Rama") ? $request->input("Rama") : $modulos__contratos->Rama;
-                    $modulos__contratos->update();
-                }
-            }
-
-            //Si incluye "Detalle"
-            if ($request->has("Detalle")) {
-                $isNew = false;
-                $detalle_mod_contrato = Detalle_Mod_Contrato::where('id_modulos__contratos', $modulos__contratos->id)->first();
-
-                if ($detalle_mod_contrato == null) {
-                    $detalle_mod_contrato = new Detalle_Mod_Contrato();
-                    $isNew = true;
-                }
-
-                $detalle_mod_contrato->Detalle = $request->has("Detalle") ? $request->input("Detalle") : $modulos__contratos->Detalle;
-                $detalle_mod_contrato->id_modulos__contratos = $modulos__contratos->id;
-                if ($isNew) {
-                    $detalle_mod_contrato->save();
-                } else {
-                    $detalle_mod_contrato->update();
-                }
-                $modulos__contratos->Detalle = $detalle_mod_contrato->Detalle;
-            }
-
-            if ($request->isMethod('delete')) {
-                $modulos__contratos = Modulos_Contrato::where([['id', $request->input("id")]])->first();
-                if ($modulos__contratos == null) {
-                    return false;
-                }
-
-                $detalle_mod_contrato = Detalle_Mod_Contrato::where('id_modulos__contratos', $modulos__contratos->id)->first();
-                if ($detalle_mod_contrato != null) {
-                    $detalle_mod_contrato->delete();
-                }
-
-                $modulos__contratos = $modulos__contratos->delete();
-            }
-
-            return $modulos__contratos;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos
-    public function Obtener_venta__detalles(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $venta__detalles = null;
-
-            if ($request->has("id") && $request->filled("id")) {
-                $venta__detalles = Venta_Detalle::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_Producto") && $request->filled("id_Producto")) {
-                $venta__detalles = Venta_Detalle::where([['id_Producto', $request->input("id_Producto")]])->get();
-            } else if ($request->has("id_Venta") && $request->filled("id_Venta")) {
-                $venta__detalles = Venta_Detalle::where([['id_Venta', $request->input("id_Venta")]])->get();
-            } else if ($use_for == 0) {
-                $venta__detalles = DB::select('select * from DocuSwift.venta__detalles LIMIT ' . $offset . ',' . $ammount);
-            }
-            //Si es obtener a partir de la id de un contrato
-            /*else if($use_for == 1)
-            {
-                if($request->has("id_ventas") && $request->filled("id_ventas"))
-                {
-                    $venta__detalles = DB::table('venta__detalles')->where([
-                        'venta__detalles.id_Venta' => $request->input("id_ventas"),
-                    ])->get();
-                }
-            }*/ else {
-                $venta__detalles = Venta_Detalle::get();
-            }
-
-            return $venta__detalles;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el venta__detalle, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    public function Editar_venta__detalles(Request $request)
-    {
-        try {
-            $venta__detalles = null;
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                $venta__detalles = new Venta_Detalle();
-                $venta__detalles->id_Producto = $request->has("id_Producto") ? $request->input("id_Producto") : $venta__detalles->id_Producto;
-                $venta__detalles->id_Venta =  $request->has("id_Venta") ? $request->input("id_Venta") : $venta__detalles->id_Venta;
-                $venta__detalles->Subtotal =  $request->has("Subtotal") ? $request->input("Subtotal") : $venta__detalles->Subtotal;
-                $venta__detalles->Valor_Individual =  $request->has("Valor_Individual") ? $request->input("Valor_Individual") : $venta__detalles->Valor_Individual;
-                $venta__detalles->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $venta__detalles = Venta_Detalle::where([['id', $request->input("id")]])->first();
-                if ($venta__detalles != null) {
-                    $venta__detalles->id_Producto = $request->has("id_Producto") ? $request->input("id_Producto") : $venta__detalles->id_Producto;
-                    $venta__detalles->id_Venta =  $request->has("id_Venta") ? $request->input("id_Venta") : $venta__detalles->id_Venta;
-                    $venta__detalles->Subtotal =  $request->has("Subtotal") ? $request->input("Subtotal") : $venta__detalles->Subtotal;
-                    $venta__detalles->Valor_Individual =  $request->has("Valor_Individual") ? $request->input("Valor_Individual") : $venta__detalles->Valor_Individual;
-                    $venta__detalles->update();
-                }
-            }
-
-            if ($request->isMethod('delete')) {
-                $venta__detalles = Venta_Detalle::where([['id', $request->input("id")]])->first();
-                if ($venta__detalles == null) {
-                    return false;
-                }
-                $venta__detalles = $venta__detalles->delete();
-            }
-
-            return $venta__detalles;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos
-    public function Obtener_contrato(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $Contrato = null;
-
-            if ($request->has("id") && $request->filled("id")) {
-                $Contrato = Contrato::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("Validator") && $request->filled("Validator")) {
-                if ($use_for == 0) {
-                    $Contrato = Contrato::where([['Validator', $request->input("Validator")]])->exists();
-                } else {
-                    $Contrato = Contrato::where([['Validator', $request->input("Validator")]])->first();
-                }
-            } else if ($request->has("Nombre") && $request->filled("Nombre")) {
-                $Contrato = Contrato::where('Nombre', 'like', '%' . $request->input("Nombre") . '%')->get();
-            } else if ($use_for == 'A') {
-                $Contrato = Contrato::get();
-            } else if ($use_for == 'B') {
-                $Contrato = DB::select('select * from DocuSwift.contratos LIMIT ' . $offset . ',' . $ammount);
-            } else if ($use_for == 'C') {
-                $Contrato = DB::select('select * from DocuSwift.contratos Where Estado = 1 LIMIT ' . $offset . ',' . $ammount);
-            } else if(is_numeric($use_for)) {
-                $Contrato = DB::select('SELECT DISTINCT DocuSwift.contratos.* FROM DocuSwift.contratos JOIN DocuSwift.inter_perm_contratos ON DocuSwift.contratos.id = DocuSwift.inter_perm_contratos.id_contratos JOIN DocuSwift.inter_user_perms ON DocuSwift.inter_perm_contratos.id_permisos = DocuSwift.inter_user_perms.id_permisos WHERE DocuSwift.contratos.Estado = 1 AND DocuSwift.inter_user_perms.id_user = '.$use_for.' LIMIT '. $offset . ',' . $ammount);
-            }
-
-            // if ($Contrato != null) {
-            //     if (!$Contrato instanceof Contrato) {
-            //         $varTemp = "";
-            //         foreach ($Contrato as $key => $value) {
-            //             $varTemp = DB::table('correos__firmas')->where(
-            //                 'correos__firmas.id_contratos',
-            //                 $value->id
-            //             )->get();
-            //             if ($varTemp != null) {
-            //                 $Contrato[$key]->FirmasFirmadas = $varTemp->where('Estado', 1)->count();
-            //                 $Contrato[$key]->FirmasTotal = $varTemp->count();
-            //             }
-            //         }
-            //     } else {
-            //         $varTemp = DB::table('correos__firmas')->where(
-            //             'correos__firmas.id_contratos',
-            //             $Contrato->id
-            //         )->get();
-            //         if ($varTemp != null) {
-            //             $Contrato->FirmasFirmadas = $varTemp->where('Estado', 1)->count();
-            //             $Contrato->FirmasTotal = $varTemp->count();
-            //         }
-            //     }
-            // }
-
-            return $Contrato;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el Contrato, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    public function Obtener_contrato_Arr(array $array, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $Contrato = null;
-
-            if (array_key_exists('id', $array)) {
-                $Contrato = Contrato::where('id', $array['id'])->first();
-            } else if (array_key_exists("Validator", $array)) {
-                if ($use_for == 0) {
-                    $Contrato = Contrato::where([['Validator', $array("Validator")]])->exists();
-                } else {
-                    $Contrato = Contrato::where([['Validator', $array("Validator")]])->first();
-                }
-            } else if (array_key_exists('Nombre', $array)) {
-                $Contrato = Contrato::where('Nombre', 'like', '%' . $array["Nombre"] . '%')->get();
-            } else if ($use_for == 'A') {
-                $Contrato = Contrato::get();
-            } else if ($use_for == 'B') {
-                $Contrato = DB::select('select * from DocuSwift.contratos LIMIT ' . $offset . ',' . $ammount);
-            } else if ($use_for == 'C') {
-                $Contrato = DB::select('select * from DocuSwift.contratos Where Estado = 1 LIMIT ' . $offset . ',' . $ammount);
-            } else if(is_numeric($use_for)) {
-                $Contrato = DB::select('SELECT DISTINCT DocuSwift.contratos.* FROM DocuSwift.contratos JOIN DocuSwift.inter_perm_contratos ON DocuSwift.contratos.id = inter_perm_contratos.id_contratos JOIN DocuSwift.inter_user_perms ON inter_perm_contratos.id_permisos = inter_user_perms.id_permisos WHERE DocuSwift.contratos.Estado = 1 AND DocuSwift.inter_user_perms.id_user = '.$use_for.' LIMIT '. $offset . ',' . $ammount);
-            }
-
-            // if ($Contrato != null) {
-            //     if (!$Contrato instanceof Contrato) {
-            //         $varTemp = "";
-            //         foreach ($Contrato as $key => $value) {
-            //             $varTemp = DB::table('correos__firmas')->where(
-            //                 'correos__firmas.id_contratos',
-            //                 $value->id
-            //             )->get();
-            //             if ($varTemp != null) {
-            //                 $Contrato[$key]->FirmasFirmadas = $varTemp::where('Estado', 1)->count();
-            //                 $Contrato[$key]->FirmasTotal = $varTemp->count();
-            //             }
-            //         }
-            //     } else {
-            //         $varTemp = DB::table('correos__firmas')->where(
-            //             'correos__firmas.id_contratos',
-            //             $Contrato->id
-            //         )->get();
-            //         if ($varTemp != null) {
-            //             $Contrato->FirmasFirmadas = $varTemp->where('Estado', 1)->count();
-            //             $Contrato->FirmasTotal = $varTemp->count();
-            //         }
-            //     }
-            // }
-
-            return $Contrato;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el Contrato, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    public function Editar_contrato(Request $request, $hard_delete = true)
-    {
-        try {
-            $contrato = null;
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                $question = Contrato::where([['Validator', $request->input("Validator")]])->count();
-                if ($question > 0) {
-                    session()->flash('failure', "Validator ya en uso, por favor intente con otro");
-                    return;
-                }
-                $contrato = new Contrato();
-                $contrato->Nombre = $request->has("Nombre") ? $request->input("Nombre") : $contrato->Nombre;
-                $contrato->Descripcion = $request->has("Descripcion") ? $request->input("Descripcion") : $contrato->Descripcion;
-                $contrato->Validator = $request->has("Validator") ? $request->input("Validator") : $contrato->Validator;
-                $contrato->Estado = 1;
-                $contrato->id_tipos__contratos =  $request->has("id_tipos__contratos") ? $request->input("id_tipos__contratos") : $contrato->id_tipos__contratos;
-                $contrato->save();
-
-                if ($request->has('id_doc_tipo')) {
-                    $doctipo = Doc_Tipo::where([['id', $request->input("id_doc_tipo")]])->first();
-
-                    $inter_mod_doctipo = Inter_Mod_DocTipo::where([['id_doc__tipos', $request->input("id_doc_tipo")]])->get();
-                    foreach ($inter_mod_doctipo as $key => $value) {
-                        $inter_mod_contrato = new Inter_Mod_Contrat();
-                        $inter_mod_contrato->id_contratos =  $contrato->id;
-                        $inter_mod_contrato->JsonModulo = $request->has("JsonModulo") ? $request->input("JsonModulo") : $inter_mod_contrato->JsonModulo;
-                        $inter_mod_contrato->id_modulos__contratos =  $request->has("id_modulos__contratos") ? $request->input("id_modulos__contratos") : $inter_mod_contrato->id_modulos__contratos;
-                        $inter_mod_contrato->Posicion =  $request->has("Posicion") ? $request->input("Posicion") : $inter_mod_contrato->Posicion;
-                        $inter_mod_contrato->save();
-                    }
-                }
-
-                
-                $permiso = new Permisos();
-                $permiso->Nombre = "Perm_".$contrato->Nombre."_".$contrato->getKey();
-                $permiso->Type = 1;
-                $permiso->save();
-
-                $imp = new Inter_Perm_Contratos();
-                $imp->id_contratos = $contrato->getKey();
-                $imp->id_permisos = $permiso->id;
-                $imp->save();
-
-                $user = Auth::user();
-                //$user = 1;
-
-                $iup = new Inter_User_Perm();
-                $iup->id_user = $user->id;
-                //$iup->id_user = $user;
-                $iup->id_permisos = $permiso->getKey();
-                $iup->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $contrato = Contrato::where([['id', $request->input("id")]])->first();
-                if ($request->has('Validator')) {
-                    $question = Contrato::where([['Validator', $request->input("Validator")]])->count();
-                    if ($question > 1 && $contrato->Validator != $request->input("Validator")) {
-                        session()->flash('failure', "Validator ya en uso, por favor intente con otro");
-                        return;
-                    }
-                }
-                if ($contrato != null) {
-                    $contrato->Nombre = $request->has("Nombre") ? $request->input("Nombre") : $contrato->Nombre;
-                    $contrato->Descripcion = $request->has("Descripcion") ? $request->input("Descripcion") : $contrato->Descripcion;
-                    $contrato->Validator = $request->has("Validator") ? $request->input("Validator") : $contrato->Validator;
-                    $contrato->Estado = $request->has("Estado") ? $request->input("Estado") : $contrato->Estado;
-                    $contrato->id_tipos__contratos =  $request->has("id_tipos__contratos") ? $request->input("id_tipos__contratos") : $contrato->id_tipos__contratos;
-                    $contrato->update();
-                }
-            }
-
-            if ($request->isMethod('delete')) {
-                $contrato = Contrato::where([['id', $request->input("id")]])->first();
-
-                if ($contrato == null) {
-                    return false;
-                }
-
-                if ($hard_delete) {
-                    $Inter_Mod_Contrat = Inter_Mod_Contrat::where('id_contratos', $contrato->id);
-                    if ($Inter_Mod_Contrat != null) {
-                        $Inter_Mod_Contrat->delete();
-                    }
-
-                    $Inter_Perm_Contratos = Inter_Perm_Contratos::where('id_contratos', $contrato->id);
-                    if ($Inter_Perm_Contratos != null) {
-                        $Inter_Perm_Contratos->delete();
-                    }
-
-                    return $contrato = $contrato->delete();
-                }
-                //Si es soft delete
-                if ($contrato->Estado != 0) {
-                    $contrato->Estado = 0;
-                    $contrato->update();
-                }
-                return ($contrato->Estado == 0 ? true : false);
-            }
-
-            return $contrato;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este copia los contratos, retorna la id del contrato clon, si retorna 0 es que la clonación no se llevo a cabo
-    public function Copiar_Contrato($id_contrato)
-    {
-        try {
-            //dd($request);
-            $contrato = null;
-            $idNuevoContrato = 0;
-
-            //Crear contrato nuevo
-            $contrato = Contrato::where([['id', $id_contrato]])->first();
-            if ($contrato != null) {
-                $contratoNuevo = new Contrato();
-                $contratoNuevo->Nombre = $contrato->Nombre;
-                $contratoNuevo->Descripcion = $contrato->Descripcion;
-                $contratoNuevo->Validator = $contrato->Validator;
-                $contratoNuevo->id_tipos__contratos = $contrato->id_tipos__contratos;
-                $contratoNuevo->Estado = 1;
-                $contratoNuevo->save();
-                $idNuevoContrato = $contratoNuevo->id;
-            }
-
-            return $idNuevoContrato;
-        } catch (Exception $e) {
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return 0;
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos
-    public function Obtener_doc_tipo(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $Contrato = null;
-            if ($request->has("id") && $request->filled("id")) {
-                $Contrato = Doc_Tipo::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("Nombre_Tipo") && $request->filled("Nombre_Tipo")) {
-                $Contrato = Doc_Tipo::where('Nombre_Tipo', 'like', '%' . $request->input("Nombre_Tipo") . '%')->get();
-            } else if ($use_for == 'A') {
-                $Contrato = Doc_Tipo::get();
-            } else if ($use_for == 'B'){
-                $Contrato = DB::select('select * from DocuSwift.doc__tipos LIMIT ' . $offset . ',' . $ammount);
-            } else if(is_numeric($use_for)) {
-                $Contrato = DB::select('SELECT DISTINCT DocuSwift.doc__tipos.* FROM DocuSwift.doc__tipos JOIN DocuSwift.inter_perm_doc_tipos ON DocuSwift.doc__tipos.id = DocuSwift.inter_perm_doc_tipos.id_doc__tipos JOIN DocuSwift.inter_user_perms ON DocuSwift.inter_perm_doc_tipos.id_permisos = DocuSwift.inter_user_perms.id_permisos WHERE DocuSwift.inter_user_perms.id_user = '.$use_for.' LIMIT ' . $offset . ',' . $ammount);
-            }
-            
-            return $Contrato;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el Doc_Tipo, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    public function Editar_doc_tipo(Request $request)
-    {
-        try {
-
-            //dd($request);
-            $contrato = null;
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                $contrato = new Doc_Tipo();
-                $contrato->Nombre_Tipo = $request->has("Nombre_Tipo") ? $request->input("Nombre_Tipo") : $contrato->Nombre;
-                $contrato->id_tipos__contratos =  $request->has("id_tipos__contratos") ? $request->input("id_tipos__contratos") : $contrato->id_tipos__contratos;
-                $contrato->save();
-
-                
-                $permiso = new Permisos();
-                $permiso->Nombre = "Perm_".$contrato->Nombre_Tipo."_".$contrato->getKey();
-                $permiso->Type = 1;
-                $permiso->save();
-
-                $imp = new Inter_Perm_Doc_Tipos();
-                $imp->id_doc__tipos = $contrato->getKey();
-                $imp->id_permisos = $permiso->id;
-                $imp->save();
-
-                $user = Auth::user();
-                //$user = 1;
-
-                $iup = new Inter_User_Perm();
-                $iup->id_user = $user->id;
-                //$iup->id_user = $user;
-                $iup->id_permisos = $permiso->getKey();
-                $iup->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $contrato = Doc_Tipo::where([['id', $request->input("id")]])->first();
-                if ($contrato != null) {
-                    $contrato->Nombre_Tipo = $request->has("Nombre_Tipo") ? $request->input("Nombre_Tipo") : $contrato->Nombre;
-                    $contrato->id_tipos__contratos =  $request->has("id_tipos__contratos") ? $request->input("id_tipos__contratos") : $contrato->id_tipos__contratos;
-                    $contrato->update();
-                }
-            }
-
-            if ($request->isMethod('delete')) {
-                $contrato = Doc_Tipo::where([['id', $request->input("id")]])->first();
-                if ($contrato == null) {
-                    return false;
-                }
-
-                $Inter_Mod_DocTipo = Inter_Mod_DocTipo::where('id_doc__tipos', $contrato->id);
-                if ($Inter_Mod_DocTipo != null) {
-                    $Inter_Mod_DocTipo->delete();
-                }
-
-                $Inter_Perm_Doc_Tipos = Inter_Perm_Doc_Tipos::where('id_permisos', $contrato->id);
-                if ($Inter_Perm_Doc_Tipos != null) {
-                    $Inter_Perm_Doc_Tipos->delete();
-                }
-
-                return $contrato = $contrato->delete();
-            }
-
-            return $contrato;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos 
-    public function Obtener_inter__mod__contrats(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $inter_mod_contracs = null;
-
-            if ($request->has("id") && $request->filled("id")) {
-                $inter_mod_contracs = Inter_Mod_Contrat::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_contrato") && $request->filled("id_contrato")) {
-                //$inter_mod_contracs = Inter_Mod_Contrat::where([['id_contratos', $request->input("id_contrato")]])->orderBy('Posicion')->get();
-                //dd($ammount);
-                $inter_mod_contracs = DB::select('select * from DocuSwift.inter__mod__contrats WHERE id_contratos = '.$request->input("id_contrato").' ORDER BY Posicion LIMIT ' . $offset . ',' . $ammount);
-            } else if ($use_for == 1) {
-                $inter_mod_contracs = Inter_Mod_Contrat::orderBy('Posicion')->get();
-            } else {
-                $inter_mod_contracs = DB::select('select * from DocuSwift.inter__mod__contrats ORDER BY Posicion LIMIT ' . $offset . ',' . $ammount);
-            }
-
-            if ($inter_mod_contracs != null) {
-                if (!$inter_mod_contracs instanceof Inter_Mod_Contrat) {
-                    $varTemp = "";
-                    foreach ($inter_mod_contracs as $key => $value) {
-                        $varTemp = Detalle_Mod_Contrato::where('id_modulos__contratos', $value->id_modulos__contratos)->first();
-                        if ($varTemp != null) {
-                            $inter_mod_contracs[$key]->Detalle = $varTemp->Detalle;
-                        }
-                    }
-                } else {
-                    $varTemp = Detalle_Mod_Contrato::where('id_modulos__contratos', $inter_mod_contracs->id_modulos__contratos)->first();
-                    if ($varTemp != null) {
-                        $inter_mod_contracs->Detalle = $varTemp->Detalle;
-                    }
-                }
-            }
-
-            return $inter_mod_contracs;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el Inter_Mod_Contrat, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    public function Editar_inter__mod__contrats(Request $request)
-    {
-        try {
-            $inter_mod_contracts = null;
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                //To avoid create it twice
-                $ifAlreadyExist = Inter_Mod_Contrat::where([['id_contratos', $request->input("id_contratos")], ['id_modulos__contratos', $request->input("id_modulos__contratos")]])->get();
-                if ($ifAlreadyExist->count() > 0) {
-                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
-                    return "{}";
-                }
-
-                $inter_mod_contracts = new Inter_Mod_Contrat();
-                $inter_mod_contracts->id_contratos =  $request->has("id_contratos") ? $request->input("id_contratos") : $inter_mod_contracts->id_contratos;
-                $inter_mod_contracts->JsonModulo = $request->has("JsonModulo") ? $request->input("JsonModulo") : $inter_mod_contracts->JsonModulo;
-                $inter_mod_contracts->id_modulos__contratos =  $request->has("id_modulos__contratos") ? $request->input("id_modulos__contratos") : $inter_mod_contracts->id_modulos__contratos;
-                $inter_mod_contracts->Posicion = $request->has("Posicion") ? $request->input("Posicion") : $inter_mod_contracts->Posicion;
-                $inter_mod_contracts->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $inter_mod_contracts = Inter_Mod_Contrat::where([['id', $request->input("id")]])->first();
-                if ($inter_mod_contracts != null) {
-                    $inter_mod_contracts->id_contratos =  $request->has("id_contratos") ? $request->input("id_contratos") : $inter_mod_contracts->id_contratos;
-                    $inter_mod_contracts->JsonModulo = $request->has("JsonModulo") ? $request->input("JsonModulo") : $inter_mod_contracts->JsonModulo;
-                    $inter_mod_contracts->id_modulos__contratos =  $request->has("id_modulos__contratos") ? $request->input("id_modulos__contratos") : $inter_mod_contracts->id_modulos__contratos;
-                    $inter_mod_contracts->Posicion = $request->has("Posicion") ? $request->input("Posicion") : $inter_mod_contracts->Posicion;
-                    $inter_mod_contracts->update();
-                }
-            }
-
-            if ($request->isMethod('delete')) {
-                $inter_mod_contracts = Inter_Mod_Contrat::where([['id', $request->input("id")]])->first();
-                if ($inter_mod_contracts == null) {
-                    return false;
-                }
-                return $inter_mod_contracts = $inter_mod_contracts->delete();
-            }
-
-            return $inter_mod_contracts;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos 
-    public function Obtener_inter__mod__doc_tipos(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $inter_mod_doctipo = null;
-
-            if ($request->has("id") && $request->filled("id")) {
-                $inter_mod_doctipo = Inter_Mod_DocTipo::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_doc_tipo") && $request->filled("id_doc_tipo")) {
-                //$inter_mod_doctipo = Inter_Mod_DocTipo::where([['id_doc__tipos', $request->input("id_doc_tipo")]])->get();
-                $inter_mod_doctipo = DB::select('select * from DocuSwift.inter__mod__doc_tipos WHERE id_doc__tipos = '.$request->input("id_doc_tipo").' LIMIT ' . $offset . ',' . $ammount);
-            } else if ($use_for == 1) {
-                $inter_mod_doctipo = Inter_Mod_DocTipo::get();
-            } else {
-                $inter_mod_doctipo = DB::select('select * from DocuSwift.inter__mod__doc_tipos LIMIT ' . $offset . ',' . $ammount);
-            }
-
-
-            return $inter_mod_doctipo;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el Inter_Mod_DocTipo, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    public function Editar_inter__mod__doc_tipos(Request $request)
-    {
-        try {
-
-            //dd($request);
-            $inter_mod_doc_tipo = null;
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                //To avoid create it twice
-                $ifAlreadyExist = Inter_Mod_DocTipo::where([['id_doc__tipos', $request->input("id_doc__tipos")], ['id_modulos__contratos', $request->input("id_modulos__contratos")]])->get();
-                if ($ifAlreadyExist->count() > 0) {
-                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
-                    return "{}";
-                }
-
-                $inter_mod_doc_tipo = new Inter_Mod_DocTipo();
-                $inter_mod_doc_tipo->id_doc__tipos =  $request->has("id_doc__tipos") ? $request->input("id_doc__tipos") : $inter_mod_doc_tipo->id_doc__tipos;
-                $inter_mod_doc_tipo->id_modulos__contratos =  $request->has("id_modulos__contratos") ? $request->input("id_modulos__contratos") : $inter_mod_doc_tipo->id_modulos__contratos;
-                $inter_mod_doc_tipo->Posicion = $request->has("Posicion") ? $request->input("Posicion") : $inter_mod_doc_tipo->Posicion;
-                $inter_mod_doc_tipo->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $inter_mod_doc_tipo = Inter_Mod_DocTipo::where([['id', $request->input("id")]])->first();
-                if ($inter_mod_doc_tipo != null) {
-                    $inter_mod_doc_tipo->id_doc__tipos =  $request->has("id_doc__tipos") ? $request->input("id_doc__tipos") : $inter_mod_doc_tipo->id_doc__tipos;
-                    $inter_mod_doc_tipo->id_modulos__contratos =  $request->has("id_modulos__contratos") ? $request->input("id_modulos__contratos") : $inter_mod_doc_tipo->id_modulos__contratos;
-                    $inter_mod_doc_tipo->Posicion = $request->has("Posicion") ? $request->input("Posicion") : $inter_mod_doc_tipo->Posicion;
-                    $inter_mod_doc_tipo->update();
-                }
-            }
-
-            if ($request->isMethod('delete')) {
-                $inter_mod_doc_tipo = Inter_Mod_DocTipo::where([['id', $request->input("id")]])->first();
-                if ($inter_mod_doc_tipo == null) {
-                    return false;
-                }
-                return $inter_mod_doc_tipo = $inter_mod_doc_tipo->delete();
-            }
-
-            return $inter_mod_doc_tipo;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos 
-    //************** Dario: desde aca las pruebas en api.*************
-    //revisado ok *******Dario
-    public function Obtener_inter_user_perms(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $inter_mod_doctipo = null;
-
-            if ($request->has("id") && $request->filled("id")) {
-                $inter_mod_doctipo = Inter_User_Perm::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_user") && $request->filled("id_user")) {
-                $inter_mod_doctipo = Inter_User_Perm::where([['id_user', $request->input("id_user")]])->get();
-            } else if ($request->has("id_permisos") && $request->filled("id_permisos")) {
-                $inter_mod_doctipo = Inter_User_Perm::where([['id_permisos', $request->input("id_permisos")]])->get();
-            } else if ($use_for == 1) {
-                $inter_mod_doctipo = Inter_User_Perm::get();
-            } else {
-                $inter_mod_doctipo = DB::select('select * from DocuSwift.inter_user_perms LIMIT ' . $offset . ',' . $ammount);
-            }
-
-            return $inter_mod_doctipo;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el inter_user_perms, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    //no funciona el post, no probe el put ni delete**********Dario
-    public function Editar_inter_user_perms(Request $request)
-    {
-        try {
-            //dd($request);
-            $Inter_User_Perm = null;
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                //To avoid create it twice
-                $ifAlreadyExist = Inter_User_Perm::where([['id_permisos', $request->input("id_permisos")], ['id_user', $request->input("id_user")]])->get();
-                if ($ifAlreadyExist->count() > 0) {
-                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
-                    return "{}";
-                }
-
-                $Inter_User_Perm = new Inter_User_Perm();
-                $Inter_User_Perm->id_user =  $request->has("id_user") ? $request->input("id_user") : $Inter_User_Perm->id_user;
-                $Inter_User_Perm->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_User_Perm->id_permisos;
-                $Inter_User_Perm->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $Inter_User_Perm = Inter_User_Perm::where([['id', $request->input("id")]])->first();
-                if ($Inter_User_Perm != null) {
-                    $Inter_User_Perm->id_user =  $request->has("id_user") ? $request->input("id_user") : $Inter_User_Perm->id_user;
-                    $Inter_User_Perm->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_User_Perm->id_permisos;
-                    $Inter_User_Perm->update();
-                }
-            }
-
-            if ($request->isMethod('delete')) {
-                $Inter_User_Perm = Inter_User_Perm::where([['id', $request->input("id")]])->first();
-                if ($Inter_User_Perm == null) {
-                    return false;
-                }
-                return $Inter_User_Perm = $Inter_User_Perm->delete();
-            }
-
-            return $Inter_User_Perm;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos 
-    public function Obtener_inter_user_perfiles(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $inter_mod_doctipo = null;
-
-            if ($request->has("id") && $request->filled("id")) {
-                $inter_mod_doctipo = Inter_User_Perf::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_user") && $request->filled("id_user")) {
-                $inter_mod_doctipo = Inter_User_Perf::where([['id_user', $request->input("id_user")]])->get();
-            } else if ($request->has("id_permisos") && $request->filled("id_permisos")) {
-                $inter_mod_doctipo = Inter_User_Perf::where([['id_permisos', $request->input("id_permisos")]])->get();
-            } else if ($use_for == 1) {
-                $inter_mod_doctipo = Inter_User_Perf::get();
-            } else {
-                $inter_mod_doctipo = DB::select('select * from DocuSwift.inter_user_perfiles LIMIT ' . $offset . ',' . $ammount);
-            }
-
-            return $inter_mod_doctipo;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el inter_user_perfiles, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    public function Editar_inter_user_perfiles(Request $request)
-    {
-        
-        try {
-            //dd($request);
-            $Inter_User_Perf = null;
-
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                //To avoid create it twice
-                $ifAlreadyExist = Inter_User_Perf::where([['id_perfiles', $request->input("id_perfiles")], ['id_user', $request->input("id_user")]])->get();
-                if ($ifAlreadyExist->count() > 0) {
-                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
-                    return "{}";
-                }
-
-                $Inter_User_Perf = new Inter_User_Perf();
-                $Inter_User_Perf->id_user =  $request->has("id_user") ? $request->input("id_user") : $Inter_User_Perf->id_user;
-                $Inter_User_Perf->id_perfiles =  $request->has("id_perfiles") ? $request->input("id_perfiles") : $Inter_User_Perf->id_perfiles;
-                $Inter_User_Perf->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $Inter_User_Perf = Inter_User_Perf::where([['id', $request->input("id")]])->first();
-                if ($Inter_User_Perf != null) {
-                    $Inter_User_Perf->id_user =  $request->has("id_user") ? $request->input("id_user") : $Inter_User_Perf->id_user;
-                    $Inter_User_Perf->id_perfiles =  $request->has("id_perfiles") ? $request->input("id_perfiles") : $Inter_User_Perf->id_perfiles;
-                    $Inter_User_Perf->update();
-                }
-            }
-
-            if ($request->isMethod('delete')) {
-                $Inter_User_Perf = Inter_User_Perf::where([['id', $request->input("id")]])->first();
-                if ($Inter_User_Perf == null) {
-                    return false;
-                }
-                return $Inter_User_Perf = $Inter_User_Perf->delete();
-            }
-
-            return $Inter_User_Perf;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos 
-    //revisado ok *******Dario
-    public function Obtener_inter_perf_perms(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $Inter_Perf_Perm = null;
-
-            if ($request->has("id") && $request->filled("id")) {
-                $Inter_Perf_Perm = Inter_Perf_Perm::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_perfiles") && $request->filled("id_perfiles")) {
-                $Inter_Perf_Perm = Inter_Perf_Perm::where([['id_perfiles', $request->input("id_perfiles")]])->get();
-            } else if ($request->has("id_permisos") && $request->filled("id_permisos")) {
-                $Inter_Perf_Perm = Inter_Perf_Perm::where([['id_permisos', $request->input("id_permisos")]])->get();
-            } else if ($use_for == 1) {
-                $Inter_Perf_Perm = Inter_Perf_Perm::get();
-            } else {
-                $Inter_Perf_Perm = DB::select('select * from DocuSwift.inter_perf_perms LIMIT ' . $offset . ',' . $ammount);
-            }
-
-            return $Inter_Perf_Perm;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el inter_perf_perms, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    //no funciona el post, no probe el put ni delete**********Dario
-    public function Editar_inter_perf_perms(Request $request)
-    {
-        try {
-            //dd($request);
-            $Inter_Perf_Perm = null;
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                //To avoid create it twice
-                $ifAlreadyExist = Inter_Perf_Perm::where([['id_perfiles', $request->input("id_perfiles")], ['id_permisos', $request->input("id_permisos")]])->get();
-                if ($ifAlreadyExist->count() > 0) {
-                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
-                    return "{}";
-                }
-
-                $Inter_Perf_Perm = new Inter_Perf_Perm();
-                $Inter_Perf_Perm->id_perfiles =  $request->has("id_perfiles") ? $request->input("id_perfiles") : $Inter_Perf_Perm->id_perfiles;
-                $Inter_Perf_Perm->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_Perf_Perm->id_permisos;
-                $Inter_Perf_Perm->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $Inter_Perf_Perm = Inter_Perf_Perm::where([['id', $request->input("id")]])->first();
-                if ($Inter_Perf_Perm != null) {
-                    $Inter_Perf_Perm->id_perfiles =  $request->has("id_perfiles") ? $request->input("id_perfiles") : $Inter_Perf_Perm->id_perfiles;
-                    $Inter_Perf_Perm->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_Perf_Perm->id_permisos;
-                    $Inter_Perf_Perm->update();
-                }
-            }
-
-            if ($request->isMethod('delete')) {
-                $Inter_Perf_Perm = Inter_Perf_Perm::where([['id', $request->input("id")]])->first();
-                if ($Inter_Perf_Perm == null) {
-                    return false;
-                }
-                return $Inter_Perf_Perm = $Inter_Perf_Perm->delete();
-            }
-
-            return $Inter_Perf_Perm;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos
-    public function Obtener_permisos(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $permisos = null;
-
-            if ($request->has("id") && $request->filled("id")) {
-                $permisos = Permisos::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("Nombre") && $request->filled("Nombre")) {
-                $permisos = Permisos::where('Nombre', 'like', '%' . $request->input("Nombre") . '%')->get();
-            } else if ($request->has("id_perfiles") && $request->filled("id_perfiles")) {
-                $permisos = DB::select('SELECT DocuSwift.permisos.* FROM DocuSwift.permisos JOIN DocuSwift.inter_perf_perms ON DocuSwift.permisos.id = DocuSwift.inter_perf_perms.id_permisos WHERE DocuSwift.inter_perf_perms.id_perfiles = '.$request->input('id_perfiles'));
-            } else if ($use_for == 'A') {
-                $permisos = Permisos::get();
-            } else if(is_numeric($use_for)) {
-                $permisos = DB::select('SELECT DISTINCT DocuSwift.permisos.* FROM DocuSwift.permisos JOIN DocuSwift.inter_user_perms ON DocuSwift.permisos.id = DocuSwift.inter_user_perms.id_permisos JOIN DocuSwift.users ON DocuSwift.inter_user_perms.id_user = DocuSwift.users.id WHERE DocuSwift.users.id = '.$use_for.' LIMIT '. $offset . ',' . $ammount);
-            } else if(str_contains($use_for, "_")) {
-                $numberToUse =  substr($use_for, stripos($use_for, "_")+1);
-                $permisos = DB::select('SELECT DocuSwift.permisos.*, DocuSwift.users.id "id_user" FROM DocuSwift.permisos JOIN DocuSwift.inter_user_perms ON DocuSwift.permisos.id = DocuSwift.inter_user_perms.id_permisos JOIN DocuSwift.users ON DocuSwift.inter_user_perms.id_user = DocuSwift.users.id WHERE DocuSwift.users.id_usuario_upper LIKE (SELECT CONCAT(\'%_\', '.$numberToUse.')) LIMIT '. $offset . ',' . $ammount);
-            } else {
-                $permisos = DB::select('select * from DocuSwift.permisos LIMIT ' . $offset . ',' . $ammount);
-            }
-
-            return $permisos;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el permisos, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    //revisado ok *******Dario
-    public function Editar_permisos(Request $request)
-    {
-        try {
-            //dd($request);
-            $Permisos = null;
-
-            //Crear objeto nuevo
-            if ($request->isMethod('post')) {
-                $Permisos = new Permisos();
-                $Permisos->Nombre =  $request->has("Nombre") ? $request->input("Nombre") : $Permisos->Nombre;
-                $Permisos->Type =  $request->has("Type") ? $request->input("Type") : $Permisos->Type;
-                $Permisos->save();
-            }
-
-            //Actualizar objeto
-            if ($request->isMethod('put')) {
-                $Permisos = Permisos::where([['id', $request->input("id")]])->first();
-                if ($Permisos != null) {
-                    $Permisos->Nombre =  $request->has("Nombre") ? $request->input("Nombre") : $Permisos->Nombre;
-                    $Permisos->Type =  $request->has("Type") ? $request->input("Type") : $Permisos->Type;
-                    $Permisos->update();
-                }
-            }
-
-            if ($request->isMethod('delete')) {
-                $Permisos = Permisos::where([['id', $request->input("id")]])->first();
-                if ($Permisos == null) {
-                    return false;
-                }
-
-                $Inter_Perm_Doc_Tipos = Inter_Perm_Doc_Tipos::where('id_permisos', $Permisos->id);
-                if ($Inter_Perm_Doc_Tipos != null) {
-                    $Inter_Perm_Doc_Tipos->delete();
-                }
-
-                $Inter_User_Perm = Inter_User_Perm::where('id_permisos', $Permisos->id);
-                if ($Inter_User_Perm != null) {
-                    $Inter_User_Perm->delete();
-                }
-
-                $Inter_Perm_Contratos = Inter_Perm_Contratos::where('id_permisos', $Permisos->id);
-                if ($Inter_Perm_Contratos != null) {
-                    $Inter_Perm_Contratos->delete();
-                }
-
-                $Inter_Perf_Perm = Inter_Perf_Perm::where('id_permisos', $Permisos->id);
-                if ($Inter_Perf_Perm != null) {
-                    $Inter_Perf_Perm->delete();
-                }
-
-                return $Permisos = $Permisos->delete();
-            }
-
-            return $Permisos;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //De necesitar otro filtro, favor avisar
-    //-Jose-
-    //Este obtiene un dato, varios o todos 
-    //revisado ok
-    public function Obtener_perfiles(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
-    {
-        try {
-            $perfiles = null;
-
-            if ($request->has("id") && $request->filled("id")) {
-                $perfiles = Perfiles::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("Nombre") && $request->filled("Nombre")) {
-                $perfiles = Perfiles::where('Nombre', 'like', '%' . $request->input("Nombre") . '%')->get();
-            } else if ($use_for == 'A') {
-                $perfiles = Perfiles::get();
-            } else if(is_numeric($use_for)) {
-                $perfiles = DB::select('SELECT DISTINCT DocuSwift.perfiles.* FROM DocuSwift.perfiles JOIN DocuSwift.inter_user_perfiles ON DocuSwift.perfiles.id = DocuSwift.inter_user_perfiles.id_perfiles JOIN DocuSwift.users ON DocuSwift.inter_user_perfiles.id_user = DocuSwift.users.id WHERE DocuSwift.users.id = '.$use_for.' LIMIT '. $offset . ',' . $ammount);
-            } else if(str_contains($use_for, "_")) {
-                $numberToUse =  substr($use_for, stripos($use_for, "_")+1);
-                $perfiles = DB::select('SELECT DocuSwift.perfiles.*, DocuSwift.users.id "id_user" FROM DocuSwift.perfiles JOIN DocuSwift.inter_user_perfiles ON DocuSwift.perfiles.id = DocuSwift.inter_user_perfiles.id_perfiles JOIN DocuSwift.users ON DocuSwift.inter_user_perfiles.id_user = DocuSwift.users.id WHERE DocuSwift.users.id_usuario_upper LIKE (SELECT CONCAT(\'%_\', '.$numberToUse.')) LIMIT '. $offset . ',' . $ammount);
-            }  else {
-                $perfiles = DB::select('select * from DocuSwift.perfiles LIMIT ' . $offset . ',' . $ammount);
-            }
-
-            return $perfiles;
-        } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el perfiles, por favor intente nuevamente");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
-        }
-    }
-
-    //Este hace de Crear/Editar y Borrar
-    //revisado ok *******Dario
-    public function Editar_perfiles(Request $request, $special_case = 0)
-    {
-        try {
-            //dd($request);
-            $Perfiles = null;
-
-            //Special Case, Borrar todos los inter mod permisos vinculados al perfil correspondiente y reestablece los permisos vinculados por los perfiles al usuario
-            if($special_case > 0)
-            {
-                $userid = Auth::user()->id;
-
-                //Eliminar todos los permisos vinculados al usuario al que le fue removido dicho especifico perfil
-                // $interPermUserLinkedToPerfilABorrar = DB::table('DocuSwift.inter_user_perms')
-                // ->where('DocuSwift.inter_user_perms.id_user', '=', $userid)
-                // ->whereIn('id_permisos', DB::table('DocuSwift.inter_perf_perms')
-                //     ->where('DocuSwift.inter_perf_perms.id_perfiles', '=', $special_case)
-                //     ->select('id_permisos')
-                //     ->get());
-                
-                // $interPermUserLinkedToPerfilABorrar->delete();
-
-                // //Removemos el perfil del usuario
-                // $Inter_User_Perf = Inter_User_Perf::where([['id_perfiles', $special_case],['id_user', $userid]]);
-                // $Inter_User_Perf->delete();
-
-                //Reinstauramos cualquier permiso que pudiera haberse perdido de los perfiles que aún persisten
-
-                /*->where('DocuSwift.inter_user_perms.id_user', '=', Auth::user()->id)*/
-                /*SELECT id_permisos 
-                FROM DocuSwift.inter_perf_perms 
-                WHERE id_perfiles IN 
-                (SELECT id_perfiles FROM DocuSwift.inter_user_perfiles iup where id_user = 1)
-                AND id_permisos NOT IN 
-                (SELECT id_permisos FROM DocuSwift.inter_user_perms iup where id_user = 1);*/
-
-                // $reinstatePermits = DB::table('DocuSwift.inter_perf_perms')
-                // ->whereIn('id_perfiles', DB::table('DocuSwift.inter_user_perfiles')
-                //     ->where('DocuSwift.inter_user_perfiles.id_user', '=', $userid)
-                //     ->select('id_perfiles')
-                //     ->get())
-                // ->whereNotIn('id_permisos', DB::table('DocuSwift.inter_user_perms')
-                //     ->where('DocuSwift.inter_user_perms.id_user', '=', $userid)
-                //     ->select('id_permisos')
-                //     ->get())
-                // ->select('id_permisos');
-
-                // $Inter_User_Perm = null;
-                // foreach ($reinstatePermits as $key => $value) {
-                //     $Inter_User_Perm = new Inter_User_Perm();
-                //     $Inter_User_Perm->id_user = $userid;
-                //     $Inter_User_Perm->id_permisos = $value;
-                //     $Inter_User_Perm->save();
+                // $venta = Venta::where([['id', $request->input("id")]])->first();
+                // if ($venta == null) {
+                //     return false;
                 // }
 
-                DB::select('CALL DocuSwift.Anadir_Permisos_Segun_Perfil_A_User('.$special_case.','.$userid.');');
-                return 1;
+                // $Venta_Detalle = Venta_Detalle::where('id_Venta', $venta->id);
+                // if ($Venta_Detalle != null) {
+                //     $Venta_Detalle->delete();
+                // }
+
+                $Transaccion = $Transaccion->delete();
             }
+
+            return $Transaccion;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //De necesitar otro filtro, favor avisar
+    //-Jose-
+    //Este obtiene un dato, varios o todos
+    public function Obtener_inter__transa__publics(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
+    {
+        try {
+            $Inter_Transa_Public = null;
+
+            if ($request->has("id") && $request->filled("id")) {
+                $Inter_Transa_Public = Inter_Transa_Public::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                $Inter_Transa_Public = DB::select('select * from inter__transa__publics Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("id_transaccion") && $request->filled("id_transaccion")) {
+                $Inter_Transa_Public = DB::select('select * from inter__transa__publics Where id_transaccion = ' . $request->input('id_transaccion') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else {
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Inter_Transa_Public = Inter_Transa_Public::get();
+                } else {
+                    //Si es obtener TODO
+                    $Inter_Transa_Public = DB::select('select * from inter__transa__publics LIMIT ' . $offset . ',' . $ammount);
+                }
+            }
+            return $Inter_Transa_Public;
+        } catch (Exception  $e) {
+            session()->flash('failure', "Error al obtener el Inter_Transa_Public, por favor intente nuevamente");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //Este hace de Crear/Editar y Borrar
+    public function Editar_inter__transa__publics(Request $request)
+    {
+        try {
+            $Inter_Transa_Public = null;
 
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
-                $Perfiles = new Perfiles();
-                $Perfiles->Nombre =  $request->has("Nombre") ? $request->input("Nombre") : $Perfiles->Nombre;
-                $Perfiles->Type =  $request->has("Type") ? $request->input("Type") : $Perfiles->Type;
-                $Perfiles->save();
+                //To avoid create it twice
+                $ifAlreadyExist = Inter_Transa_Public::where([['id_publicacion', $request->input("id_publicacion")], ['id_transaccion', $request->input("id_transaccion")]])->get();
+                if ($ifAlreadyExist->count() > 0) {
+                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
+                    return "{}";
+                }
 
-                $user = Auth::user();
-                //$user = 1;
-                
-                $Inter_User_Perf = new Inter_User_Perf();
-                $Inter_User_Perf->id_user =  $user->id;
-                $Inter_User_Perf->id_perfiles =  $Perfiles->getKey();
-                $Inter_User_Perf->save();
+                $Inter_Transa_Public = new Inter_Transa_Public();
+                $Inter_Transa_Public->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Inter_Transa_Public->id_publicacion;
+                $Inter_Transa_Public->id_transaccion = $request->has("id_transaccion") ? $request->input("id_transaccion") : $Inter_Transa_Public->id_transaccion;
+                $Inter_Transa_Public->save();
             }
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
-                $Perfiles = Perfiles::where([['id', $request->input("id")]])->first();
-                if ($Perfiles != null) {
-                    $Perfiles->Nombre =  $request->has("Nombre") ? $request->input("Nombre") : $Perfiles->Nombre;
-                    $Perfiles->Type =  $request->has("Type") ? $request->input("Type") : $Perfiles->Type;
-                    $Perfiles->update();
+                $Inter_Transa_Public = Inter_Transa_Public::where([['id', $request->input("id")]])->first();
+                if ($Inter_Transa_Public != null) {
+                    $Inter_Transa_Public = new Inter_Transa_Public();
+                    $Inter_Transa_Public->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Inter_Transa_Public->id_publicacion;
+                    $Inter_Transa_Public->id_transaccion = $request->has("id_transaccion") ? $request->input("id_transaccion") : $Inter_Transa_Public->id_transaccion;
+                    $Inter_Transa_Public->update();
                 }
             }
 
             if ($request->isMethod('delete')) {
-                $Perfiles = Perfiles::where([['id', $request->input("id")]])->first();
-                if ($Perfiles == null) {
+                $Inter_Transa_Public = Inter_Transa_Public::where([['id', $request->input("id")]])->first();
+                if ($Inter_Transa_Public == null) {
                     return false;
                 }
 
-                $Inter_Perf_Perm = Inter_Perf_Perm::where('id_perfiles', $Perfiles->id);
-                if ($Inter_Perf_Perm != null) {
-                    $Inter_Perf_Perm->delete();
-                }
-
-                $Inter_User_Perf = Inter_User_Perf::where('id_perfiles', $Perfiles->id);
-                if ($Inter_User_Perf != null) {
-                    $Inter_User_Perf->delete();
-                }
-
-                return $Perfiles = $Perfiles->delete();
+                $Inter_Transa_Public = $Inter_Transa_Public->delete();
             }
 
-            return $Perfiles;
+            return $Inter_Transa_Public;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+    //De necesitar otro filtro, favor avisar
+    //-Jose-
+    //Este obtiene un dato, varios o todos
+    public function Obtener_proyectos(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
+    {
+        try {
+            $Proyecto = null;
+            //Si es obtener con filtro
+            if ($request->has("id") && $request->filled("id")) {
+                $Proyecto = Proyecto::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                $Proyecto = DB::select('select * from Proyectos Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else {
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Proyecto = Proyecto::get();
+                } else if (is_numeric($use_for)) {
+                    $Proyecto = DB::select('select * from Proyectos WHERE Porcentaje_Avance = ' . $use_for . ' LIMIT ' . $offset . ',' . $ammount);
+                } else {
+                    //Si es obtener TODO
+                    $Proyecto = DB::select('select * from Proyectos LIMIT ' . $offset . ',' . $ammount);
+                }
+            }
+
+            return $Proyecto;
+        } catch (Exception  $e) {
+            session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //Este hace de Crear/Editar y Borrar
+    public function Editar_proyectos(Request $request)
+    {
+        try {
+            $Proyecto = null;
+            //Crear objeto nuevo
+            if ($request->isMethod('post')) {
+                $Proyecto = new Proyecto();
+                $Proyecto->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Proyecto->id_publicacion;
+                $Proyecto->id_voluntario =  $request->has("id_voluntario") ? $request->input("id_voluntario") : $Proyecto->id_voluntario;
+                $Proyecto->Porcentaje_Avance =  $request->has("Porcentaje_Avance") ? $request->input("Porcentaje_Avance") : $Proyecto->Porcentaje_Avance;
+                $Proyecto->save();
+            }
+
+            //Actualizar objeto
+            if ($request->isMethod('put')) {
+                $Proyecto = Proyecto::where([['id', $request->input("id")]])->first();
+                if ($Proyecto != null) {
+                    $Proyecto->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Proyecto->id_publicacion;
+                    $Proyecto->id_voluntario =  $request->has("id_voluntario") ? $request->input("id_voluntario") : $Proyecto->id_voluntario;
+                    $Proyecto->Porcentaje_Avance =  $request->has("Porcentaje_Avance") ? $request->input("Porcentaje_Avance") : $Proyecto->Porcentaje_Avance;
+                    $Proyecto->update();
+                }
+            }
+
+            if ($request->isMethod('delete')) {
+                $Proyecto = Venta::where([['id', $request->input("id")]])->first();
+                if ($Proyecto == null) {
+                    return false;
+                }
+
+                $Proyecto = $Proyecto->delete();
+            }
+
+            return $Proyecto;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //De necesitar otro filtro, favor avisar
+    //-Jose-
+    //Este obtiene un dato, varios o todos
+    public function Obtener_voluntario(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    {
+        try {
+            $Voluntario = null;
+            //Si es obtener con filtro
+            if ($request->has("id") && $request->filled("id")) {
+                $Voluntario = Voluntario::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_voluntario") && $request->filled("id_voluntario")) {
+                $Voluntario = DB::select('select * from Voluntarios Where id_voluntario = ' . $request->input('id_voluntario') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("id_usuario") && $request->filled("id_usuario")) {
+                $Voluntario = DB::select('select * from Voluntarios Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else {
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Voluntario = Voluntario::get();
+                } else {
+                    //Si es obtener TODO
+                    $Voluntario = DB::select('select * from Voluntarios LIMIT ' . $offset . ',' . $ammount);
+                }
+            }
+
+            return $Voluntario;
+        } catch (Exception  $e) {
+            session()->flash('failure', "Error al obtener el Voluntario, por favor intente nuevamente");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //Este hace de Crear/Editar y Borrar
+    public function Editar_voluntario(Request $request, $hard_delete = true)
+    {
+        try {
+            $Voluntario = null;
+
+            //Crear objeto nuevo
+            if ($request->isMethod('post')) {
+                $Voluntario = new Voluntario();
+                $Voluntario->id_voluntario = $request->has("id_voluntario") ? $request->input("id_voluntario") : $Voluntario->id_voluntario;
+                $Voluntario->id_usuario = $request->has("id_usuario") ? $request->input("id_usuario") : $Voluntario->id_usuario;
+                $Voluntario->save();
+            }
+
+            //Actualizar objeto
+            if ($request->isMethod('put')) {
+                $Voluntario = Voluntario::where([['id', $request->input("id")]])->first();
+                if ($Voluntario != null) {
+                    $Voluntario = new Voluntario();
+                    $Voluntario->id_voluntario = $request->has("id_voluntario") ? $request->input("id_voluntario") : $Voluntario->id_voluntario;
+                    $Voluntario->id_usuario = $request->has("id_usuario") ? $request->input("id_usuario") : $Voluntario->id_usuario;
+                    $Voluntario->update();
+                }
+            }
+
+            if ($request->isMethod('delete')) {
+                $Voluntario = Voluntario::where([['id', $request->input("id")]])->first();
+                if ($Voluntario == null) {
+                    return false;
+                }
+
+                $Voluntario = $Voluntario->delete();
+            }
+
+            return $Voluntario;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+    //De necesitar otro filtro, favor avisar
+    //-Jose-
+    //Este obtiene un dato, varios o todos
+    public function Obtener_mensaje(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    {
+        try {
+            $Mensaje = null;
+            //Si es obtener con filtro
+            if ($request->has("id") && $request->filled("id")) {
+                $Mensaje = Mensaje::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+                $Mensaje = DB::select('select * from mensajes Where id_usuario_origen = ' . $request->input('id_usuario_origen') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("id_usuario_destino") && $request->filled("id_usuario_destino")) {
+                $Mensaje = DB::select('select * from mensajes Where id_usuario_destino = ' . $request->input('id_usuario_destino') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("Tipo_Mensaje") && $request->filled("Tipo_Mensaje")) {
+                $Mensaje = DB::select('select * from mensajes Where Tipo_Mensaje = ' . $request->input('Tipo_Mensaje') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else {
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Mensaje = Mensaje::get();
+                } else {
+                    //Si es obtener TODO
+                    $Mensaje = DB::select('select * from mensajes LIMIT ' . $offset . ',' . $ammount);
+                }
+            }
+
+            return $Mensaje;
+        } catch (Exception  $e) {
+            session()->flash('failure', "Error al obtener el Mensaje, por favor intente nuevamente");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //Este hace de Crear/Editar y Borrar
+    public function Editar_mensaje(Request $request)
+    {
+        try {
+            $Mensaje = null;
+
+            //Crear objeto nuevo
+            if ($request->isMethod('post')) {
+                $Mensaje = new Mensaje();
+                $Mensaje->id_usuario_origen = $request->has("id_usuario_origen") ? $request->input("id_usuario_origen") : $Mensaje->id_usuario_origen;
+                $Mensaje->id_usuario_destino = $request->has("id_usuario_destino") ? $request->input("id_usuario_destino") : $Mensaje->id_usuario_destino;
+                $Mensaje->Mensaje = $request->has("Mensaje") ? $request->input("Mensaje") : $Mensaje->Mensaje;
+                $Mensaje->Tipo_Mensaje = $request->has("Tipo_Mensaje") ? $request->input("Tipo_Mensaje") : $Mensaje->Tipo_Mensaje;
+                $Mensaje->save();
+            }
+
+            //Actualizar objeto
+            if ($request->isMethod('put')) {
+                $Mensaje = Mensaje::where([['id', $request->input("id")]])->first();
+                if ($Mensaje != null) {
+                    $Mensaje = new Mensaje();
+                    $Mensaje->id_usuario_origen = $request->has("id_usuario_origen") ? $request->input("id_usuario_origen") : $Mensaje->id_usuario_origen;
+                    $Mensaje->id_usuario_destino = $request->has("id_usuario_destino") ? $request->input("id_usuario_destino") : $Mensaje->id_usuario_destino;
+                    $Mensaje->Mensaje = $request->has("Mensaje") ? $request->input("Mensaje") : $Mensaje->Mensaje;
+                    $Mensaje->Tipo_Mensaje = $request->has("Tipo_Mensaje") ? $request->input("Tipo_Mensaje") : $Mensaje->Tipo_Mensaje;
+                    $Mensaje->update();
+                }
+            }
+
+            if ($request->isMethod('delete')) {
+                $Mensaje = Mensaje::where([['id', $request->input("id")]])->first();
+                if ($Mensaje == null) {
+                    return false;
+                }
+
+                $Mensaje = $Mensaje->delete();
+            }
+
+            return $Mensaje;
         } catch (Exception  $e) {
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
@@ -1445,72 +455,159 @@ trait Cruds
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos 
-    public function Obtener_inter_perm_contratos(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    public function Obtener_publicacions(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
-            $inter_perm_contratos = null;
-
+            $Publicacion = null;
+            //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
-                $inter_perm_contratos = Inter_Perm_Contratos::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_permisos") && $request->filled("id_permisos")) {
-                $inter_perm_contratos = Inter_Perm_Contratos::where([['id_permisos', $request->input("id_permisos")]])->get();
-            } else if ($request->has("id_contratos") && $request->filled("id_contratos")) {
-                $inter_perm_contratos = Inter_Perm_Contratos::where([['id_contratos', $request->input("id_contratos")]])->get();
-            } else if ($use_for == 1) {
-                $inter_perm_contratos = Inter_Perm_Contratos::get();
+                $Publicacion = Publicacion::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_usuario") && $request->filled("id_usuario")) {
+                $Publicacion = DB::select('select * from publicacions Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("Nombre") && $request->filled("Nombre")) {
+                $Publicacion = DB::select('select * from publicacions Where Nombre = ' . $request->input('Nombre') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("Tipo_Publicacion") && $request->filled("Tipo_Publicacion")) {
+                $Publicacion = DB::select('select * from publicacions Where Tipo_Publicacion = ' . $request->input('Tipo_Publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
-                $inter_perm_contratos = DB::select('select * from DocuSwift.inter_perm_contratos LIMIT ' . $offset . ',' . $ammount);
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Publicacion = Publicacion::get();
+                } else {
+                    //Si es obtener TODO
+                    $Publicacion = DB::select('select * from publicacions LIMIT ' . $offset . ',' . $ammount);
+                }
             }
 
-            return $inter_perm_contratos;
+            return $Publicacion;
         } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el inter_perm_contratos, por favor intente nuevamente");
+            session()->flash('failure', "Error al obtener la Publicacion, por favor intente nuevamente");
             //print_r("Error ---: " . $e->getMessage());
             return "{}";
         }
     }
 
     //Este hace de Crear/Editar y Borrar
-    public function Editar_inter_perm_contratos(Request $request)
+    public function Editar_publicacions(Request $request)
     {
         try {
-            //dd($request);
-            $Inter_Perm_Contratos = null;
+            $Publicacion = null;
+
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
-                //To avoid create it twice
-                $ifAlreadyExist = Inter_Perm_Contratos::where([['id_contratos', $request->input("id_contratos")], ['id_permisos', $request->input("id_permisos")]])->get();
-                if ($ifAlreadyExist->count() > 0) {
-                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
-                    return "{}";
-                }
-
-                $Inter_Perm_Contratos = new Inter_Perm_Contratos();
-                $Inter_Perm_Contratos->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_Perm_Contratos->id_permisos;
-                $Inter_Perm_Contratos->id_contratos =  $request->has("id_contratos") ? $request->input("id_contratos") : $Inter_Perm_Contratos->id_contratos;
-                $Inter_Perm_Contratos->save();
+                $Publicacion = new Publicacion();
+                $Publicacion->id_usuario = $request->has("id_usuario") ? $request->input("id_usuario") : $Publicacion->id_usuario;
+                $Publicacion->Nombre = $request->has("Nombre") ? $request->input("Nombre") : $Publicacion->Nombre;
+                $Publicacion->Descripcion = $request->has("Descripcion") ? $request->input("Descripcion") : $Publicacion->Descripcion;
+                $Publicacion->Tipo_Publicacion = $request->has("Tipo_Publicacion") ? $request->input("Tipo_Publicacion") : $Publicacion->Tipo_Publicacion;
+                $Publicacion->save();
             }
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
-                $Inter_Perm_Contratos = Inter_Perm_Contratos::where([['id', $request->input("id")]])->first();
-                if ($Inter_Perm_Contratos != null) {
-                    $Inter_Perm_Contratos->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_Perm_Contratos->id_permisos;
-                    $Inter_Perm_Contratos->id_contratos =  $request->has("id_contratos") ? $request->input("id_contratos") : $Inter_Perm_Contratos->id_contratos;
-                    $Inter_Perm_Contratos->update();
+                $Publicacion = Publicacion::where([['id', $request->input("id")]])->first();
+                if ($Publicacion != null) {
+                    $Publicacion = new Publicacion();
+                    $Publicacion->id_usuario = $request->has("id_usuario") ? $request->input("id_usuario") : $Publicacion->id_usuario;
+                    $Publicacion->Nombre = $request->has("Nombre") ? $request->input("Nombre") : $Publicacion->Nombre;
+                    $Publicacion->Descripcion = $request->has("Descripcion") ? $request->input("Descripcion") : $Publicacion->Descripcion;
+                    $Publicacion->Tipo_Publicacion = $request->has("Tipo_Publicacion") ? $request->input("Tipo_Publicacion") : $Publicacion->Tipo_Publicacion;
+                    $Publicacion->update();
                 }
             }
 
             if ($request->isMethod('delete')) {
-                $Inter_Perm_Contratos = Inter_Perm_Contratos::where([['id', $request->input("id")]])->first();
-                if ($Inter_Perm_Contratos == null) {
+                $Publicacion = Publicacion::where([['id', $request->input("id")]])->first();
+                if ($Publicacion == null) {
                     return false;
                 }
 
-                return $Inter_Perm_Contratos = $Inter_Perm_Contratos->delete();
+                $Publicacion = $Publicacion->delete();
             }
 
-            return $Inter_Perm_Contratos;
+            return $Publicacion;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+    //De necesitar otro filtro, favor avisar
+    //-Jose-
+    //Este obtiene un dato, varios o todos 
+    public function Obtener_demandas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    {
+        try {
+            $Demanda = null;
+            //Si es obtener con filtro
+            if ($request->has("id") && $request->filled("id")) {
+                $Demanda = Demanda::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                $Demanda = DB::select('select * from demandas Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else {
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Demanda = Demanda::get();
+                } else {
+                    //Si es obtener TODO
+                    $Demanda = DB::select('select * from demandas LIMIT ' . $offset . ',' . $ammount);
+                }
+            }
+
+            return $Demanda;
+        } catch (Exception  $e) {
+            session()->flash('failure', "Error al obtener el Demanda, por favor intente nuevamente");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //Este hace de Crear/Editar y Borrar
+    public function Editar_demandas(Request $request)
+    {
+        try {
+            $Demanda = null;
+
+            //Crear objeto nuevo
+            if ($request->isMethod('post')) {
+                $Demanda = new Demanda();
+                $Demanda->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Demanda->id_publicacion;
+                $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
+                $Demanda->save();
+            }
+
+            //Actualizar objeto
+            if ($request->isMethod('put')) {
+                $Demanda = Demanda::where([['id', $request->input("id")]])->first();
+                if ($Demanda != null) {
+                    $Demanda = new Demanda();
+                    $Demanda->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Demanda->id_publicacion;
+                    $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
+                    $Demanda->update();
+                }
+            }
+
+            if ($request->isMethod('delete')) {
+                $Demanda = Demanda::where([['id', $request->input("id")]])->first();
+                if ($Demanda == null) {
+                    return false;
+                }
+
+                $Demanda = $Demanda->delete();
+            }
+
+            return $Demanda;
         } catch (Exception  $e) {
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
@@ -1522,71 +619,68 @@ trait Cruds
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos 
-    public function Obtener_inter_perm_doc_tipos(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    public function Obtener_ofertas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
-            $Inter_Perm_Doc_Tipos = null;
-
+            $Ofertas = null;
+            //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
-                $Inter_Perm_Doc_Tipos = Inter_Perm_Doc_Tipos::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_permisos") && $request->filled("id_permisos")) {
-                $Inter_Perm_Doc_Tipos = Inter_Perm_Doc_Tipos::where([['id_permisos', $request->input("id_permisos")]])->get();
-            } else if ($request->has("id_doc__tipos") && $request->filled("id_doc__tipos")) {
-                $Inter_Perm_Doc_Tipos = Inter_Perm_Doc_Tipos::where([['id_doc__tipos', $request->input("id_doc__tipos")]])->get();
-            } else if ($use_for == 1) {
-                $Inter_Perm_Doc_Tipos = Inter_Perm_Doc_Tipos::get();
+                $Ofertas = Oferta::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                $Ofertas = DB::select('select * from ofertas Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
-                $Inter_Perm_Doc_Tipos = DB::select('select * from DocuSwift.inter_perm_doc_tipos LIMIT ' . $offset . ',' . $ammount);
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Ofertas = Oferta::get();
+                } else {
+                    //Si es obtener TODO
+                    $Ofertas = DB::select('select * from ofertas LIMIT ' . $offset . ',' . $ammount);
+                }
             }
 
-            return $Inter_Perm_Doc_Tipos;
+            return $Ofertas;
         } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el inter_perm_doc_tipos, por favor intente nuevamente");
+            session()->flash('failure', "Error al obtener las ofertas, por favor intente nuevamente");
             //print_r("Error ---: " . $e->getMessage());
             return "{}";
         }
     }
 
     //Este hace de Crear/Editar y Borrar
-    public function Editar_inter_perm_doc_tipos(Request $request)
+    public function Editar_ofertas(Request $request)
     {
         try {
-            //dd($request);
-            $Inter_Perm_Doc_Tipos = null;
+            $Oferta = null;
+
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
-                //To avoid create it twice
-                $ifAlreadyExist = Inter_Perm_Doc_Tipos::where([['id_doc__tipos', $request->input("id_doc__tipos")], ['id_permisos', $request->input("id_permisos")]])->get();
-                if ($ifAlreadyExist->count() > 0) {
-                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
-                    return "{}";
-                }
-
-                $Inter_Perm_Doc_Tipos = new Inter_Perm_Doc_Tipos();
-                $Inter_Perm_Doc_Tipos->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_Perm_Doc_Tipos->id_permisos;
-                $Inter_Perm_Doc_Tipos->id_doc__tipos =  $request->has("id_doc__tipos") ? $request->input("id_doc__tipos") : $Inter_Perm_Doc_Tipos->id_doc__tipos;
-                $Inter_Perm_Doc_Tipos->save();
+                $Oferta = new Oferta();
+                $Oferta->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Oferta->id_publicacion;
+                $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
+                $Oferta->save();
             }
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
-                $Inter_Perm_Doc_Tipos = Inter_Perm_Doc_Tipos::where([['id', $request->input("id")]])->first();
-                if ($Inter_Perm_Doc_Tipos != null) {
-                    $Inter_Perm_Doc_Tipos->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_Perm_Doc_Tipos->id_permisos;
-                    $Inter_Perm_Doc_Tipos->id_doc__tipos =  $request->has("id_doc__tipos") ? $request->input("id_doc__tipos") : $Inter_Perm_Doc_Tipos->id_doc__tipos;
-                    $Inter_Perm_Doc_Tipos->update();
+                $Oferta = Oferta::where([['id', $request->input("id")]])->first();
+                if ($Oferta != null) {
+                    $Oferta = new Oferta();
+                    $Oferta->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Oferta->id_publicacion;
+                    $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
+                    $Oferta->update();
                 }
             }
 
             if ($request->isMethod('delete')) {
-                $Inter_Perm_Doc_Tipos = Inter_Perm_Doc_Tipos::where([['id', $request->input("id")]])->first();
-                if ($Inter_Perm_Doc_Tipos == null) {
+                $Oferta = Oferta::where([['id', $request->input("id")]])->first();
+                if ($Oferta == null) {
                     return false;
                 }
-                return $Inter_Perm_Doc_Tipos = $Inter_Perm_Doc_Tipos->delete();
+
+                $Oferta = $Oferta->delete();
             }
 
-            return $Inter_Perm_Doc_Tipos;
+            return $Oferta;
         } catch (Exception  $e) {
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
@@ -1598,71 +692,160 @@ trait Cruds
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos 
-    public function Obtener_inter_mod_perms(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    public function Obtener_imagens(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
-            $Inter_Mod_Perm = null;
-
+            $Imagen = null;
+            //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
-                $Inter_Mod_Perm = Inter_Mod_Perm::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_permisos") && $request->filled("id_permisos")) {
-                $Inter_Mod_Perm = Inter_Mod_Perm::where([['id_permisos', $request->input("id_permisos")]])->get();
-            } else if ($request->has("id_modulos__contratos") && $request->filled("id_modulos__contratos")) {
-                $Inter_Mod_Perm = Inter_Mod_Perm::where([['id_modulos__contratos', $request->input("id_modulos__contratos")]])->get();
-            } else if ($use_for == 1) {
-                $Inter_Mod_Perm = Inter_Mod_Perm::get();
+                $Imagen = Imagen::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+                $Imagen = DB::select('select * from imagens Where id_usuario_origen = ' . $request->input('id_usuario_origen') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("Tipo") && $request->filled("Tipo")) {
+                $Imagen = DB::select('select * from imagens Where Tipo = ' . $request->input('Tipo') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
-                $Inter_Mod_Perm = DB::select('select * from DocuSwift.inter_mod_perms LIMIT ' . $offset . ',' . $ammount);
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Imagen = Imagen::get();
+                } else {
+                    //Si es obtener TODO
+                    $Imagen = DB::select('select * from imagens LIMIT ' . $offset . ',' . $ammount);
+                }
             }
 
-            return $Inter_Mod_Perm;
+            return $Imagen;
         } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el inter_mod_perms, por favor intente nuevamente");
+            session()->flash('failure', "Error al obtener la imagen, por favor intente nuevamente");
             //print_r("Error ---: " . $e->getMessage());
             return "{}";
         }
     }
 
     //Este hace de Crear/Editar y Borrar
-    public function Editar_inter_mod_perms(Request $request)
+    public function Editar_imagens(Request $request)
     {
         try {
-            //dd($request);
-            $Inter_Mod_Perm = null;
+            $Imagen = null;
+
+            //Crear objeto nuevo
+            if ($request->isMethod('post')) {
+                $Imagen = new Imagen();
+                $Imagen->id_usuario_origen = $request->has("id_usuario_origen") ? $request->input("id_usuario_origen") : $Imagen->id_usuario_origen;
+                $Imagen->Tipo = $request->has("Tipo") ? $request->input("Tipo") : $Imagen->Tipo;
+                $Imagen->Direccion = $request->has("Direccion") ? $request->input("Direccion") : $Imagen->Direccion;
+                $Imagen->save();
+            }
+
+            //Actualizar objeto
+            if ($request->isMethod('put')) {
+                $Imagen = Imagen::where([['id', $request->input("id")]])->first();
+                if ($Imagen != null) {
+                    $Imagen->id_usuario_origen = $request->has("id_usuario_origen") ? $request->input("id_usuario_origen") : $Imagen->id_usuario_origen;
+                    $Imagen->Tipo = $request->has("Tipo") ? $request->input("Tipo") : $Imagen->Tipo;
+                    $Imagen->Direccion = $request->has("Direccion") ? $request->input("Direccion") : $Imagen->Direccion;
+                    $Imagen->update();
+                }
+            }
+
+            if ($request->isMethod('delete')) {
+                $Imagen = Imagen::where([['id', $request->input("id")]])->first();
+                if ($Imagen == null) {
+                    return false;
+                }
+
+                $Imagen = $Imagen->delete();
+            }
+
+            return $Imagen;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+    //De necesitar otro filtro, favor avisar
+    //-Jose-
+    //Este obtiene un dato, varios o todos
+    public function Obtener_inter__calif__publics(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    {
+        try {
+            $Inter_Calif_Public = null;
+            //Si es obtener con filtro
+            if ($request->has("id") && $request->filled("id")) {
+                $Inter_Calif_Public = Inter_Calif_Public::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_calificacion") && $request->filled("id_calificacion")) {
+                $Inter_Calif_Public = DB::select('select * from inter__calif__publics Where id_calificacion = ' . $request->input('id_calificacion') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                $Inter_Calif_Public = DB::select('select * from inter__calif__publics Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else {
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Inter_Calif_Public = Inter_Calif_Public::get();
+                } else {
+                    //Si es obtener TODO
+                    $Inter_Calif_Public = DB::select('select * from inter__calif__publics LIMIT ' . $offset . ',' . $ammount);
+                }
+            }
+
+            return $Inter_Calif_Public;
+        } catch (Exception  $e) {
+            session()->flash('failure', "Error al obtener el inter__calif__publics, por favor intente nuevamente");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //Este hace de Crear/Editar y Borrar
+    public function Editar_inter__calif__publics(Request $request)
+    {
+        try {
+            $Inter_Calif_Public = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
                 //To avoid create it twice
-                $ifAlreadyExist = Inter_Mod_Perm::where([['id_modulos__contratos', $request->input("id_modulos__contratos")], ['id_permisos', $request->input("id_permisos")]])->get();
+                $ifAlreadyExist = Inter_Calif_Public::where([['id_calificacion', $request->input("id_calificacion")], ['id_publicacion', $request->input("id_publicacion")]])->get();
                 if ($ifAlreadyExist->count() > 0) {
                     session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
                     return "{}";
                 }
 
-                $Inter_Mod_Perm = new Inter_Mod_Perm();
-                $Inter_Mod_Perm->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_Mod_Perm->id_permisos;
-                $Inter_Mod_Perm->id_modulos__contratos =  $request->has("id_modulos__contratos") ? $request->input("id_modulos__contratos") : $Inter_Mod_Perm->id_modulos__contratos;
-                $Inter_Mod_Perm->save();
+                $Inter_Calif_Public = new Inter_Calif_Public();
+                $Inter_Calif_Public->id_calificacion =  $request->has("id_calificacion") ? $request->input("id_calificacion") : $Inter_Calif_Public->id_calificacion;
+                $Inter_Calif_Public->id_publicacion =  $request->has("id_publicacion") ? $request->input("id_publicacion") : $Inter_Calif_Public->id_publicacion;
+                $Inter_Calif_Public->save();
             }
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
-                $Inter_Mod_Perm = Inter_Mod_Perm::where([['id', $request->input("id")]])->first();
-                if ($Inter_Mod_Perm != null) {
-                    $Inter_Mod_Perm->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Inter_Mod_Perm->id_permisos;
-                    $Inter_Mod_Perm->id_modulos__contratos =  $request->has("id_modulos__contratos") ? $request->input("id_modulos__contratos") : $Inter_Mod_Perm->id_modulos__contratos;
-                    $Inter_Mod_Perm->update();
+                $Inter_Calif_Public = Inter_Calif_Public::where([['id', $request->input("id")]])->first();
+                if ($Inter_Calif_Public != null) {
+                    $Inter_Calif_Public->id_calificacion =  $request->has("id_calificacion") ? $request->input("id_calificacion") : $Inter_Calif_Public->id_calificacion;
+                    $Inter_Calif_Public->id_publicacion =  $request->has("id_publicacion") ? $request->input("id_publicacion") : $Inter_Calif_Public->id_publicacion;
+                    $Inter_Calif_Public->update();
                 }
             }
 
             if ($request->isMethod('delete')) {
-                $Inter_Mod_Perm = Inter_Mod_Perm::where([['id', $request->input("id")]])->first();
-                if ($Inter_Mod_Perm == null) {
+                $Inter_Calif_Public = Inter_Calif_Public::where([['id', $request->input("id")]])->first();
+                if ($Inter_Calif_Public == null) {
                     return false;
                 }
-                return $Inter_Mod_Perm = $Inter_Mod_Perm->delete();
+                return $Inter_Calif_Public = $Inter_Calif_Public->delete();
             }
 
-            return $Inter_Mod_Perm;
+            return $Inter_Calif_Public;
         } catch (Exception  $e) {
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
@@ -1673,72 +856,93 @@ trait Cruds
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
-    //Este obtiene un dato, varios o todos 
-    public function Obtener_tipos__contratos(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    //Este obtiene un dato, varios o todos
+    public function Obtener_calificacions(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
-            $Tipos_Contrato = null;
-
+            $Calificacion = null;
+            //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
-                $Tipos_Contrato = Tipos_Contrato::where([['id', $request->input("id")]])->first();
-            } else if ($request->has("id_permisos") && $request->filled("id_permisos")) {
-                $Tipos_Contrato = Tipos_Contrato::where([['id_permisos', $request->input("id_permisos")]])->get();
-            } else if ($request->has("Nombre_Tipo") && $request->filled("Nombre_Tipo")) {
-                $Tipos_Contrato = Tipos_Contrato::where([['Nombre_Tipo', $request->input("Nombre_Tipo")]])->get();
-            } else if ($use_for == 1) {
-                $Tipos_Contrato = Tipos_Contrato::get();
+                $Calificacion = Calificacion::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+                $Calificacion = DB::select('select * from calificacions Where id_usuario_origen = ' . $request->input('id_usuario_origen') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("id_usuario_destino") && $request->filled("id_usuario_destino")) {
+                $Calificacion = DB::select('select * from calificacions Where id_usuario_destino = ' . $request->input('id_usuario_destino') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                $Calificacion = DB::select('select * from calificacions Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("Tipo_Calificacion") && $request->filled("Tipo_Calificacion")) {
+                $Calificacion = DB::select('select * from calificacions Where Tipo_Calificacion = ' . $request->input('Tipo_Calificacion') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("Puntuacion") && $request->filled("Puntuacion")) {
+                $Calificacion = DB::select('select * from calificacions Where Puntuacion = ' . $request->input('Puntuacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
-                $Tipos_Contrato = DB::select('select * from DocuSwift.tipos__contratos LIMIT ' . $offset . ',' . $ammount);
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Calificacion = Calificacion::get();
+                } else {
+                    //Si es obtener TODO
+                    $Calificacion = DB::select('select * from calificacions LIMIT ' . $offset . ',' . $ammount);
+                }
             }
 
-            return $Tipos_Contrato;
+            return $Calificacion;
         } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el tipos__contratos, por favor intente nuevamente");
+            session()->flash('failure', "Error al obtener el calificacions, por favor intente nuevamente");
             //print_r("Error ---: " . $e->getMessage());
             return "{}";
         }
     }
 
     //Este hace de Crear/Editar y Borrar
-    public function Editar_tipos__contratos(Request $request)
+    public function Editar_calificacions(Request $request)
     {
         try {
-            //dd($request);
-            $Tipos_Contrato = null;
+            $Calificacion = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
                 //To avoid create it twice
-                $ifAlreadyExist = Tipos_Contrato::where([['Nombre_Tipo', $request->input("Nombre_Tipo")], ['id_permisos', $request->input("id_permisos")]])->get();
+                $ifAlreadyExist = Calificacion::where([
+                    ['id_usuario_origen', $request->input("id_usuario_origen")],
+                    ['id_usuario_destino', $request->input("id_usuario_destino")],
+                    ['id_publicacion', $request->input("id_publicacion")]
+                ])->get();
                 if ($ifAlreadyExist->count() > 0) {
                     session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
                     return "{}";
                 }
 
-                $Tipos_Contrato = new Tipos_Contrato();
-                $Tipos_Contrato->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Tipos_Contrato->id_permisos;
-                $Tipos_Contrato->Nombre_Tipo =  $request->has("Nombre_Tipo") ? $request->input("Nombre_Tipo") : $Tipos_Contrato->Nombre_Tipo;
-                $Tipos_Contrato->save();
+                $Calificacion = new Calificacion();
+                $Calificacion->id_usuario_origen =  $request->has("id_usuario_origen") ? $request->input("id_usuario_origen") : $Calificacion->id_usuario_origen;
+                $Calificacion->id_usuario_destino =  $request->has("id_usuario_destino") ? $request->input("id_usuario_destino") : $Calificacion->id_usuario_destino;
+                $Calificacion->id_publicacion =  $request->has("id_publicacion") ? $request->input("id_publicacion") : $Calificacion->id_publicacion;
+                $Calificacion->Puntuacion =  $request->has("Puntuacion") ? $request->input("Puntuacion") : $Calificacion->Puntuacion;
+                $Calificacion->Tipo_Calificacion =  $request->has("Tipo_Calificacion") ? $request->input("Tipo_Calificacion") : $Calificacion->Tipo_Calificacion;
+                $Calificacion->Comentario =  $request->has("Comentario") ? $request->input("Comentario") : $Calificacion->Comentario;
+                $Calificacion->save();
             }
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
-                $Tipos_Contrato = Tipos_Contrato::where([['id', $request->input("id")]])->first();
-                if ($Tipos_Contrato != null) {
-                    $Tipos_Contrato->id_permisos =  $request->has("id_permisos") ? $request->input("id_permisos") : $Tipos_Contrato->id_permisos;
-                    $Tipos_Contrato->Nombre_Tipo =  $request->has("Nombre_Tipo") ? $request->input("Nombre_Tipo") : $Tipos_Contrato->Nombre_Tipo;
-                    $Tipos_Contrato->update();
+                $Calificacion = Calificacion::where([['id', $request->input("id")]])->first();
+                if ($Calificacion != null) {
+                    $Calificacion->id_usuario_origen =  $request->has("id_usuario_origen") ? $request->input("id_usuario_origen") : $Calificacion->id_usuario_origen;
+                    $Calificacion->id_usuario_destino =  $request->has("id_usuario_destino") ? $request->input("id_usuario_destino") : $Calificacion->id_usuario_destino;
+                    $Calificacion->id_publicacion =  $request->has("id_publicacion") ? $request->input("id_publicacion") : $Calificacion->id_publicacion;
+                    $Calificacion->Puntuacion =  $request->has("Puntuacion") ? $request->input("Puntuacion") : $Calificacion->Puntuacion;
+                    $Calificacion->Tipo_Calificacion =  $request->has("Tipo_Calificacion") ? $request->input("Tipo_Calificacion") : $Calificacion->Tipo_Calificacion;
+                    $Calificacion->Comentario =  $request->has("Comentario") ? $request->input("Comentario") : $Calificacion->Comentario;
+                    $Calificacion->update();
                 }
             }
 
             if ($request->isMethod('delete')) {
-                $Tipos_Contrato = Tipos_Contrato::where([['id', $request->input("id")]])->first();
-                if ($Tipos_Contrato == null) {
+                $Calificacion = Calificacion::where([['id', $request->input("id")]])->first();
+                if ($Calificacion == null) {
                     return false;
                 }
-                return $Tipos_Contrato = $Tipos_Contrato->delete();
+                return $Calificacion = $Calificacion->delete();
             }
 
-            return $Tipos_Contrato;
+            return $Calificacion;
         } catch (Exception  $e) {
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
@@ -1757,60 +961,117 @@ trait Cruds
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos
+    public function Obtener_tipo__usuarios(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+    {
+        try {
+            $Tipo_Usuario = null;
+            //Si es obtener con filtro
+            if ($request->has("id") && $request->filled("id")) {
+                $Tipo_Usuario = Tipo_Usuario::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_usuario") && $request->filled("id_usuario")) {
+                $Tipo_Usuario = DB::select('select * from tipo__usuarios Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("Nombre_Tipo_Usuario") && $request->filled("Nombre_Tipo_Usuario")) {
+                $Tipo_Usuario = DB::select('select * from tipo__usuarios Where Nombre_Tipo_Usuario = ' . $request->input('Nombre_Tipo_Usuario') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else {
+                //Si es obtener normal y sin filtro
+                if ($use_for == "A") {
+                    $Tipo_Usuario = Tipo_Usuario::get();
+                } else {
+                    //Si es obtener TODO
+                    $Tipo_Usuario = DB::select('select * from tipo__usuarios LIMIT ' . $offset . ',' . $ammount);
+                }
+            }
 
-    public function Obtener_usuarios(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
+            return $Tipo_Usuario;
+        } catch (Exception  $e) {
+            session()->flash('failure', "Error al obtener el tipo__usuarios, por favor intente nuevamente");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //Este hace de Crear/Editar y Borrar
+    public function Editar_tipo__usuarios(Request $request)
+    {
+        try {
+            $Tipo_Usuario = null;
+            //Crear objeto nuevo
+            if ($request->isMethod('post')) {
+                //To avoid create it twice
+                $ifAlreadyExist = Tipo_Usuario::where([
+                    ['id_usuario', $request->input("id_usuario")],
+                    ['Nombre_Tipo_Usuario', $request->input("Nombre_Tipo_Usuario")]
+                ])->get();
+                if ($ifAlreadyExist->count() > 0) {
+                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
+                    return "{}";
+                }
+
+                $Tipo_Usuario = new Tipo_Usuario();
+                $Tipo_Usuario->id_usuario =  $request->has("id_usuario") ? $request->input("id_usuario") : $Tipo_Usuario->id_usuario;
+                $Tipo_Usuario->Nombre_Tipo_Usuario =  $request->has("Nombre_Tipo_Usuario") ? $request->input("Nombre_Tipo_Usuario") : $Tipo_Usuario->Nombre_Tipo_Usuario;
+                $Tipo_Usuario->Etiqueta =  $request->has("Etiqueta") ? $request->input("Etiqueta") : $Tipo_Usuario->Etiqueta;
+                $Tipo_Usuario->save();
+            }
+
+            //Actualizar objeto
+            if ($request->isMethod('put')) {
+                $Tipo_Usuario = Tipo_Usuario::where([['id', $request->input("id")]])->first();
+                if ($Tipo_Usuario != null) {
+                    $Tipo_Usuario->id_usuario =  $request->has("id_usuario") ? $request->input("id_usuario") : $Tipo_Usuario->id_usuario;
+                    $Tipo_Usuario->Nombre_Tipo_Usuario =  $request->has("Nombre_Tipo_Usuario") ? $request->input("Nombre_Tipo_Usuario") : $Tipo_Usuario->Nombre_Tipo_Usuario;
+                    $Tipo_Usuario->Etiqueta =  $request->has("Etiqueta") ? $request->input("Etiqueta") : $Tipo_Usuario->Etiqueta;
+                    $Tipo_Usuario->update();
+                }
+            }
+
+            if ($request->isMethod('delete')) {
+                $Tipo_Usuario = Tipo_Usuario::where([['id', $request->input("id")]])->first();
+                if ($Tipo_Usuario == null) {
+                    return false;
+                }
+                return $Tipo_Usuario = $Tipo_Usuario->delete();
+            }
+
+            return $Tipo_Usuario;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    //De necesitar otro filtro, favor avisar
+    //-Jose-
+    //Este obtiene un dato, varios o todos
+    public function Obtener_usuarios(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
 
             $usuarios = null;
             //Valida que use_for no sea nulo, dado que el valor viene generalmente de un parámetro opcional
-            if(!isset($use_for) || $use_for == null)
-            {
+            if (!isset($use_for) || $use_for == null) {
                 $use_for = 'A';
             }
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
                 $usuarios = User::where([['id', $request->input("id")]])->get();
-            } 
-            else if ($request->has('id_perfiles') && $request->filled('id_perfiles'))
-            {
-                $usuarios = DB::select('SELECT users.* FROM DocuSwift.users users JOIN DocuSwift.inter_user_perfiles ON DocuSwift.users.id = DocuSwift.inter_user_perfiles.id_user WHERE id_perfiles = '.$request->input('id_perfiles'));                
-            }
-            else {
+            } else if ($request->has('Nombre_Tipo_Usuario') && $request->filled('Nombre_Tipo_Usuario')) {
+                $usuarios = DB::select('SELECT users.* FROM users JOIN tipo__usuarios ON users.id = tipo__usuarios.id_usuario WHERE tipo__usuarios.Nombre_Tipo_Usuario = ' . $request->input('Nombre_Tipo_Usuario'). ' LIMIT ' . $offset . ',' . $ammount);
+            } else {
                 //Si es obtener normal y sin filtro
                 if ($use_for == 'A') {
-                    $usuarios = DB::select('select * from DocuSwift.users LIMIT ' . $offset . ',' . $ammount);
-                } else if ($use_for == 'B') {
-                    $id_tipos__usuario = $request->has("id_tipos__usuario") ?  $request->input("id_tipos__usuario") : 1;
-                    $usuarios = DB::select('select * from DocuSwift.users WHERE id_tipos__usuario = ' . $id_tipos__usuario . ' LIMIT ' . $offset . ',' . $ammount);
-                } else if(str_contains($use_for, "_")) {
-                    $strArray = explode("_",$use_for);
-                    $numberToUse = 0;
-                    if($strArray[0] == '-') //Todos los de la empresa
-                    {
-                        $numberToUse = $strArray[1];
-                        $usuarios = DB::select('SELECT * FROM DocuSwift.users WHERE DocuSwift.users.id_usuario_upper LIKE (SELECT CONCAT(\'%_\', '.$numberToUse.')) LIMIT '. $offset . ',' . $ammount);
-                    }
-                    else if($strArray[1] == '-') //Todas las empresas donde ha trabajado o trabaja supervisor
-                    {
-                        $numberToUse = $strArray[0];
-                        $usuarios = DB::select('SELECT * FROM DocuSwift.users WHERE DocuSwift.users.id_usuario_upper LIKE (SELECT CONCAT('.$numberToUse.',\'_%\')) LIMIT '. $offset . ',' . $ammount);
-                    }
-                    else //Todos los de supervisor
-                    {   
-                        $numberToUse = $strArray[0];
-                        $numberToUse2 = $strArray[1];
-                        $usuarios = DB::select('SELECT * FROM DocuSwift.users WHERE DocuSwift.users.id_usuario_upper LIKE (SELECT CONCAT(\''.$numberToUse.'_\', '.$numberToUse2.')) LIMIT '. $offset . ',' . $ammount);
-                    }   
+                    $usuarios = User::get();
                 } else {
                     //Si es obtener TODO
-                    $usuarios = User::get();
+                    $usuarios = DB::select('select * from users LIMIT ' . $offset . ',' . $ammount);
                 }
             }
 
             return $usuarios;
         } catch (Exception  $e) {
-            session()->flash('failure', "Error al obtener el producto, por favor intente nuevamente");
+            session()->flash('failure', "Error al obtener el users, por favor intente nuevamente");
             //print_r("Error InterceptParaSolicitud: " . $e->getMessage());
             return "{}";
         }
@@ -1820,35 +1081,22 @@ trait Cruds
     public function Editar_usuarios(Request $request, $hard_delete = false)
     {
         try {
-            //TODO:
-            /*
-            * AGREGAR SEGURIDAD DE FUNCIONAMIENTO A ESTE NIVEL Y ADECUADO FILTRO DE EFECTO (i.e. que empresas solo puedan trabajar sobre sus propios trabajadores, Etc...)
-            * o al menos recordar que REQUIERE PERMISOS ESPECIALES
-            */
-
             //dd($request);
             $User = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
                 $User = new User();
                 $User->name =  $request->has("name") ? $request->input("name") : $User->name;
-                $User->Nombre_Cliente =  $request->has("Nombre_Cliente") ? $request->input("Nombre_Cliente") : $User->Nombre_Cliente;
-                $User->id_usuario_upper =  $request->has("id_usuario_upper") ? $request->input("id_usuario_upper") : $User->id_usuario_upper;
+                $User->Apellido_Materno =  $request->has("Apellido_Materno") ? $request->input("Apellido_Materno") : $User->Apellido_Materno;
+                $User->Apellido_Paterno =  $request->has("Apellido_Paterno") ? $request->input("Apellido_Paterno") : $User->Apellido_Paterno;
 
-                $User->Run_Cliente =  $request->has("Run_Cliente") ? $request->input("Run_Cliente") : $User->Run_Cliente;
-                $User->Fecha_Nacimiento =  $request->has("Fecha_Nacimiento") ? $request->input("Fecha_Nacimiento") : $User->Fecha_Nacimiento;
-                $User->Fecha_Incorporacion =  $request->has("Fecha_Incorporacion") ? $request->input("Fecha_Incorporacion") : $User->Fecha_Incorporacion;
-                $User->Fecha_Expiración =  $request->has("Fecha_Expiración") ? $request->input("Fecha_Expiración") : $User->Fecha_Expiración;
-
-                $User->Dirección =  $request->has("Dirección") ? $request->input("Dirección") : $User->Dirección;
-                $User->Comuna =  $request->has("Comuna") ? $request->input("Comuna") : $User->Comuna;
-                $User->Ciudad =  $request->has("Ciudad") ? $request->input("Ciudad") : $User->Ciudad;
                 $User->Telefono =  $request->has("Telefono") ? $request->input("Telefono") : $User->Telefono;
+                $User->Direccion =  $request->has("Direccion") ? $request->input("Direccion") : $User->Direccion;
+                $User->Ciudad =  $request->has("Ciudad") ? $request->input("Ciudad") : $User->Ciudad;
 
                 $User->email =  $request->has("email") ? $request->input("email") : $User->email;
                 $User->email_verified_at =  $request->has("email_verified_at") ? $request->input("email_verified_at") : $User->email_verified_at;
                 $User->password =  $request->has("password") ? $request->input("password") : $User->password;
-                $User->id_tipos__usuario =  $request->has("id_tipos__usuario") ? $request->input("id_tipos__usuario") : $User->id_tipos__usuario;
 
                 $User->save();
             }
@@ -1858,23 +1106,16 @@ trait Cruds
                 $User = User::where([['id', $request->input("id")]])->first();
                 if ($User != null) {
                     $User->name =  $request->has("name") ? $request->input("name") : $User->name;
-                    $User->Nombre_Cliente =  $request->has("Nombre_Cliente") ? $request->input("Nombre_Cliente") : $User->Nombre_Cliente;
-                    $User->id_usuario_upper =  $request->has("id_usuario_upper") ? $request->input("id_usuario_upper") : $User->id_usuario_upper;
+                    $User->Apellido_Materno =  $request->has("Apellido_Materno") ? $request->input("Apellido_Materno") : $User->Apellido_Materno;
+                    $User->Apellido_Paterno =  $request->has("Apellido_Paterno") ? $request->input("Apellido_Paterno") : $User->Apellido_Paterno;
 
-                    $User->Run_Cliente =  $request->has("Run_Cliente") ? $request->input("Run_Cliente") : $User->Run_Cliente;
-                    $User->Fecha_Nacimiento =  $request->has("Fecha_Nacimiento") ? $request->input("Fecha_Nacimiento") : $User->Fecha_Nacimiento;
-                    $User->Fecha_Incorporacion =  $request->has("Fecha_Incorporacion") ? $request->input("Fecha_Incorporacion") : $User->Fecha_Incorporacion;
-                    $User->Fecha_Expiración =  $request->has("Fecha_Expiración") ? $request->input("Fecha_Expiración") : $User->Fecha_Expiración;
-
-                    $User->Dirección =  $request->has("Dirección") ? $request->input("Dirección") : $User->Dirección;
-                    $User->Comuna =  $request->has("Comuna") ? $request->input("Comuna") : $User->Comuna;
-                    $User->Ciudad =  $request->has("Ciudad") ? $request->input("Ciudad") : $User->Ciudad;
                     $User->Telefono =  $request->has("Telefono") ? $request->input("Telefono") : $User->Telefono;
+                    $User->Direccion =  $request->has("Direccion") ? $request->input("Direccion") : $User->Direccion;
+                    $User->Ciudad =  $request->has("Ciudad") ? $request->input("Ciudad") : $User->Ciudad;
 
                     $User->email =  $request->has("email") ? $request->input("email") : $User->email;
                     $User->email_verified_at =  $request->has("email_verified_at") ? $request->input("email_verified_at") : $User->email_verified_at;
                     $User->password =  $request->has("password") ? $request->input("password") : $User->password;
-                    $User->id_tipos__usuario =  $request->has("id_tipos__usuario") ? $request->input("id_tipos__usuario") : $User->id_tipos__usuario;
 
                     $User->update();
                 }
@@ -1884,18 +1125,6 @@ trait Cruds
                 $User = User::where([['id', $request->input("id")]])->first();
                 if ($User == null) {
                     return false;
-                }
-
-                if ($hard_delete) {
-                    $Inter_Perf_Perm = Inter_User_Perf::where('id_user', $User->id);
-                    if ($Inter_Perf_Perm != null) {
-                        $Inter_Perf_Perm->delete();
-                    }
-
-                    $Inter_User_Perm = Inter_User_Perm::where('id_user', $User->id);
-                    if ($Inter_User_Perm != null) {
-                        $Inter_User_Perm->delete();
-                    }
                 }
 
                 return $User = $User->delete();
@@ -1910,149 +1139,12 @@ trait Cruds
         }
     }
 
-
-    public function Obtener_Total_Tabla($nombreTabla)
-    {
-        try {
-            $ammountOfRows = 0;
-            $ammountOfRows = DB::select('SELECT COUNT(id) "Total" FROM DocuSwift.' . $nombreTabla);
-            return $ammountOfRows;
-        } catch (\Throwable $th) {
-            return 0;
-        }
-    }
-
-    public function SubirPDF(Request $request)
-    {
-        //To save the pdf Uploaded
-        $PdfPath = "";
-        if ($request->hasFile('pdf')) {
-            $PdfPath = $request->file('pdf')->storeAs(
-                'pdfs',
-                uniqid() . "." . $request->file('pdf')->getClientOriginalExtension(),
-                'public',
-            );
-        }
-
-        //To load and show the pdf uploaded
-        $pdfStore = new PdfStorage();
-        $pdfStore->pdf_path = $PdfPath;
-        return $pdfStore->save();
-    }
-
-    public function MostrarPDF($nombrePDF)
-    {
-        //To load and show the pdf uploaded
-
-        $path = storage_path('app\\public\\pdfs\\' . $nombrePDF . ".pdf");
-        //  if (!Storage::exists($path)) {
-        //      //abort(404);
-        //      dd($path);
-        //  }
-
-        //Parte mía, pero probablemente en ella persiste el asunto del Storage:: -Jose-
-        //$PdfPath = str_replace("/","\\",$nombrePDF);
-        //$path = storage_path('app\\public\\pdfs\\' . $PdfPath);
-
-        //if (!Storage::exists('public/pdfs/' . $PdfPath)) {
-        //  abort(404);
-        //dd($path);
-        //}
-
-        $headers = [
-            'Content-Type' => 'application/pdf',
-        ];
-
-        return response()->file($path, $headers);
-    }
-
-    //TODO: Debe testearse el método
-    //Parámetros:
-    //$ViewBase => La view donde se mostrará la data (En String)
-    //$ContenidoParaElCompact => Todos los datos que hay que enviar al método "compact" del View, como en el método View normal de laravel
-    //Return: Retorna la view en un pdf con todos los datos asociados
-    //Observaciones: Es posible que la view tenga que ser autocontenida (i.e. un html de tomo y lomo, pero en un blade), 
-    //además, es posible que deba usar bootstrap 4 llamado en el header especifico del pdf, eso es solo para generarlo 
-    //si porque una vez generado el archivo ya conserva la data en sí, no debería llamar hacia afuera, esto último sin 
-    //embargo, requiere verificación.
-    public function MostratDataEnPDF($ViewBase, array $content)
-    {
-        $cont = $content;
-        // dd($cont);
-        $pdf = Pdf::loadView($ViewBase, compact('cont'));
-        //$pdf = Pdf::loadHTML($ViewBase, compact('content'));
-        //dd($pdf);
-        //$pdf->setPaper('a4', 'portrait');
-        return $pdf->stream($ViewBase);
-        //return $pdf->download($ViewBase);
-    }
-
-    //Genera una venta nueva y la retorna para reservar su ID, con el objetivo de poder generar la transacción (Transbank)
-    //Requiere una id de usuario
-    public function GetNewIdVenta($idUsuario)
-    {
-        //Elimina cualquier venta que no tenga venta detalle alguna
-        $ventas_a_borrar = Venta::doesnthave('mu_ventas')->get();
-        foreach ($ventas_a_borrar as $key => $value) {
-            $value->delete();
-        }
-        //dd($ventas_a_borrar);
-
-        //Genera una venta nueva solo con la ID
-        $venta = new Venta();
-        $venta->id_users = $idUsuario;
-        $venta->Is_Factura_O_Boleta = 2;
-        $venta->Is_Vigente = 1;
-        $venta->Total = 0;
-        $venta->Fecha = \Carbon\Carbon::now()->format('Y-m-d'); //Sino usa la fecha del fallido apocalipsis falso '2012-12-21'
-        $venta->Giro = "";
-        $venta->save();
-
-        //Retorna dicha venta nueva solo con ID
-        return $venta;
-    }
-
-    //Permite retornar los resultados necesarios para los buscadores por nombre
-    public function BuscadorVariable($tabla, $columnTableName, $nombre, $offset = 0, $ammount = 20)
-    {
-        $resultados = DB::table($tabla)->where($columnTableName, 'like', '%' . $nombre . '%')->skip($offset)->take($ammount)->get();
-        return $resultados;
-    }
-
-    public function Obtener_FirmasFirmadas_FirmasTotales($str)
-    {
-        try {
-            $ids_Contrato = explode(",", $str);
-            $NumerosFirmasContrato = array();
-            foreach ($ids_Contrato as $key => $value) {
-                $Contrato = new \stdClass();
-                $varTemp = DB::table('correos__firmas')->where(
-                    'correos__firmas.id_contratos',
-                    $value
-                )->get();
-
-                if ($varTemp != null) {
-                    $Contrato->FirmasFirmadas = $varTemp->where('Estado', 1)->count();
-                    $Contrato->FirmasTotal = $varTemp->count();
-                    $NumerosFirmasContrato[] = $Contrato;
-                }
-            }
-
-            return $NumerosFirmasContrato;
-        } catch (\Throwable $th) {
-            return 0;
-        }
-    }
-
-
-
-
     public function Revisar_Acceso($userid, $eval)
     {
         try {
-            $permisos = DB::select('SELECT DocuSwift.permisos.* FROM DocuSwift.permisos JOIN DocuSwift.inter_user_perms ON DocuSwift.inter_user_perms.id_permisos = DocuSwift.permisos.id WHERE  DocuSwift.permisos.Type = 2 AND DocuSwift.inter_user_perms.id_user = '.$userid);
+            $permisos = DB::select('SELECT tipo__usuarios.* FROM tipo__usuarios WHERE  id_usuario = '.$userid.' AND Etiqueta = ' . $eval);
             foreach ($permisos as $key => $value) {
-                if (str_contains($value->Nombre,$eval)) {
+                if (str_contains($value->Nombre, $eval)) {
                     return true;
                 }
             }
@@ -2061,5 +1153,5 @@ trait Cruds
             print_r("Error ---: " . $e->getMessage());
             return false;
         }
-    }    
+    }
 }

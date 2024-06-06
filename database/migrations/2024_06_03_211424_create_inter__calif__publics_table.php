@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('inter__calif__publics', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('id_calificacion')->unsigned();
+            $table->foreign('id_calificacion')->references('id')->on('calificacions')->onDelete('cascade');
+            $table->bigInteger('id_publicacion')->unsigned();
+            $table->foreign('id_publicacion')->references('id')->on('publicacions')->onDelete('cascade');
             $table->timestamps();
         });
     }

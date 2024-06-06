@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('inter__transa__publics', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('id_publicacion')->unsigned();
+            $table->foreign('id_publicacion')->references('id')->on('publicacions')->onDelete('cascade');
+            $table->bigInteger('id_transaccion')->unsigned();
+            $table->foreign('id_transaccion')->references('id')->on('transaccions')->onDelete('cascade');
             $table->timestamps();
         });
     }

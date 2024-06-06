@@ -13,6 +13,9 @@ return new class extends Migration
     {
         Schema::create('demandas', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('id_publicacion')->unsigned();
+            $table->foreign('id_publicacion')->references('id')->on('publicacions')->onDelete('cascade');
+            $table->unsignedInteger('Presupuesto');
             $table->timestamps();
         });
     }

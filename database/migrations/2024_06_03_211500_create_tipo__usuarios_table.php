@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('tipo__usuarios', function (Blueprint $table) {
             $table->id();
+            $table->bigInteger('id_usuario')->unsigned();
+            $table->foreign('id_usuario')->references('id')->on('users')->onDelete('cascade');
+            $table->string('Nombre_Tipo_Usuario');
+            $table->integer('Etiqueta');
             $table->timestamps();
         });
     }

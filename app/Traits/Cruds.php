@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 //use Illuminate\Support\Facades\Auth;
 //use Illuminate\Support\Facades\Storage;
 use App\Models\User;
-//use App\Models\Producto;
 use App\Models\Transaccion;
 use App\Models\Inter_Transa_Public;
 use App\Models\Proyecto;
@@ -20,22 +19,9 @@ use App\Models\Oferta;
 use App\Models\Imagen;
 use App\Models\Inter_Calif_Public;
 use App\Models\Calificacion;
-// use App\Models\Inter_User_Perf;
-// use App\Models\Inter_User_Perm;
-// use App\Models\Inter_Perm_Doc_Tipos;
-// use App\Models\Inter_Perm_Contratos;
-// use App\Models\Inter_Mod_Perm;
-// use App\Models\Tipos_Contrato;
-// use App\Models\Permisos;
-// use App\Models\Perfiles;
-// use App\Models\PdfStorage;
 //use Validator;
 
 use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;
-use PHPUnit\Framework\Constraint\Count;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 
 // use PDF;
 

@@ -9,6 +9,12 @@ import { Head, Link, useForm } from '@inertiajs/react';
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
+        Apellido_Materno: '',
+        Apellido_Paterno: '',
+        Age: '',
+        Telefono: '',
+        Direccion: '',
+        Ciudad: '',
         email: '',
         password: '',
         password_confirmation: '',
@@ -32,7 +38,7 @@ export default function Register() {
 
             <form onSubmit={submit}>
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                    <InputLabel htmlFor="name" value="Nombre" />
 
                     <TextInput
                         id="name"
@@ -46,6 +52,108 @@ export default function Register() {
                     />
 
                     <InputError message={errors.name} className="mt-2" />
+                </div>
+                
+                <div className="mt-4">
+                    <InputLabel htmlFor="Apellido_Paterno" value="Apellido Paterno" />
+
+                    <TextInput
+                        id="Apellido_Paterno"
+                        type="text"
+                        name="Apellido_Paterno"
+                        value={data.Apellido_Paterno}
+                        className="mt-1 block w-full"
+                        autoComplete="apellido-paterno"
+                        onChange={(e) => setData('Apellido_Paterno', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.password_confirmation} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="Apellido_Materno" value="Apellido Materno" />
+
+                    <TextInput
+                        id="Apellido_Materno"
+                        type="text"
+                        name="Apellido_Materno"
+                        value={data.Apellido_Materno}
+                        className="mt-1 block w-full"
+                        autoComplete="apellido-materno"
+                        onChange={(e) => setData('Apellido_Materno', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.password_confirmation} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="Age" value="Fecha de Nacimiento" />
+
+                    <TextInput
+                        id="Age"
+                        type="Date"
+                        name="Age"
+                        value={data.Age}
+                        className="mt-1 block w-full"
+                        autoComplete="new-password"
+                        onChange={(e) => setData('Age', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.Age} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="Telefono" value="Telefono" />
+
+                    <TextInput
+                        id="Telefono"
+                        type="tel"
+                        name="Telefono"
+                        value={data.Telefono}
+                        className="mt-1 block w-full"
+                        autoComplete="Telefono"
+                        onChange={(e) => setData('Telefono', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.password_confirmation} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="Direccion" value="Direccion" />
+
+                    <TextInput
+                        id="Direccion"
+                        type="text"
+                        name="Direccion"
+                        value={data.Direccion}
+                        className="mt-1 block w-full"
+                        autoComplete="direccion"
+                        onChange={(e) => setData('Direccion', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.Direccion} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="Ciudad" value="Ciudad" />
+
+                    <TextInput
+                        id="Ciudad"
+                        type="text"
+                        name="Ciudad"
+                        value={data.Ciudad}
+                        className="mt-1 block w-full"
+                        autoComplete="new-password"
+                        onChange={(e) => setData('Ciudad', e.target.value)}
+                        required
+                    />
+
+                    <InputError message={errors.Ciudad} className="mt-2" />
                 </div>
 
                 <div className="mt-4">

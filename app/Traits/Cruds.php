@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Traits;
+namespace App\Traits;
 
 use Illuminate\Http\Request;
 //use Illuminate\View\View;
@@ -22,6 +22,7 @@ use App\Models\Calificacion;
 //use Validator;
 
 use Illuminate\Support\Facades\DB;
+use stdClass;
 
 // use PDF;
 
@@ -38,6 +39,10 @@ trait Cruds
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
                 $Transaccion = Transaccion::where([['id', $request->input("id")]])->get();
+            } else if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+                $Transaccion = DB::select('select * from transaccions Where id_usuario_origen = ' . $request->input('id_usuario_origen') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("id_usuario_destino") && $request->filled("id_usuario_destino")) {
+                $Transaccion = DB::select('select * from transaccions Where id_usuario_destino = ' . $request->input('id_usuario_destino') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
                 if ($use_for == "A") {
@@ -84,10 +89,10 @@ trait Cruds
             }
 
             if ($request->isMethod('delete')) {
-                // $venta = Venta::where([['id', $request->input("id")]])->first();
-                // if ($venta == null) {
-                //     return false;
-                // }
+                $Transaccion = Transaccion::where([['id', $request->input("id")]])->first();
+                if ($Transaccion == null) {
+                    return false;
+                }
 
                 // $Venta_Detalle = Venta_Detalle::where('id_Venta', $venta->id);
                 // if ($Venta_Detalle != null) {
@@ -162,7 +167,6 @@ trait Cruds
             if ($request->isMethod('put')) {
                 $Inter_Transa_Public = Inter_Transa_Public::where([['id', $request->input("id")]])->first();
                 if ($Inter_Transa_Public != null) {
-                    $Inter_Transa_Public = new Inter_Transa_Public();
                     $Inter_Transa_Public->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Inter_Transa_Public->id_publicacion;
                     $Inter_Transa_Public->id_transaccion = $request->has("id_transaccion") ? $request->input("id_transaccion") : $Inter_Transa_Public->id_transaccion;
                     $Inter_Transa_Public->update();
@@ -208,16 +212,36 @@ trait Cruds
             if ($request->has("id") && $request->filled("id")) {
                 $Proyecto = Proyecto::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
-                $Proyecto = DB::select('select * from Proyectos Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
+                $Proyecto = DB::select('select * from proyectos Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
                 if ($use_for == "A") {
                     $Proyecto = Proyecto::get();
                 } else if (is_numeric($use_for)) {
-                    $Proyecto = DB::select('select * from Proyectos WHERE Porcentaje_Avance = ' . $use_for . ' LIMIT ' . $offset . ',' . $ammount);
+                    $Proyecto = DB::select('select * from proyectos WHERE Porcentaje_Avance = ' . $use_for . ' LIMIT ' . $offset . ',' . $ammount);
                 } else {
                     //Si es obtener TODO
-                    $Proyecto = DB::select('select * from Proyectos LIMIT ' . $offset . ',' . $ammount);
+                    $Proyecto = DB::select('select * from proyectos LIMIT ' . $offset . ',' . $ammount);
+                }
+            }
+
+            foreach ($Proyecto as $key => $value) {
+                if (is_array($Proyecto)) { //Is an array
+                    if ($Proyecto != null) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Proyecto[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Proyecto[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Proyecto[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Proyecto[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                } else { //Is an instanceof Collection
+                    if (!$Proyecto->isEmpty()) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Proyecto[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Proyecto[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Proyecto[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Proyecto[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
                 }
             }
 
@@ -238,9 +262,10 @@ trait Cruds
             if ($request->isMethod('post')) {
                 $Proyecto = new Proyecto();
                 $Proyecto->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Proyecto->id_publicacion;
-                $Proyecto->id_voluntario =  $request->has("id_voluntario") ? $request->input("id_voluntario") : $Proyecto->id_voluntario;
                 $Proyecto->Porcentaje_Avance =  $request->has("Porcentaje_Avance") ? $request->input("Porcentaje_Avance") : $Proyecto->Porcentaje_Avance;
                 $Proyecto->save();
+
+                $this->Internal_Editar_publicacions($Proyecto);
             }
 
             //Actualizar objeto
@@ -248,14 +273,13 @@ trait Cruds
                 $Proyecto = Proyecto::where([['id', $request->input("id")]])->first();
                 if ($Proyecto != null) {
                     $Proyecto->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Proyecto->id_publicacion;
-                    $Proyecto->id_voluntario =  $request->has("id_voluntario") ? $request->input("id_voluntario") : $Proyecto->id_voluntario;
                     $Proyecto->Porcentaje_Avance =  $request->has("Porcentaje_Avance") ? $request->input("Porcentaje_Avance") : $Proyecto->Porcentaje_Avance;
                     $Proyecto->update();
                 }
             }
 
             if ($request->isMethod('delete')) {
-                $Proyecto = Venta::where([['id', $request->input("id")]])->first();
+                $Proyecto = Proyecto::where([['id', $request->input("id")]])->first();
                 if ($Proyecto == null) {
                     return false;
                 }
@@ -282,17 +306,17 @@ trait Cruds
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
                 $Voluntario = Voluntario::where([['id', $request->input("id")]])->get();
-            } else if ($request->has("id_voluntario") && $request->filled("id_voluntario")) {
-                $Voluntario = DB::select('select * from Voluntarios Where id_voluntario = ' . $request->input('id_voluntario') . ' LIMIT ' . $offset . ',' . $ammount);
+            } else if ($request->has("id_proyecto") && $request->filled("id_proyecto")) {
+                $Voluntario = DB::select('select * from voluntarios Where id_proyecto = ' . $request->input('id_proyecto') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("id_usuario") && $request->filled("id_usuario")) {
-                $Voluntario = DB::select('select * from Voluntarios Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
+                $Voluntario = DB::select('select * from voluntarios Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
                 if ($use_for == "A") {
                     $Voluntario = Voluntario::get();
                 } else {
                     //Si es obtener TODO
-                    $Voluntario = DB::select('select * from Voluntarios LIMIT ' . $offset . ',' . $ammount);
+                    $Voluntario = DB::select('select * from voluntarios LIMIT ' . $offset . ',' . $ammount);
                 }
             }
 
@@ -312,8 +336,15 @@ trait Cruds
 
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
+                //To avoid create it twice
+                $ifAlreadyExist = Voluntario::where([['id_proyecto', $request->input("id_proyecto")], ['id_usuario', $request->input("id_usuario")]])->get();
+                if ($ifAlreadyExist->count() > 0) {
+                    session()->flash('failure', "Dato intermedio ya existe, ignorando la solicitud");
+                    return "{}";
+                }
+
                 $Voluntario = new Voluntario();
-                $Voluntario->id_voluntario = $request->has("id_voluntario") ? $request->input("id_voluntario") : $Voluntario->id_voluntario;
+                $Voluntario->id_proyecto = $request->has("id_proyecto") ? $request->input("id_proyecto") : $Voluntario->id_proyecto;
                 $Voluntario->id_usuario = $request->has("id_usuario") ? $request->input("id_usuario") : $Voluntario->id_usuario;
                 $Voluntario->save();
             }
@@ -322,8 +353,7 @@ trait Cruds
             if ($request->isMethod('put')) {
                 $Voluntario = Voluntario::where([['id', $request->input("id")]])->first();
                 if ($Voluntario != null) {
-                    $Voluntario = new Voluntario();
-                    $Voluntario->id_voluntario = $request->has("id_voluntario") ? $request->input("id_voluntario") : $Voluntario->id_voluntario;
+                    $Voluntario->id_proyecto = $request->has("id_proyecto") ? $request->input("id_proyecto") : $Voluntario->id_proyecto;
                     $Voluntario->id_usuario = $request->has("id_usuario") ? $request->input("id_usuario") : $Voluntario->id_usuario;
                     $Voluntario->update();
                 }
@@ -411,7 +441,6 @@ trait Cruds
             if ($request->isMethod('put')) {
                 $Mensaje = Mensaje::where([['id', $request->input("id")]])->first();
                 if ($Mensaje != null) {
-                    $Mensaje = new Mensaje();
                     $Mensaje->id_usuario_origen = $request->has("id_usuario_origen") ? $request->input("id_usuario_origen") : $Mensaje->id_usuario_origen;
                     $Mensaje->id_usuario_destino = $request->has("id_usuario_destino") ? $request->input("id_usuario_destino") : $Mensaje->id_usuario_destino;
                     $Mensaje->Mensaje = $request->has("Mensaje") ? $request->input("Mensaje") : $Mensaje->Mensaje;
@@ -451,7 +480,7 @@ trait Cruds
             } else if ($request->has("id_usuario") && $request->filled("id_usuario")) {
                 $Publicacion = DB::select('select * from publicacions Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Nombre") && $request->filled("Nombre")) {
-                $Publicacion = DB::select('select * from publicacions Where Nombre = ' . $request->input('Nombre') . ' LIMIT ' . $offset . ',' . $ammount);
+                $Publicacion = DB::select('select * from publicacions Where Nombre = \'' . $request->input('Nombre') . '\' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Tipo_Publicacion") && $request->filled("Tipo_Publicacion")) {
                 $Publicacion = DB::select('select * from publicacions Where Tipo_Publicacion = ' . $request->input('Tipo_Publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
@@ -492,7 +521,6 @@ trait Cruds
             if ($request->isMethod('put')) {
                 $Publicacion = Publicacion::where([['id', $request->input("id")]])->first();
                 if ($Publicacion != null) {
-                    $Publicacion = new Publicacion();
                     $Publicacion->id_usuario = $request->has("id_usuario") ? $request->input("id_usuario") : $Publicacion->id_usuario;
                     $Publicacion->Nombre = $request->has("Nombre") ? $request->input("Nombre") : $Publicacion->Nombre;
                     $Publicacion->Descripcion = $request->has("Descripcion") ? $request->input("Descripcion") : $Publicacion->Descripcion;
@@ -551,6 +579,26 @@ trait Cruds
                 }
             }
 
+            foreach ($Demanda as $key => $value) {
+                if (is_array($Demanda)) { //Is an array
+                    if ($Demanda != null) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Demanda[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Demanda[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Demanda[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Demanda[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                } else { //Is an instanceof Collection
+                    if (!$Demanda->isEmpty()) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Demanda[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Demanda[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Demanda[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Demanda[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                }
+            }
+
             return $Demanda;
         } catch (Exception  $e) {
             session()->flash('failure', "Error al obtener el Demanda, por favor intente nuevamente");
@@ -571,13 +619,14 @@ trait Cruds
                 $Demanda->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Demanda->id_publicacion;
                 $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
                 $Demanda->save();
+
+                $this->Internal_Editar_publicacions($Demanda);
             }
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
                 $Demanda = Demanda::where([['id', $request->input("id")]])->first();
                 if ($Demanda != null) {
-                    $Demanda = new Demanda();
                     $Demanda->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Demanda->id_publicacion;
                     $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
                     $Demanda->update();
@@ -624,6 +673,26 @@ trait Cruds
                 }
             }
 
+            foreach ($Ofertas as $key => $value) {
+                if (is_array($Ofertas)) { //Is an array
+                    if ($Ofertas != null) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Ofertas[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Ofertas[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Ofertas[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Ofertas[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                } else { //Is an instanceof Collection
+                    if (!$Ofertas->isEmpty()) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Ofertas[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Ofertas[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Ofertas[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Ofertas[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                }
+            }
+
             return $Ofertas;
         } catch (Exception  $e) {
             session()->flash('failure', "Error al obtener las ofertas, por favor intente nuevamente");
@@ -644,13 +713,14 @@ trait Cruds
                 $Oferta->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Oferta->id_publicacion;
                 $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
                 $Oferta->save();
+
+                $this->Internal_Editar_publicacions($Oferta);
             }
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
                 $Oferta = Oferta::where([['id', $request->input("id")]])->first();
                 if ($Oferta != null) {
-                    $Oferta = new Oferta();
                     $Oferta->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Oferta->id_publicacion;
                     $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
                     $Oferta->update();
@@ -957,7 +1027,7 @@ trait Cruds
             } else if ($request->has("id_usuario") && $request->filled("id_usuario")) {
                 $Tipo_Usuario = DB::select('select * from tipo__usuarios Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Nombre_Tipo_Usuario") && $request->filled("Nombre_Tipo_Usuario")) {
-                $Tipo_Usuario = DB::select('select * from tipo__usuarios Where Nombre_Tipo_Usuario = ' . $request->input('Nombre_Tipo_Usuario') . ' LIMIT ' . $offset . ',' . $ammount);
+                $Tipo_Usuario = DB::select('select * from tipo__usuarios Where Nombre_Tipo_Usuario = \'' . $request->input('Nombre_Tipo_Usuario') . '\' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
                 if ($use_for == "A") {
@@ -1044,7 +1114,7 @@ trait Cruds
             if ($request->has("id") && $request->filled("id")) {
                 $usuarios = User::where([['id', $request->input("id")]])->get();
             } else if ($request->has('Nombre_Tipo_Usuario') && $request->filled('Nombre_Tipo_Usuario')) {
-                $usuarios = DB::select('SELECT users.* FROM users JOIN tipo__usuarios ON users.id = tipo__usuarios.id_usuario WHERE tipo__usuarios.Nombre_Tipo_Usuario = ' . $request->input('Nombre_Tipo_Usuario'). ' LIMIT ' . $offset . ',' . $ammount);
+                $usuarios = DB::select('SELECT users.* FROM users JOIN tipo__usuarios ON users.id = tipo__usuarios.id_usuario WHERE tipo__usuarios.Nombre_Tipo_Usuario = \'' . $request->input('Nombre_Tipo_Usuario') . '\' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
                 if ($use_for == 'A') {
@@ -1076,6 +1146,8 @@ trait Cruds
                 $User->Apellido_Materno =  $request->has("Apellido_Materno") ? $request->input("Apellido_Materno") : $User->Apellido_Materno;
                 $User->Apellido_Paterno =  $request->has("Apellido_Paterno") ? $request->input("Apellido_Paterno") : $User->Apellido_Paterno;
 
+                $User->Age =  $request->has("Age") ? $request->input("Age") : $User->Age;
+
                 $User->Telefono =  $request->has("Telefono") ? $request->input("Telefono") : $User->Telefono;
                 $User->Direccion =  $request->has("Direccion") ? $request->input("Direccion") : $User->Direccion;
                 $User->Ciudad =  $request->has("Ciudad") ? $request->input("Ciudad") : $User->Ciudad;
@@ -1094,6 +1166,8 @@ trait Cruds
                     $User->name =  $request->has("name") ? $request->input("name") : $User->name;
                     $User->Apellido_Materno =  $request->has("Apellido_Materno") ? $request->input("Apellido_Materno") : $User->Apellido_Materno;
                     $User->Apellido_Paterno =  $request->has("Apellido_Paterno") ? $request->input("Apellido_Paterno") : $User->Apellido_Paterno;
+
+                    $User->Age =  $request->has("Age") ? $request->input("Age") : $User->Age;
 
                     $User->Telefono =  $request->has("Telefono") ? $request->input("Telefono") : $User->Telefono;
                     $User->Direccion =  $request->has("Direccion") ? $request->input("Direccion") : $User->Direccion;
@@ -1125,12 +1199,48 @@ trait Cruds
         }
     }
 
+    public function Internal_Editar_publicacions($stdClass)
+    {
+        try {
+            $Publicacion = null;
+
+            //Crear objeto nuevo
+            if ($stdClass->id_publicacion == 0) {
+                $Publicacion = new Publicacion();
+                $Publicacion->id_usuario = $stdClass->id_usuario;
+                $Publicacion->Nombre = $stdClass->Nombre;
+                $Publicacion->Descripcion = $stdClass->Descripcion;
+                $Publicacion->Tipo_Publicacion = $stdClass->Tipo_Publicacion;
+                $Publicacion->save();
+            }
+
+            //Actualizar objeto
+            if ($stdClass->id_publicacion != 0) {
+                $Publicacion = Publicacion::where([['id', $Publicacion->id_publicacion]])->first();
+                if ($Publicacion != null) {
+                    $Publicacion->id_usuario = $stdClass->id_usuario != 0 ? $stdClass->id_usuario : $Publicacion->id_usuario;
+                    $Publicacion->Nombre = $stdClass->Nombre != 0 ? $stdClass->Nombre : $Publicacion->Nombre;
+                    $Publicacion->Descripcion = $stdClass->Descripcion != 0 ? $stdClass->Descripcion : $Publicacion->Descripcion;
+                    $Publicacion->Tipo_Publicacion = $stdClass->Tipo_Publicacion != 0 ? $stdClass->Tipo_Publicacion : $Publicacion->Tipo_Publicacion;
+                    $Publicacion->update();
+                }
+            }
+
+            return $Publicacion;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
     public function Revisar_Acceso($userid, $eval)
     {
         try {
-            $permisos = DB::select('SELECT tipo__usuarios.* FROM tipo__usuarios WHERE  id_usuario = '.$userid.' AND Etiqueta = ' . $eval);
+            $permisos = DB::select('SELECT tipo__usuarios.* FROM tipo__usuarios WHERE  id_usuario = ' . $userid . ' AND Etiqueta = ' . $eval);
             foreach ($permisos as $key => $value) {
-                if (str_contains($value->Nombre, $eval)) {
+                if (str_contains($value->Etiqueta, $eval)) {
                     return true;
                 }
             }

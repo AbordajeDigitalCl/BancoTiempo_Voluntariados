@@ -22,6 +22,7 @@ use App\Models\Calificacion;
 //use Validator;
 
 use Illuminate\Support\Facades\DB;
+use stdClass;
 
 // use PDF;
 
@@ -224,6 +225,26 @@ trait Cruds
                 }
             }
 
+            foreach ($Proyecto as $key => $value) {
+                if (is_array($Proyecto)) { //Is an array
+                    if ($Proyecto != null) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Proyecto[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Proyecto[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Proyecto[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Proyecto[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                } else { //Is an instanceof Collection
+                    if (!$Proyecto->isEmpty()) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Proyecto[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Proyecto[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Proyecto[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Proyecto[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                }
+            }
+
             return $Proyecto;
         } catch (Exception  $e) {
             session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
@@ -243,6 +264,8 @@ trait Cruds
                 $Proyecto->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Proyecto->id_publicacion;
                 $Proyecto->Porcentaje_Avance =  $request->has("Porcentaje_Avance") ? $request->input("Porcentaje_Avance") : $Proyecto->Porcentaje_Avance;
                 $Proyecto->save();
+
+                $this->Internal_Editar_publicacions($Proyecto);
             }
 
             //Actualizar objeto
@@ -556,6 +579,26 @@ trait Cruds
                 }
             }
 
+            foreach ($Demanda as $key => $value) {
+                if (is_array($Demanda)) { //Is an array
+                    if ($Demanda != null) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Demanda[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Demanda[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Demanda[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Demanda[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                } else { //Is an instanceof Collection
+                    if (!$Demanda->isEmpty()) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Demanda[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Demanda[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Demanda[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Demanda[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                }
+            }
+
             return $Demanda;
         } catch (Exception  $e) {
             session()->flash('failure', "Error al obtener el Demanda, por favor intente nuevamente");
@@ -576,6 +619,8 @@ trait Cruds
                 $Demanda->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Demanda->id_publicacion;
                 $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
                 $Demanda->save();
+
+                $this->Internal_Editar_publicacions($Demanda);
             }
 
             //Actualizar objeto
@@ -628,6 +673,26 @@ trait Cruds
                 }
             }
 
+            foreach ($Ofertas as $key => $value) {
+                if (is_array($Ofertas)) { //Is an array
+                    if ($Ofertas != null) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Ofertas[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Ofertas[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Ofertas[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Ofertas[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                } else { //Is an instanceof Collection
+                    if (!$Ofertas->isEmpty()) {
+                        $Publicacion = Publicacion::where([['id', $value->id_publicacion]])->get();
+                        $Ofertas[$key]->id_usuario = $Publicacion[0]->id_usuario;
+                        $Ofertas[$key]->Nombre = $Publicacion[0]->Nombre;
+                        $Ofertas[$key]->Descripcion =  $Publicacion[0]->Descripcion;
+                        $Ofertas[$key]->Tipo_Publicacion = $Publicacion[0]->Tipo_Publicacion;
+                    }
+                }
+            }
+
             return $Ofertas;
         } catch (Exception  $e) {
             session()->flash('failure', "Error al obtener las ofertas, por favor intente nuevamente");
@@ -648,6 +713,8 @@ trait Cruds
                 $Oferta->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Oferta->id_publicacion;
                 $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
                 $Oferta->save();
+
+                $this->Internal_Editar_publicacions($Oferta);
             }
 
             //Actualizar objeto
@@ -1124,6 +1191,42 @@ trait Cruds
             }
 
             return $User;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
+
+    public function Internal_Editar_publicacions($stdClass)
+    {
+        try {
+            $Publicacion = null;
+
+            //Crear objeto nuevo
+            if ($stdClass->id_publicacion == 0) {
+                $Publicacion = new Publicacion();
+                $Publicacion->id_usuario = $stdClass->id_usuario;
+                $Publicacion->Nombre = $stdClass->Nombre;
+                $Publicacion->Descripcion = $stdClass->Descripcion;
+                $Publicacion->Tipo_Publicacion = $stdClass->Tipo_Publicacion;
+                $Publicacion->save();
+            }
+
+            //Actualizar objeto
+            if ($stdClass->id_publicacion != 0) {
+                $Publicacion = Publicacion::where([['id', $Publicacion->id_publicacion]])->first();
+                if ($Publicacion != null) {
+                    $Publicacion->id_usuario = $stdClass->id_usuario != 0 ? $stdClass->id_usuario : $Publicacion->id_usuario;
+                    $Publicacion->Nombre = $stdClass->Nombre != 0 ? $stdClass->Nombre : $Publicacion->Nombre;
+                    $Publicacion->Descripcion = $stdClass->Descripcion != 0 ? $stdClass->Descripcion : $Publicacion->Descripcion;
+                    $Publicacion->Tipo_Publicacion = $stdClass->Tipo_Publicacion != 0 ? $stdClass->Tipo_Publicacion : $Publicacion->Tipo_Publicacion;
+                    $Publicacion->update();
+                }
+            }
+
+            return $Publicacion;
         } catch (Exception  $e) {
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");

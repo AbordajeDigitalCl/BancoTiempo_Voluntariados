@@ -34,14 +34,79 @@ trait Cruds
     public function Obtener_transaccions(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
 
             $Transaccion = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric('id')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+    
                 $Transaccion = Transaccion::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+                if (
+                    !is_numeric('id_usuario_origen')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_usuario_origen")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Transaccion = DB::select('select * from transaccions Where id_usuario_origen = ' . $request->input('id_usuario_origen') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("id_usuario_destino") && $request->filled("id_usuario_destino")) {
+                if (
+                    !is_numeric('id_usuario_destino')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_usuario_destino")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Transaccion = DB::select('select * from transaccions Where id_usuario_destino = ' . $request->input('id_usuario_destino') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -117,13 +182,78 @@ trait Cruds
     public function Obtener_inter__transa__publics(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
-            $Inter_Transa_Public = null;
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
 
+            $Inter_Transa_Public = null;
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric('id')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Inter_Transa_Public = Inter_Transa_Public::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                if (
+                    !is_numeric('id_publicacion')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_publicacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Inter_Transa_Public = DB::select('select * from inter__transa__publics Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("id_transaccion") && $request->filled("id_transaccion")) {
+                if (
+                    !is_numeric('id_transaccion')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_transaccion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Inter_Transa_Public = DB::select('select * from inter__transa__publics Where id_transaccion = ' . $request->input('id_transaccion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -207,11 +337,61 @@ trait Cruds
     public function Obtener_proyectos(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Proyecto = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric('id')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Proyecto = Proyecto::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                if (
+                    !is_numeric('id_publicacion')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_publicacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Proyecto = DB::select('select * from proyectos Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -265,7 +445,7 @@ trait Cruds
                 $Proyecto->Porcentaje_Avance =  $request->has("Porcentaje_Avance") ? $request->input("Porcentaje_Avance") : $Proyecto->Porcentaje_Avance;
                 $Proyecto->save();
 
-                $this->Internal_Editar_publicacions($Proyecto);
+                $this->Internal_Editar_publicacions($Proyecto, $request);
             }
 
             //Actualizar objeto
@@ -275,6 +455,8 @@ trait Cruds
                     $Proyecto->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Proyecto->id_publicacion;
                     $Proyecto->Porcentaje_Avance =  $request->has("Porcentaje_Avance") ? $request->input("Porcentaje_Avance") : $Proyecto->Porcentaje_Avance;
                     $Proyecto->update();
+
+                    $this->Internal_Editar_publicacions($Proyecto, $request);
                 }
             }
 
@@ -284,6 +466,7 @@ trait Cruds
                     return false;
                 }
 
+                $this->Internal_Editar_publicacions($Proyecto, $request);
                 $Proyecto = $Proyecto->delete();
             }
 
@@ -302,13 +485,79 @@ trait Cruds
     public function Obtener_voluntario(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Voluntario = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric('id')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Voluntario = Voluntario::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_proyecto") && $request->filled("id_proyecto")) {
+                if (
+                    !is_numeric('id_proyecto')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_proyecto")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Voluntario = DB::select('select * from voluntarios Where id_proyecto = ' . $request->input('id_proyecto') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("id_usuario") && $request->filled("id_usuario")) {
+                if (
+                    !is_numeric('id_usuario')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_usuario")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Voluntario = DB::select('select * from voluntarios Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -393,15 +642,97 @@ trait Cruds
     public function Obtener_mensaje(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Mensaje = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric('id')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Mensaje = Mensaje::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+                if (
+                    !is_numeric('id_usuario_origen')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_usuario_origen")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Mensaje = DB::select('select * from mensajes Where id_usuario_origen = ' . $request->input('id_usuario_origen') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("id_usuario_destino") && $request->filled("id_usuario_destino")) {
+                if (
+                    !is_numeric('id_usuario_destino')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_usuario_destino")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Mensaje = DB::select('select * from mensajes Where id_usuario_destino = ' . $request->input('id_usuario_destino') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Tipo_Mensaje") && $request->filled("Tipo_Mensaje")) {
+                if (
+                    !is_numeric('Tipo_Mensaje')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("Tipo_Mensaje")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Mensaje = DB::select('select * from mensajes Where Tipo_Mensaje = ' . $request->input('Tipo_Mensaje') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -473,15 +804,81 @@ trait Cruds
     public function Obtener_publicacions(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Publicacion = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric('id')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Publicacion = Publicacion::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_usuario") && $request->filled("id_usuario")) {
+                if (
+                    !is_numeric('id_usuario')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_usuario")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Publicacion = DB::select('select * from publicacions Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Nombre") && $request->filled("Nombre")) {
                 $Publicacion = DB::select('select * from publicacions Where Nombre = \'' . $request->input('Nombre') . '\' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Tipo_Publicacion") && $request->filled("Tipo_Publicacion")) {
+                if (
+                    !is_numeric('Tipo_Publicacion')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("Tipo_Publicacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Publicacion = DB::select('select * from publicacions Where Tipo_Publicacion = ' . $request->input('Tipo_Publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -563,11 +960,61 @@ trait Cruds
     public function Obtener_demandas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Demanda = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric('id')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Demanda = Demanda::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                if (
+                    !is_numeric('id_publicacion')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_publicacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Demanda = DB::select('select * from demandas Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -620,7 +1067,7 @@ trait Cruds
                 $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
                 $Demanda->save();
 
-                $this->Internal_Editar_publicacions($Demanda);
+                $this->Internal_Editar_publicacions($Demanda, $request);
             }
 
             //Actualizar objeto
@@ -630,6 +1077,8 @@ trait Cruds
                     $Demanda->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Demanda->id_publicacion;
                     $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
                     $Demanda->update();
+
+                    $this->Internal_Editar_publicacions($Demanda, $request);
                 }
             }
 
@@ -639,6 +1088,7 @@ trait Cruds
                     return false;
                 }
 
+                $this->Internal_Editar_publicacions($Demanda, $request);
                 $Demanda = $Demanda->delete();
             }
 
@@ -657,11 +1107,61 @@ trait Cruds
     public function Obtener_ofertas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Ofertas = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric('id')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Ofertas = Oferta::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                if (
+                    !is_numeric('id_publicacion')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_publicacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                
                 $Ofertas = DB::select('select * from ofertas Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -714,7 +1214,7 @@ trait Cruds
                 $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
                 $Oferta->save();
 
-                $this->Internal_Editar_publicacions($Oferta);
+                $this->Internal_Editar_publicacions($Oferta, $request);
             }
 
             //Actualizar objeto
@@ -724,6 +1224,8 @@ trait Cruds
                     $Oferta->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Oferta->id_publicacion;
                     $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
                     $Oferta->update();
+
+                    $this->Internal_Editar_publicacions($Oferta, $request);
                 }
             }
 
@@ -733,6 +1235,7 @@ trait Cruds
                     return false;
                 }
 
+                $this->Internal_Editar_publicacions($Oferta, $request);
                 $Oferta = $Oferta->delete();
             }
 
@@ -751,13 +1254,79 @@ trait Cruds
     public function Obtener_imagens(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Imagen = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric('id')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Imagen = Imagen::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+                if (
+                    !is_numeric('id_usuario_origen')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_usuario_origen")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Imagen = DB::select('select * from imagens Where id_usuario_origen = ' . $request->input('id_usuario_origen') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Tipo") && $request->filled("Tipo")) {
+                if (
+                    !is_numeric('Tipo')
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("Tipo")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Imagen = DB::select('select * from imagens Where Tipo = ' . $request->input('Tipo') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -837,13 +1406,79 @@ trait Cruds
     public function Obtener_inter__calif__publics(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Inter_Calif_Public = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric($request->input('id'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Inter_Calif_Public = Inter_Calif_Public::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_calificacion") && $request->filled("id_calificacion")) {
+                if (
+                    !is_numeric($request->input('id_calificacion'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_calificacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Inter_Calif_Public = DB::select('select * from inter__calif__publics Where id_calificacion = ' . $request->input('id_calificacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                if (
+                    !is_numeric($request->input('id_publicacion'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_publicacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Inter_Calif_Public = DB::select('select * from inter__calif__publics Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -916,19 +1551,133 @@ trait Cruds
     public function Obtener_calificacions(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Calificacion = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric($request->input('id'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Calificacion = Calificacion::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+                if (
+                    !is_numeric($request->input('id_usuario_origen'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_usuario_origen")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Calificacion = DB::select('select * from calificacions Where id_usuario_origen = ' . $request->input('id_usuario_origen') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("id_usuario_destino") && $request->filled("id_usuario_destino")) {
+                if (
+                    !is_numeric($request->input('id_usuario_destino'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_usuario_destino")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Calificacion = DB::select('select * from calificacions Where id_usuario_destino = ' . $request->input('id_usuario_destino') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+                if (
+                    !is_numeric($request->input('id_publicacion'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id_publicacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Calificacion = DB::select('select * from calificacions Where id_publicacion = ' . $request->input('id_publicacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Tipo_Calificacion") && $request->filled("Tipo_Calificacion")) {
+                if (
+                    !is_numeric($request->input('Tipo_Calificacion'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("Tipo_Calificacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Calificacion = DB::select('select * from calificacions Where Tipo_Calificacion = ' . $request->input('Tipo_Calificacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Puntuacion") && $request->filled("Puntuacion")) {
+                if (
+                    !is_numeric($request->input('Puntuacion'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("Puntuacion")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Calificacion = DB::select('select * from calificacions Where Puntuacion = ' . $request->input('Puntuacion') . ' LIMIT ' . $offset . ',' . $ammount);
             } else {
                 //Si es obtener normal y sin filtro
@@ -1020,11 +1769,61 @@ trait Cruds
     public function Obtener_tipo__usuarios(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
             $Tipo_Usuario = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric($request->input('id'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Tipo_Usuario = Tipo_Usuario::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_usuario") && $request->filled("id_usuario")) {
+                if (
+                    !is_numeric($request->input('id_usuario'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+
                 $Tipo_Usuario = DB::select('select * from tipo__usuarios Where id_usuario = ' . $request->input('id_usuario') . ' LIMIT ' . $offset . ',' . $ammount);
             } else if ($request->has("Nombre_Tipo_Usuario") && $request->filled("Nombre_Tipo_Usuario")) {
                 $Tipo_Usuario = DB::select('select * from tipo__usuarios Where Nombre_Tipo_Usuario = \'' . $request->input('Nombre_Tipo_Usuario') . '\' LIMIT ' . $offset . ',' . $ammount);
@@ -1104,6 +1903,23 @@ trait Cruds
     public function Obtener_usuarios(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+            else if(
+                $offset < 0 ||
+                $ammount < 0
+            )
+            {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
 
             $usuarios = null;
             //Valida que use_for no sea nulo, dado que el valor viene generalmente de un parámetro opcional
@@ -1112,6 +1928,22 @@ trait Cruds
             }
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
+                if (
+                    !is_numeric($request->input('id'))
+                ) {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                else if(
+                    $request->input("id")  < 0
+                )
+                {
+                    session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                    //print_r("Error ---: " . $e->getMessage());
+                    return "{}";
+                }
+                
                 $usuarios = User::where([['id', $request->input("id")]])->get();
             } else if ($request->has('Nombre_Tipo_Usuario') && $request->filled('Nombre_Tipo_Usuario')) {
                 $usuarios = DB::select('SELECT users.* FROM users JOIN tipo__usuarios ON users.id = tipo__usuarios.id_usuario WHERE tipo__usuarios.Nombre_Tipo_Usuario = \'' . $request->input('Nombre_Tipo_Usuario') . '\' LIMIT ' . $offset . ',' . $ammount);
@@ -1199,31 +2031,53 @@ trait Cruds
         }
     }
 
-    public function Internal_Editar_publicacions($stdClass)
+    public function Internal_Editar_publicacions(&$stdClass, $request)
     {
         try {
             $Publicacion = null;
 
-            //Crear objeto nuevo
-            if ($stdClass->id_publicacion == 0) {
-                $Publicacion = new Publicacion();
-                $Publicacion->id_usuario = $stdClass->id_usuario;
-                $Publicacion->Nombre = $stdClass->Nombre;
-                $Publicacion->Descripcion = $stdClass->Descripcion;
-                $Publicacion->Tipo_Publicacion = $stdClass->Tipo_Publicacion;
-                $Publicacion->save();
+            if ($request->isMethod('post')) {
+                //Crear objeto nuevo
+                if ($stdClass->id_publicacion == 0) {
+                    $Publicacion = new Publicacion();
+                    $Publicacion->id_usuario = $request->input('id_usuario');
+                    $Publicacion->Nombre = $request->input('Nombre');
+                    $Publicacion->Descripcion = $request->input('Descripcion');
+                    $Publicacion->Tipo_Publicacion = $request->input('Tipo_Publicacion');
+                    $Publicacion->save();
+
+                    $stdClass->id_usuario = $Publicacion->id_usuario;
+                    $stdClass->Nombre = $Publicacion->Nombre;
+                    $stdClass->Descripcion = $Publicacion->Descripcion;
+                    $stdClass->Tipo_Publicacion = $Publicacion->Tipo_Publicacion;
+                }
             }
 
-            //Actualizar objeto
-            if ($stdClass->id_publicacion != 0) {
-                $Publicacion = Publicacion::where([['id', $Publicacion->id_publicacion]])->first();
-                if ($Publicacion != null) {
-                    $Publicacion->id_usuario = $stdClass->id_usuario != 0 ? $stdClass->id_usuario : $Publicacion->id_usuario;
-                    $Publicacion->Nombre = $stdClass->Nombre != 0 ? $stdClass->Nombre : $Publicacion->Nombre;
-                    $Publicacion->Descripcion = $stdClass->Descripcion != 0 ? $stdClass->Descripcion : $Publicacion->Descripcion;
-                    $Publicacion->Tipo_Publicacion = $stdClass->Tipo_Publicacion != 0 ? $stdClass->Tipo_Publicacion : $Publicacion->Tipo_Publicacion;
-                    $Publicacion->update();
+            if ($request->isMethod('put')) {
+                //Actualizar objeto
+                if ($stdClass->id_publicacion != 0) {
+                    $Publicacion = Publicacion::where([['id', $Publicacion->id_publicacion]])->first();
+                    if ($Publicacion != null) {
+                        $Publicacion->id_usuario = $request->input('id_usuario') != 0 ? $request->input('id_usuario') : $Publicacion->id_usuario;
+                        $Publicacion->Nombre = $request->input('Nombre') != 0 ? $request->input('Nombre') : $Publicacion->Nombre;
+                        $Publicacion->Descripcion = $request->input('Descripcion') != 0 ? $request->input('Descripcion') : $Publicacion->Descripcion;
+                        $Publicacion->Tipo_Publicacion = $request->input('Tipo_Publicacion') != 0 ? $request->input('Tipo_Publicacion') : $Publicacion->Tipo_Publicacion;
+                        $Publicacion->update();
+
+                        $stdClass->id_usuario = $Publicacion->id_usuario;
+                        $stdClass->Nombre = $Publicacion->Nombre;
+                        $stdClass->Descripcion = $Publicacion->Descripcion;
+                        $stdClass->Tipo_Publicacion = $Publicacion->Tipo_Publicacion;
+                    }
                 }
+            }
+
+            if ($request->isMethod('delete')) {
+                $Publicacion = Publicacion::where([['id', $stdClass->id_publicacion]])->first();
+                if ($Publicacion == null) {
+                    return false;
+                }
+                $Publicacion = $Publicacion->delete();
             }
 
             return $Publicacion;

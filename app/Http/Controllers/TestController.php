@@ -49,6 +49,7 @@ class TestController extends Controller
         // $result = $this->Obtener_usuarios($request, $use_for = '-', $offset = 0, $ammount = 20);
         // $result = $this->Revisar_Acceso(1, 1);
         // $result = "A";
+        // return response()->json(is_numeric($request->input('Nombre_Tipo_Usuario')), 200);
         return response()->json($result, 200);
     }
 }

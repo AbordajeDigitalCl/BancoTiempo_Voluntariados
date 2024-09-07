@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Auth\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\UserController;
 
 
 /*
@@ -22,6 +24,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+Route::post("/token/login", [
+    AuthController::class, 'login'
+]);
+
+Route::get('/users',[
+    UserController::class, 'Obtener_usuarios'
+]);
 
 Route::post('editar',[TestController::class, 'editar'])->name('editar');
 Route::put('editar',[TestController::class, 'editar'])->name('editar');

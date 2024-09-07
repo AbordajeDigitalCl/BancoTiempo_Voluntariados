@@ -19,6 +19,7 @@ use App\Models\Oferta;
 use App\Models\Imagen;
 use App\Models\Inter_Calif_Public;
 use App\Models\Calificacion;
+use Exception;
 //use Validator;
 
 use Illuminate\Support\Facades\DB;
@@ -469,7 +470,7 @@ trait Cruds
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
-    //Este obtiene un dato, varios o todos 
+    //Este obtiene un dato, varios o todos
     public function Obtener_publicacions(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
@@ -559,7 +560,7 @@ trait Cruds
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
-    //Este obtiene un dato, varios o todos 
+    //Este obtiene un dato, varios o todos
     public function Obtener_demandas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
@@ -653,7 +654,7 @@ trait Cruds
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
-    //Este obtiene un dato, varios o todos 
+    //Este obtiene un dato, varios o todos
     public function Obtener_ofertas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
@@ -747,7 +748,7 @@ trait Cruds
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
-    //Este obtiene un dato, varios o todos 
+    //Este obtiene un dato, varios o todos
     public function Obtener_imagens(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
@@ -1096,6 +1097,14 @@ trait Cruds
             //print_r("Error ---: " . $e->getMessage());
             return "{}";
         }
+    }
+
+    public function findUserByEmail(Request $request) : User | null{
+        $usuarios = null;
+        if($request->has("email")){
+            $usuarios = User::where([['email', $request->input("email")]])->get();
+        }
+        return sizeof($usuarios) > 0 ? $usuarios[0] : null;
     }
 
     //De necesitar otro filtro, favor avisar

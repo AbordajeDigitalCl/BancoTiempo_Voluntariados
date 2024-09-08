@@ -23,6 +23,7 @@ use Exception;
 //use Validator;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use stdClass;
 
 // use PDF;
@@ -1010,7 +1011,9 @@ trait Cruds
 
 
 
-
+    public function getUserTypeByUserId(int $userId){
+        return Tipo_Usuario::where([["id_usuario", $userId]])->get();
+    }
 
 
 
@@ -1073,7 +1076,7 @@ trait Cruds
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
-                $Tipo_Usuario = Tipo_Usuario::where([['id', $request->input("id")]])->first();
+                $Tipo_Usuario = Tipo_Usuario::where([['id_usuario', $request->input("id_usuario")]])->first();
                 if ($Tipo_Usuario != null) {
                     $Tipo_Usuario->id_usuario =  $request->has("id_usuario") ? $request->input("id_usuario") : $Tipo_Usuario->id_usuario;
                     $Tipo_Usuario->Nombre_Tipo_Usuario =  $request->has("Nombre_Tipo_Usuario") ? $request->input("Nombre_Tipo_Usuario") : $Tipo_Usuario->Nombre_Tipo_Usuario;
@@ -1092,6 +1095,7 @@ trait Cruds
 
             return $Tipo_Usuario;
         } catch (Exception  $e) {
+            Log::error("Error on tipo!!!");
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
             //print_r("Error ---: " . $e->getMessage());

@@ -1,0 +1,1968 @@
+{
+	"info": {
+		"_postman_id": "e6ea23d7-4fe3-411c-941a-14c6649e2579",
+		"name": "BancoTiempo_Voluntariados",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10124145"
+	},
+	"item": [
+		{
+			"name": "Publicacions",
+			"item": [
+				{
+					"name": "Obtener_Publicacions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Publicacions",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_usuario=1&Nombre=Nombre&Descripcion=Descripcion&Tipo_Publicacion=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre",
+									"value": "Nombre"
+								},
+								{
+									"key": "Descripcion",
+									"value": "Descripcion"
+								},
+								{
+									"key": "Tipo_Publicacion",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Publicacions",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=2&id_usuario=1&Nombre=Nombre2&Descripcion=Descripcion&Tipo_Publicacion=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "2"
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre",
+									"value": "Nombre2"
+								},
+								{
+									"key": "Descripcion",
+									"value": "Descripcion"
+								},
+								{
+									"key": "Tipo_Publicacion",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Publicacions",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Proyectos",
+			"item": [
+				{
+					"name": "Obtener_Proyectos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Proyectos",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_usuario=1&Nombre=Nombre4&Descripcion=Descripcion&Tipo_Publicacion=1&Porcentaje_Avance=95",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre",
+									"value": "Nombre4"
+								},
+								{
+									"key": "Descripcion",
+									"value": "Descripcion"
+								},
+								{
+									"key": "Tipo_Publicacion",
+									"value": "1"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "0",
+									"disabled": true
+								},
+								{
+									"key": "Porcentaje_Avance",
+									"value": "95"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Proyectos",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=4&id_usuario=1&Nombre=Nombre5&Descripcion=Descripcion&Tipo_Publicacion=1&id_publicacion=4&Porcentaje_Avance=95",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "4"
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre",
+									"value": "Nombre5"
+								},
+								{
+									"key": "Descripcion",
+									"value": "Descripcion"
+								},
+								{
+									"key": "Tipo_Publicacion",
+									"value": "1"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "4"
+								},
+								{
+									"key": "Porcentaje_Avance",
+									"value": "95"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Proyectos",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=5",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Voluntarios",
+			"item": [
+				{
+					"name": "Obtener_Voluntario",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Voluntario",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_usuario=1&id_proyecto=4",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "id_proyecto",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Voluntario",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=1&id_usuario=1&id_proyecto=3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "id_proyecto",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Voluntario",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Tipo__Usuario",
+			"item": [
+				{
+					"name": "Obtener_Tipo__Usuarios",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Tipo__Usuarios",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_usuario=1&Nombre_Tipo_Usuario=Nombre3&Etiqueta=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre_Tipo_Usuario",
+									"value": "Nombre3"
+								},
+								{
+									"key": "Etiqueta",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Tipo__Usuarios",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=1&id_usuario=1&Nombre_Tipo_Usuario=Nombre2&Etiqueta=3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre_Tipo_Usuario",
+									"value": "Nombre2"
+								},
+								{
+									"key": "Etiqueta",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Tipo__Usuarios",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Calificacions",
+			"item": [
+				{
+					"name": "Obtener_Calificacions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Calificacions",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_usuario=1&id_usuario_origen=2&id_usuario_destino=1&id_publicacion=2&Puntuacion=3&Tipo_Calificacion=1&Comentario=Comentario1ASDF",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario_origen",
+									"value": "2"
+								},
+								{
+									"key": "id_usuario_destino",
+									"value": "1"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "2"
+								},
+								{
+									"key": "Puntuacion",
+									"value": "3"
+								},
+								{
+									"key": "Tipo_Calificacion",
+									"value": "1"
+								},
+								{
+									"key": "Comentario",
+									"value": "Comentario1ASDF"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Calificacions",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=2&id_usuario=1&id_usuario_origen=1&id_usuario_destino=2&id_publicacion=1&Puntuacion=5&Tipo_Calificacion=1&Comentario=Comentario2ASDF",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "2"
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario_origen",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario_destino",
+									"value": "2"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "1"
+								},
+								{
+									"key": "Puntuacion",
+									"value": "5"
+								},
+								{
+									"key": "Tipo_Calificacion",
+									"value": "1"
+								},
+								{
+									"key": "Comentario",
+									"value": "Comentario2ASDF"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Calificacions",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=2",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Demandas",
+			"item": [
+				{
+					"name": "Obtener_Demandas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Demandas",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?Presupuesto=1&id_usuario=1&Nombre=NombreDemanda&Descripcion=DescripcionDemanda&Tipo_Publicacion=2",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "Presupuesto",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre",
+									"value": "NombreDemanda"
+								},
+								{
+									"key": "Descripcion",
+									"value": "DescripcionDemanda"
+								},
+								{
+									"key": "Tipo_Publicacion",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Demandas",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=1&id_publicacion=1&Presupuesto=100&id_usuario=1&Nombre=NombreDemandaEdit&Descripcion=DescripcionDemandaEdit&Tipo_Publicacion=3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "1"
+								},
+								{
+									"key": "Presupuesto",
+									"value": "100"
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre",
+									"value": "NombreDemandaEdit"
+								},
+								{
+									"key": "Descripcion",
+									"value": "DescripcionDemandaEdit"
+								},
+								{
+									"key": "Tipo_Publicacion",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Demandas",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=5",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Ofertas",
+			"item": [
+				{
+					"name": "Obtener_Ofertas",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Ofertas",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?Precio=150&id_usuario=1&Nombre=NombreOferta&Descripcion=DescripcionOferta&Tipo_Publicacion=4",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "Precio",
+									"value": "150"
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre",
+									"value": "NombreOferta"
+								},
+								{
+									"key": "Descripcion",
+									"value": "DescripcionOferta"
+								},
+								{
+									"key": "Tipo_Publicacion",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Ofertas",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=3&id_publicacion=2&Precio=350&id_usuario=1&Nombre=NombreOferta3&Descripcion=DescripcionOferta3&Tipo_Publicacion=4",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "3"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "2"
+								},
+								{
+									"key": "Precio",
+									"value": "350"
+								},
+								{
+									"key": "id_usuario",
+									"value": "1"
+								},
+								{
+									"key": "Nombre",
+									"value": "NombreOferta3"
+								},
+								{
+									"key": "Descripcion",
+									"value": "DescripcionOferta3"
+								},
+								{
+									"key": "Tipo_Publicacion",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Ofertas",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=2",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Transaccions",
+			"item": [
+				{
+					"name": "Obtener_Transaccions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Transaccions",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_usuario_origen=1&id_usuario_destino=2&Tipo_Transaccion=5",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_usuario_origen",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario_destino",
+									"value": "2"
+								},
+								{
+									"key": "Tipo_Transaccion",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Transaccions",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=1&id_usuario_origen=1&id_usuario_destino=2&Tipo_Transaccion=4",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario_origen",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario_destino",
+									"value": "2"
+								},
+								{
+									"key": "Tipo_Transaccion",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Transaccions",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Message",
+			"item": [
+				{
+					"name": "Obtener_Message",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Message",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_usuario_origen=1&id_usuario_destino=2&Mensaje=ASDF-FDSA&Tipo_Mensaje=5",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_usuario_origen",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario_destino",
+									"value": "2"
+								},
+								{
+									"key": "Mensaje",
+									"value": "ASDF-FDSA"
+								},
+								{
+									"key": "Tipo_Mensaje",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Message",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=1&id_usuario_origen=1&id_usuario_destino=2&Mensaje=ASDF-TEST-FDSA&Tipo_Mensaje=5",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario_origen",
+									"value": "1"
+								},
+								{
+									"key": "id_usuario_destino",
+									"value": "2"
+								},
+								{
+									"key": "Mensaje",
+									"value": "ASDF-TEST-FDSA"
+								},
+								{
+									"key": "Tipo_Mensaje",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Message",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=2",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Inter__Calif__Publics",
+			"item": [
+				{
+					"name": "Obtener_Inter__Calif__Publics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Inter__Calif__Publics",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_calificacion=4&id_publicacion=3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_calificacion",
+									"value": "4"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Inter__Calif__Publics",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=2&id_calificacion=4&id_publicacion=4",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "2"
+								},
+								{
+									"key": "id_calificacion",
+									"value": "4"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Inter__Calif__Publics",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=2",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Inter__Transa__Publics",
+			"item": [
+				{
+					"name": "Obtener_Inter__Transa__Publics",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Inter__Transa__Publics",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_transaccion=3&id_publicacion=4",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_transaccion",
+									"value": "3"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Inter__Transa__Publics",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=4&id_transaccion=3&id_publicacion=3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "4"
+								},
+								{
+									"key": "id_transaccion",
+									"value": "3"
+								},
+								{
+									"key": "id_publicacion",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Inter__Transa__Publics",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=3",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Imagens",
+			"item": [
+				{
+					"name": "Obtener_Imagens",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Imagens",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id_usuario_origen=2&Tipo=4&Direccion=ASDF",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "id_usuario_origen",
+									"value": "2"
+								},
+								{
+									"key": "Tipo",
+									"value": "4"
+								},
+								{
+									"key": "Direccion",
+									"value": "ASDF"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Imagens",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=2&id_usuario_origen=2&Tipo=3&Direccion=ASDF",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "2"
+								},
+								{
+									"key": "id_usuario_origen",
+									"value": "2"
+								},
+								{
+									"key": "Tipo",
+									"value": "3"
+								},
+								{
+									"key": "Direccion",
+									"value": "ASDF"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Imagens",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=1",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Usuarios",
+			"item": [
+				{
+					"name": "Obtener_Usuarios",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/obtener",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"obtener"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Usuarios",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?name=username&Apellido_Materno=APMatermp&Apellido_Paterno=APPaterno&Age=2018-06-14&Telefono=+56994851072&Direccion=ASDF 123&Ciudad=STGO&email=em@mail.cl&password=asdasdasdad",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "username"
+								},
+								{
+									"key": "Apellido_Materno",
+									"value": "APMatermp"
+								},
+								{
+									"key": "Apellido_Paterno",
+									"value": "APPaterno"
+								},
+								{
+									"key": "Age",
+									"value": "2018-06-14"
+								},
+								{
+									"key": "Telefono",
+									"value": "+56994851072"
+								},
+								{
+									"key": "Direccion",
+									"value": "ASDF 123"
+								},
+								{
+									"key": "Ciudad",
+									"value": "STGO"
+								},
+								{
+									"key": "email",
+									"value": "em@mail.cl"
+								},
+								{
+									"key": "password",
+									"value": "asdasdasdad"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Usuarios",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=3&name=username&Apellido_Materno=APMaterno&Apellido_Paterno=APPaterno&Age=2018-06-14&Telefono=+56994851072&Direccion=ASDF 123&Ciudad=STGO&email=e@mail.cl&password=asdasdasdad",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "3"
+								},
+								{
+									"key": "name",
+									"value": "username"
+								},
+								{
+									"key": "Apellido_Materno",
+									"value": "APMaterno"
+								},
+								{
+									"key": "Apellido_Paterno",
+									"value": "APPaterno"
+								},
+								{
+									"key": "Age",
+									"value": "2018-06-14"
+								},
+								{
+									"key": "Telefono",
+									"value": "+56994851072"
+								},
+								{
+									"key": "Direccion",
+									"value": "ASDF 123"
+								},
+								{
+									"key": "Ciudad",
+									"value": "STGO"
+								},
+								{
+									"key": "email",
+									"value": "e@mail.cl"
+								},
+								{
+									"key": "password",
+									"value": "asdasdasdad"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Editar_Usuarios",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "http://127.0.0.1:8000/api/editar?id=2",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "8000",
+							"path": [
+								"api",
+								"editar"
+							],
+							"query": [
+								{
+									"key": "id",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

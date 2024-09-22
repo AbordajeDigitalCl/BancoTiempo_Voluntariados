@@ -34,7 +34,26 @@ trait Cruds
     public function Obtener_transaccions(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
 
+            if (!$this->Internal_Validation_Transaccions($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Transaccion = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -67,6 +86,10 @@ trait Cruds
     public function Editar_transaccions(Request $request)
     {
         try {
+            if (!$this->Internal_Validation_Transaccions($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Transaccion = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
@@ -111,14 +134,68 @@ trait Cruds
         }
     }
 
+    private function Internal_Validation_Transaccions(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+            if (!is_numeric($request->input("id_usuario_origen"))) {
+                $result = false;
+            } else if ($request->input("id_usuario_origen") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_usuario_destino") && $request->filled("id_usuario_destino")) {
+            if (!is_numeric($request->input("id_usuario_destino"))) {
+                $result = false;
+            } else if ($request->input("id_usuario_destino") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Tipo_Transaccion") && $request->filled("Tipo_Transaccion")) {
+            if (!is_numeric($request->input("Tipo_Transaccion"))) {
+                $result = false;
+            } else if ($request->input("Tipo_Transaccion") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos
     public function Obtener_inter__transa__publics(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
-            $Inter_Transa_Public = null;
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
 
+            if (!$this->Internal_Validation_Inter__Transa__Publics($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
+            $Inter_Transa_Public = null;
             if ($request->has("id") && $request->filled("id")) {
                 $Inter_Transa_Public = Inter_Transa_Public::where([['id', $request->input("id")]])->get();
             } else if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
@@ -146,6 +223,10 @@ trait Cruds
     public function Editar_inter__transa__publics(Request $request)
     {
         try {
+            if (!$this->Internal_Validation_Inter__Transa__Publics($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Inter_Transa_Public = null;
 
             //Crear objeto nuevo
@@ -191,7 +272,32 @@ trait Cruds
         }
     }
 
-
+    private function Internal_Validation_Inter__Transa__Publics(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_transaccion") && $request->filled("id_transaccion")) {
+            if (!is_numeric($request->input("id_transaccion"))) {
+                $result = false;
+            } else if ($request->input("id_transaccion") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+            if (!is_numeric($request->input("id_publicacion"))) {
+                $result = false;
+            } else if ($request->input("id_publicacion") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
 
 
 
@@ -207,6 +313,27 @@ trait Cruds
     public function Obtener_proyectos(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Validation_Proyectos($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Proyecto = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -257,15 +384,25 @@ trait Cruds
     public function Editar_proyectos(Request $request)
     {
         try {
+
+            if (!$this->Internal_Validation_Proyectos($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Proyecto = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
                 $Proyecto = new Proyecto();
-                $Proyecto->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Proyecto->id_publicacion;
+                // $Proyecto->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Proyecto->id_publicacion;
+                $Proyecto->id_publicacion = 0;
                 $Proyecto->Porcentaje_Avance =  $request->has("Porcentaje_Avance") ? $request->input("Porcentaje_Avance") : $Proyecto->Porcentaje_Avance;
-                $Proyecto->save();
 
-                $this->Internal_Editar_publicacions($Proyecto);
+                $this->Internal_Editar_publicacions($Proyecto, $request);
+                $ProyectoNw = new Proyecto();
+                $ProyectoNw->id_publicacion = $Proyecto->id_publicacion;
+                $ProyectoNw->Porcentaje_Avance = $Proyecto->Porcentaje_Avance;
+                $ProyectoNw->save();
             }
 
             //Actualizar objeto
@@ -275,6 +412,9 @@ trait Cruds
                     $Proyecto->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Proyecto->id_publicacion;
                     $Proyecto->Porcentaje_Avance =  $request->has("Porcentaje_Avance") ? $request->input("Porcentaje_Avance") : $Proyecto->Porcentaje_Avance;
                     $Proyecto->update();
+
+                    //dd($Proyecto);
+                    $this->Internal_Editar_publicacions($Proyecto, $request);
                 }
             }
 
@@ -284,6 +424,7 @@ trait Cruds
                     return false;
                 }
 
+                $this->Internal_Editar_publicacions($Proyecto, $request);
                 $Proyecto = $Proyecto->delete();
             }
 
@@ -296,12 +437,61 @@ trait Cruds
         }
     }
 
+    private function Internal_Validation_Proyectos(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+            if (!is_numeric($request->input("id_publicacion"))) {
+                $result = false;
+            } else if ($request->input("id_publicacion") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Porcentaje_Avance") && $request->filled("Porcentaje_Avance")) {
+            if (!is_numeric($request->input("Porcentaje_Avance"))) {
+                $result = false;
+            } else if ($request->input("Porcentaje_Avance") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
+
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos
     public function Obtener_voluntario(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Validation_Voluntarios($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Voluntario = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -333,6 +523,11 @@ trait Cruds
     {
         try {
             $Voluntario = null;
+
+            if (!$this->Internal_Validation_Voluntarios($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
 
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
@@ -377,6 +572,32 @@ trait Cruds
         }
     }
 
+    private function Internal_Validation_Voluntarios(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_proyecto") && $request->filled("id_proyecto")) {
+            if (!is_numeric($request->input("id_proyecto"))) {
+                $result = false;
+            } else if ($request->input("id_proyecto") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_usuario") && $request->filled("id_usuario")) {
+            if (!is_numeric($request->input("id_usuario"))) {
+                $result = false;
+            } else if ($request->input("id_usuario") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
 
 
 
@@ -393,6 +614,27 @@ trait Cruds
     public function Obtener_mensaje(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Validation_Message($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Mensaje = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -425,6 +667,10 @@ trait Cruds
     public function Editar_mensaje(Request $request)
     {
         try {
+            if (!$this->Internal_Validation_Message($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Mensaje = null;
 
             //Crear objeto nuevo
@@ -467,12 +713,75 @@ trait Cruds
         }
     }
 
+    private function Internal_Validation_Message(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+            if (!is_numeric($request->input("id_usuario_origen"))) {
+                $result = false;
+            } else if ($request->input("id_usuario_origen") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_usuario_destino") && $request->filled("id_usuario_destino")) {
+            if (!is_numeric($request->input("id_usuario_destino"))) {
+                $result = false;
+            } else if ($request->input("id_usuario_destino") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Mensaje") && $request->filled("Mensaje")) {
+            if (!is_string($request->input("Mensaje"))) {
+                $result = false;
+            } else if ($request->input("Mensaje") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Tipo_Mensaje") && $request->filled("Tipo_Mensaje")) {
+            if (!is_numeric($request->input("Tipo_Mensaje"))) {
+                $result = false;
+            } else if ($request->input("Tipo_Mensaje") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
+
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos 
     public function Obtener_publicacions(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Validation_Publicacions($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Publicacion = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -506,6 +815,11 @@ trait Cruds
     {
         try {
             $Publicacion = null;
+
+            if (!$this->Internal_Validation_Publicacions($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
 
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
@@ -547,14 +861,106 @@ trait Cruds
         }
     }
 
+    public function Internal_Editar_publicacions(&$stdClass, $request)
+    {
+        try {
+            $Publicacion = null;
 
+            if (!$this->Internal_Validation_Publicacions($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
 
+            if ($request->isMethod('post')) {
+                //Crear objeto nuevo
+                if ($stdClass->id_publicacion == 0) {
+                    $Publicacion = new Publicacion();
+                    $Publicacion->id_usuario = $request->input('id_usuario');
+                    $Publicacion->Nombre = $request->input('Nombre');
+                    $Publicacion->Descripcion = $request->input('Descripcion');
+                    $Publicacion->Tipo_Publicacion = $request->input('Tipo_Publicacion');
+                    $Publicacion->save();
 
+                    $stdClass->id_usuario = $Publicacion->id_usuario;
+                    $stdClass->Nombre = $Publicacion->Nombre;
+                    $stdClass->Descripcion = $Publicacion->Descripcion;
+                    $stdClass->Tipo_Publicacion = $Publicacion->Tipo_Publicacion;
+                    $stdClass->id_publicacion = $Publicacion->id;
+                }
+            }
 
+            if ($request->isMethod('put')) {
+                //Actualizar objeto
+                if ($stdClass->id_publicacion != 0) {
+                    $Publicacion = Publicacion::where([['id', $stdClass->id_publicacion]])->first();
+                    if ($Publicacion != null) {
+                        $Publicacion->id_usuario = $request->input('id_usuario') != 0 ? $request->input('id_usuario') : $Publicacion->id_usuario;
+                        $Publicacion->Nombre = $request->input('Nombre') != 0 ? $request->input('Nombre') : $Publicacion->Nombre;
+                        $Publicacion->Descripcion = $request->input('Descripcion') != 0 ? $request->input('Descripcion') : $Publicacion->Descripcion;
+                        $Publicacion->Tipo_Publicacion = $request->input('Tipo_Publicacion') != 0 ? $request->input('Tipo_Publicacion') : $Publicacion->Tipo_Publicacion;
+                        $Publicacion->update();
 
+                        $stdClass->id_usuario = $Publicacion->id_usuario;
+                        $stdClass->Nombre = $Publicacion->Nombre;
+                        $stdClass->Descripcion = $Publicacion->Descripcion;
+                        $stdClass->Tipo_Publicacion = $Publicacion->Tipo_Publicacion;
+                    }
+                }
+            }
 
+            if ($request->isMethod('delete')) {
+                $Publicacion = Publicacion::where([['id', $stdClass->id_publicacion]])->first();
+                if ($Publicacion == null) {
+                    return false;
+                }
+                $Publicacion = $Publicacion->delete();
+            }
 
+            return $Publicacion;
+        } catch (Exception  $e) {
+            DB::rollback();
+            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            //print_r("Error ---: " . $e->getMessage());
+            return "{}";
+        }
+    }
 
+    private function Internal_Validation_Publicacions(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_usuario") && $request->filled("id_usuario")) {
+            if (!is_numeric($request->input("id_usuario"))) {
+                $result = false;
+            } else if ($request->input("id_usuario") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Nombre") && $request->filled("Nombre")) {
+            if (!is_string($request->input("Nombre"))) {
+                $result = false;
+            }
+        }
+        if ($request->has("Descripcion") && $request->filled("Descripcion")) {
+            if (!is_string($request->input("Descripcion"))) {
+                $result = false;
+            }
+        }
+        if ($request->has("Tipo_Publicacion") && $request->filled("Tipo_Publicacion")) {
+            if (!is_numeric($request->input("Tipo_Publicacion"))) {
+                $result = false;
+            } else if ($request->input("Tipo_Publicacion") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
 
 
     //De necesitar otro filtro, favor avisar
@@ -563,6 +969,28 @@ trait Cruds
     public function Obtener_demandas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            
+            if (!$this->Internal_Validation_Demandas($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Demanda = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -611,16 +1039,24 @@ trait Cruds
     public function Editar_demandas(Request $request)
     {
         try {
+            
+            if (!$this->Internal_Validation_Demandas($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Demanda = null;
 
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
                 $Demanda = new Demanda();
-                $Demanda->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Demanda->id_publicacion;
+                $Demanda->id_publicacion = 0;
                 $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
-                $Demanda->save();
-
-                $this->Internal_Editar_publicacions($Demanda);
+                
+                $this->Internal_Editar_publicacions($Demanda, $request);
+                $DemandaNw = new Demanda();
+                $DemandaNw->id_publicacion = $Demanda->id_publicacion;
+                $DemandaNw->Presupuesto = $Demanda->Presupuesto;
+                $DemandaNw->save();
             }
 
             //Actualizar objeto
@@ -630,6 +1066,8 @@ trait Cruds
                     $Demanda->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Demanda->id_publicacion;
                     $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
                     $Demanda->update();
+
+                    $this->Internal_Editar_publicacions($Demanda, $request);
                 }
             }
 
@@ -639,6 +1077,7 @@ trait Cruds
                     return false;
                 }
 
+                $this->Internal_Editar_publicacions($Demanda, $request);
                 $Demanda = $Demanda->delete();
             }
 
@@ -651,12 +1090,61 @@ trait Cruds
         }
     }
 
+    private function Internal_Validation_Demandas(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+            if (!is_numeric($request->input("id_publicacion"))) {
+                $result = false;
+            } else if ($request->input("id_publicacion") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Presupuesto") && $request->filled("Presupuesto")) {
+            if (!is_numeric($request->input("Presupuesto"))) {
+                $result = false;
+            } else if ($request->input("Presupuesto") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
+
+
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos 
     public function Obtener_ofertas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Validation_Ofertas($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Ofertas = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -705,16 +1193,23 @@ trait Cruds
     public function Editar_ofertas(Request $request)
     {
         try {
+            if (!$this->Internal_Validation_Ofertas($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Oferta = null;
 
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
                 $Oferta = new Oferta();
-                $Oferta->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Oferta->id_publicacion;
+                $Oferta->id_publicacion = 0;
                 $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
-                $Oferta->save();
-
-                $this->Internal_Editar_publicacions($Oferta);
+                
+                $this->Internal_Editar_publicacions($Oferta, $request);
+                $OfertaNw = new Oferta();
+                $OfertaNw->id_publicacion = $Oferta->id_publicacion;
+                $OfertaNw->Precio = $Oferta->Precio;
+                $OfertaNw->save();
             }
 
             //Actualizar objeto
@@ -724,6 +1219,8 @@ trait Cruds
                     $Oferta->id_publicacion = $request->has("id_publicacion") ? $request->input("id_publicacion") : $Oferta->id_publicacion;
                     $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
                     $Oferta->update();
+
+                    $this->Internal_Editar_publicacions($Oferta, $request);
                 }
             }
 
@@ -733,6 +1230,7 @@ trait Cruds
                     return false;
                 }
 
+                $this->Internal_Editar_publicacions($Oferta, $request);
                 $Oferta = $Oferta->delete();
             }
 
@@ -745,12 +1243,60 @@ trait Cruds
         }
     }
 
+    private function Internal_Validation_Ofertas(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+            if (!is_numeric($request->input("id_publicacion"))) {
+                $result = false;
+            } else if ($request->input("id_publicacion") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Precio") && $request->filled("Precio")) {
+            if (!is_numeric($request->input("Precio"))) {
+                $result = false;
+            } else if ($request->input("Precio") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos 
     public function Obtener_imagens(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Imagens($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Imagen = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -781,6 +1327,10 @@ trait Cruds
     public function Editar_imagens(Request $request)
     {
         try {
+            if (!$this->Internal_Imagens($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Imagen = null;
 
             //Crear objeto nuevo
@@ -821,7 +1371,39 @@ trait Cruds
         }
     }
 
-
+    private function Internal_Imagens(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+            if (!is_numeric($request->input("id_usuario_origen"))) {
+                $result = false;
+            } else if ($request->input("id_usuario_origen") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Tipo") && $request->filled("Tipo")) {
+            if (!is_numeric($request->input("Tipo"))) {
+                $result = false;
+            } else if ($request->input("Tipo") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Direccion") && $request->filled("Direccion")) {
+            if (!is_string($request->input("Direccion"))) {
+                $result = false;
+            } else if ($request->input("Direccion") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
 
 
 
@@ -837,6 +1419,27 @@ trait Cruds
     public function Obtener_inter__calif__publics(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Validation_Inter__Calif__Publics($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Inter_Calif_Public = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -867,6 +1470,10 @@ trait Cruds
     public function Editar_inter__calif__publics(Request $request)
     {
         try {
+            if (!$this->Internal_Validation_Inter__Calif__Publics($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Inter_Calif_Public = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
@@ -910,12 +1517,60 @@ trait Cruds
         }
     }
 
+    private function Internal_Validation_Inter__Calif__Publics(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_calificacion") && $request->filled("id_calificacion")) {
+            if (!is_numeric($request->input("id_calificacion"))) {
+                $result = false;
+            } else if ($request->input("id_calificacion") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+            if (!is_numeric($request->input("id_publicacion"))) {
+                $result = false;
+            } else if ($request->input("id_publicacion") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos
     public function Obtener_calificacions(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Validation_Calificacions($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Calificacion = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -952,6 +1607,10 @@ trait Cruds
     public function Editar_calificacions(Request $request)
     {
         try {
+            if (!$this->Internal_Validation_Calificacions($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $Calificacion = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
@@ -1007,7 +1666,60 @@ trait Cruds
         }
     }
 
-
+    private function Internal_Validation_Calificacions(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_usuario_origen") && $request->filled("id_usuario_origen")) {
+            if (!is_numeric($request->input("id_usuario_origen"))) {
+                $result = false;
+            } else if ($request->input("id_usuario_origen") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_usuario_destino") && $request->filled("id_usuario_destino")) {
+            if (!is_numeric($request->input("id_usuario_destino"))) {
+                $result = false;
+            } else if ($request->input("id_usuario_destino") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("id_publicacion") && $request->filled("id_publicacion")) {
+            if (!is_numeric($request->input("id_publicacion"))) {
+                $result = false;
+            } else if ($request->input("id_publicacion") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Puntuacion") && $request->filled("Puntuacion")) {
+            if (!is_numeric($request->input("Puntuacion"))) {
+                $result = false;
+            } else if ($request->input("Puntuacion") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Tipo_Calificacion") && $request->filled("Tipo_Calificacion")) {
+            if (!is_numeric($request->input("Tipo_Calificacion"))) {
+                $result = false;
+            } else if ($request->input("Tipo_Calificacion") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Comentario") && $request->filled("Comentario")) {
+            if (!is_string($request->input("Comentario"))) {
+                $result = false;
+            } else if ($request->input("Comentario") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
 
 
 
@@ -1020,6 +1732,27 @@ trait Cruds
     public function Obtener_tipo__usuarios(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Validation_Tipo__Usuarios($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Tipo_Usuario = null;
             //Si es obtener con filtro
             if ($request->has("id") && $request->filled("id")) {
@@ -1050,6 +1783,11 @@ trait Cruds
     public function Editar_tipo__usuarios(Request $request)
     {
         try {
+            if (!$this->Internal_Validation_Tipo__Usuarios($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
+
             $Tipo_Usuario = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
@@ -1098,12 +1836,60 @@ trait Cruds
         }
     }
 
+    private function Internal_Validation_Tipo__Usuarios(Request $request)
+    {
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Nombre_Tipo_Usuario") && $request->filled("Nombre_Tipo_Usuario")) {
+            if (!is_string($request->input("Nombre_Tipo_Usuario"))) {
+                $result = false;
+            } else if ($request->input("Nombre_Tipo_Usuario") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Etiqueta") && $request->filled("Etiqueta")) {
+            if (!is_numeric($request->input("Etiqueta"))) {
+                $result = false;
+            } else if ($request->input("Etiqueta") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
+    }
+
+
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos
     public function Obtener_usuarios(Request $request, $use_for = '-', $offset = 0, $ammount = 20)
     {
         try {
+            if (
+                !is_numeric($offset) ||
+                !is_numeric($ammount)
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            } else if (
+                $offset < 0 ||
+                $ammount < 0
+            ) {
+                session()->flash('failure', "Error al obtener la Proyecto, por favor intente nuevamente");
+                //print_r("Error ---: " . $e->getMessage());
+                return "{}";
+            }
+
+            if (!$this->Internal_Validation_Usuarios($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
 
             $usuarios = null;
             //Valida que use_for no sea nulo, dado que el valor viene generalmente de un parámetro opcional
@@ -1138,6 +1924,10 @@ trait Cruds
     {
         try {
             //dd($request);
+            if (!$this->Internal_Validation_Usuarios($request)) {
+                session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
+                return "{}";
+            }
             $User = null;
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
@@ -1199,40 +1989,80 @@ trait Cruds
         }
     }
 
-    public function Internal_Editar_publicacions($stdClass)
+    private function Internal_Validation_Usuarios(Request $request)
     {
-        try {
-            $Publicacion = null;
-
-            //Crear objeto nuevo
-            if ($stdClass->id_publicacion == 0) {
-                $Publicacion = new Publicacion();
-                $Publicacion->id_usuario = $stdClass->id_usuario;
-                $Publicacion->Nombre = $stdClass->Nombre;
-                $Publicacion->Descripcion = $stdClass->Descripcion;
-                $Publicacion->Tipo_Publicacion = $stdClass->Tipo_Publicacion;
-                $Publicacion->save();
+        $result = true;
+        if ($request->has("id") && $request->filled("id")) {
+            if (!is_numeric($request->input("id"))) {
+                $result = false;
+            } else if ($request->input("id") <= 0) {
+                $result = false;
             }
-
-            //Actualizar objeto
-            if ($stdClass->id_publicacion != 0) {
-                $Publicacion = Publicacion::where([['id', $Publicacion->id_publicacion]])->first();
-                if ($Publicacion != null) {
-                    $Publicacion->id_usuario = $stdClass->id_usuario != 0 ? $stdClass->id_usuario : $Publicacion->id_usuario;
-                    $Publicacion->Nombre = $stdClass->Nombre != 0 ? $stdClass->Nombre : $Publicacion->Nombre;
-                    $Publicacion->Descripcion = $stdClass->Descripcion != 0 ? $stdClass->Descripcion : $Publicacion->Descripcion;
-                    $Publicacion->Tipo_Publicacion = $stdClass->Tipo_Publicacion != 0 ? $stdClass->Tipo_Publicacion : $Publicacion->Tipo_Publicacion;
-                    $Publicacion->update();
-                }
-            }
-
-            return $Publicacion;
-        } catch (Exception  $e) {
-            DB::rollback();
-            session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
-            //print_r("Error ---: " . $e->getMessage());
-            return "{}";
         }
+        if ($request->has("name") && $request->filled("name")) {
+            if (!is_string($request->input("name"))) {
+                $result = false;
+            } else if ($request->input("name") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Apellido_Materno") && $request->filled("Apellido_Materno")) {
+            if (!is_string($request->input("Apellido_Materno"))) {
+                $result = false;
+            } else if ($request->input("Apellido_Materno") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Apellido_Paterno") && $request->filled("Apellido_Paterno")) {
+            if (!is_string($request->input("Apellido_Paterno"))) {
+                $result = false;
+            } else if ($request->input("Apellido_Paterno") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Age") && $request->filled("Age")) {
+            if (!is_string($request->input("Age"))) {
+                $result = false;
+            } else if ($request->input("Age") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Telefono") && $request->filled("Telefono")) {
+            if (!is_string($request->input("Telefono"))) {
+                $result = false;
+            } else if ($request->input("Telefono") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Direccion") && $request->filled("Direccion")) {
+            if (!is_string($request->input("Direccion"))) {
+                $result = false;
+            } else if ($request->input("Direccion") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("Ciudad") && $request->filled("Ciudad")) {
+            if (!is_string($request->input("Ciudad"))) {
+                $result = false;
+            } else if ($request->input("Ciudad") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("email") && $request->filled("email")) {
+            if (!is_string($request->input("email"))) {
+                $result = false;
+            } else if ($request->input("email") <= 0) {
+                $result = false;
+            }
+        }
+        if ($request->has("password") && $request->filled("password")) {
+            if (!is_string($request->input("password"))) {
+                $result = false;
+            } else if ($request->input("password") <= 0) {
+                $result = false;
+            }
+        }
+        return $result;
     }
 
     public function Revisar_Acceso($userid, $eval)

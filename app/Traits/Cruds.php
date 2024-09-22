@@ -24,6 +24,7 @@ use Exception;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Ramsey\Uuid\Type\Integer;
 use stdClass;
 
 // use PDF;
@@ -511,6 +512,7 @@ trait Cruds
 
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
+                Log::info("create a new publicacion");
                 $Publicacion = new Publicacion();
                 $Publicacion->id_usuario = $request->has("id_usuario") ? $request->input("id_usuario") : $Publicacion->id_usuario;
                 $Publicacion->Nombre = $request->has("Nombre") ? $request->input("Nombre") : $Publicacion->Nombre;
@@ -544,6 +546,7 @@ trait Cruds
         } catch (Exception  $e) {
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            Log::info("Publicacion Error ".$e->getMessage());
             //print_r("Error ---: " . $e->getMessage());
             return "{}";
         }
@@ -701,6 +704,59 @@ trait Cruds
             //print_r("Error ---: " . $e->getMessage());
             return "{}";
         }
+    }
+
+    public function findOfertaById(int $ofertaId){
+        DB::enableQueryLog();
+        LOG::info("search for oferta");
+        try{
+            //$oferta =  Oferta::where(['id', $ofertaId]);
+            //$oferta = Oferta::with("Publicacion:id,nombre,descripcion")->select("Publicacion:*")->find($ofertaId);
+            $oferta = DB::table("ofertas")
+                        ->join('publicacions', "ofertas.id_publicacion", "=", "publicacions.id")
+                        ->select("publicacions.*", "ofertas.Precio")
+                        ->where("ofertas.id", "=", $ofertaId)
+                        ->get()
+                        ->first();
+            $queries = DB::getQueryLog();
+            $last_query = end($queries);
+            LOG::info("Used Query ");
+            LOG::info($last_query);
+            LOG::info("with oferId ".$ofertaId);
+            LOG::info("Oferta found");
+            LOG::info(json_encode($oferta));
+        }
+        catch(Exception $e){
+            Log::info("oferta search failed ".$e->getMessage());
+        }
+        return $oferta;
+    }
+
+    public function findDemandaById(int $demandaId){
+        $demanda = DB::table("demandas")
+            ->join('publicacions', "demandas.id_publicacion", "=", "publicacions.id")
+            ->select("publicacions.*", "demandas.Presupuesto")
+            ->where("demandas.id", "=", $demandaId)
+            ->get()
+            ->first();
+        LOG::info("with demandaId ".$demandaId);
+        return $demanda;
+    }
+
+    public function crearOferta(Request $request){
+        $oferta = new Oferta();
+        $oferta->id_publicacion = $request->id_publicacion;
+        $oferta->Precio = $request->Precio;
+        $oferta->save();
+        return $oferta;
+    }
+
+    public function crearDemanda(Request $request){
+        $demanda = new Demanda();
+        $demanda->id_publicacion = $request->id_publicacion;
+        $demanda->Presupuesto = $request->Presupuesto;
+        $demanda->save();
+        return $demanda;
     }
 
     //Este hace de Crear/Editar y Borrar

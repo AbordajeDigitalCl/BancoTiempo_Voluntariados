@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\PublicacionesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestController;
@@ -49,11 +50,24 @@ Route::post('/user',[
     RegisteredUserController::class, 'storeApi'
 ]);
 
-Route::post('/user/type', [
-    TipoUsuario::class, 'edit'
-]);
 Route::put('/user/type', [
     TipoUsuario::class, 'edit'
+])->middleware('auth:sanctum');
+
+Route::get('/post', [
+    PublicacionesController::class, 'find'
+])->middleware('auth:sanctum');
+
+Route::post('/post', [
+    PublicacionesController::class, 'create'
+])->middleware('auth:sanctum');
+
+Route::get('/oferta/{ofertaId}', [
+    PublicacionesController::class, 'findOferta'
+])->middleware('auth:sanctum');
+
+Route::get('/demanda/{demandaId}', [
+    PublicacionesController::class, 'findDemanda'
 ])->middleware('auth:sanctum');
 
 

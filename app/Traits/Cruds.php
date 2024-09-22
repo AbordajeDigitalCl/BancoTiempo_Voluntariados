@@ -990,7 +990,7 @@ trait Cruds
                 return "{}";
             }
 
-            
+
             if (!$this->Internal_Validation_Demandas($request)) {
                 session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
                 return "{}";
@@ -1044,7 +1044,7 @@ trait Cruds
     public function Editar_demandas(Request $request)
     {
         try {
-            
+
             if (!$this->Internal_Validation_Demandas($request)) {
                 session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
                 return "{}";
@@ -1056,7 +1056,7 @@ trait Cruds
                 $Demanda = new Demanda();
                 $Demanda->id_publicacion = 0;
                 $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
-                
+
                 $this->Internal_Editar_publicacions($Demanda, $request);
                 $DemandaNw = new Demanda();
                 $DemandaNw->id_publicacion = $Demanda->id_publicacion;
@@ -1194,58 +1194,6 @@ trait Cruds
         }
     }
 
-    public function findOfertaById(int $ofertaId){
-        DB::enableQueryLog();
-        LOG::info("search for oferta");
-        try{
-            //$oferta =  Oferta::where(['id', $ofertaId]);
-            //$oferta = Oferta::with("Publicacion:id,nombre,descripcion")->select("Publicacion:*")->find($ofertaId);
-            $oferta = DB::table("ofertas")
-                        ->join('publicacions', "ofertas.id_publicacion", "=", "publicacions.id")
-                        ->select("publicacions.*", "ofertas.Precio")
-                        ->where("ofertas.id", "=", $ofertaId)
-                        ->get()
-                        ->first();
-            $queries = DB::getQueryLog();
-            $last_query = end($queries);
-            LOG::info("Used Query ");
-            LOG::info($last_query);
-            LOG::info("with oferId ".$ofertaId);
-            LOG::info("Oferta found");
-            LOG::info(json_encode($oferta));
-        }
-        catch(Exception $e){
-            Log::info("oferta search failed ".$e->getMessage());
-        }
-        return $oferta;
-    }
-
-    public function findDemandaById(int $demandaId){
-        $demanda = DB::table("demandas")
-            ->join('publicacions', "demandas.id_publicacion", "=", "publicacions.id")
-            ->select("publicacions.*", "demandas.Presupuesto")
-            ->where("demandas.id", "=", $demandaId)
-            ->get()
-            ->first();
-        LOG::info("with demandaId ".$demandaId);
-        return $demanda;
-    }
-
-    public function crearOferta(Request $request){
-        $oferta = new Oferta();
-        $oferta->id_publicacion = $request->id_publicacion;
-        $oferta->Precio = $request->Precio;
-        $oferta->save();
-        return $oferta;
-    }
-
-    public function crearDemanda(Request $request){
-        $demanda = new Demanda();
-        $demanda->id_publicacion = $request->id_publicacion;
-        $demanda->Presupuesto = $request->Presupuesto;
-        $demanda->save();
-        return $demanda;
-    }
 
     //Este hace de Crear/Editar y Borrar
     public function Editar_ofertas(Request $request)
@@ -1262,7 +1210,7 @@ trait Cruds
                 $Oferta = new Oferta();
                 $Oferta->id_publicacion = 0;
                 $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
-                
+
                 $this->Internal_Editar_publicacions($Oferta, $request);
                 $OfertaNw = new Oferta();
                 $OfertaNw->id_publicacion = $Oferta->id_publicacion;
@@ -1924,15 +1872,6 @@ trait Cruds
         return $result;
     }
 
-
-    public function findUserByEmail(Request $request) : User | null{
-        $usuarios = null;
-        if($request->has("email")){
-            $usuarios = User::where([['email', $request->input("email")]])->get();
-        }
-        return sizeof($usuarios) > 0 ? $usuarios[0] : null;
-    }
-
     //De necesitar otro filtro, favor avisar
     //-Jose-
     //Este obtiene un dato, varios o todos
@@ -2149,4 +2088,70 @@ trait Cruds
             return false;
         }
     }
+
+    /**
+     * Funciones extras para funciones con tipos de datos especificos
+     */
+
+    public function findUserByEmail(Request $request) : User | null{
+        $usuarios = null;
+        if($request->has("email")){
+            $usuarios = User::where([['email', $request->input("email")]])->get();
+        }
+        return sizeof($usuarios) > 0 ? $usuarios[0] : null;
+    }
+
+    public function findOfertaById(int $ofertaId){
+        DB::enableQueryLog();
+        LOG::info("search for oferta");
+        try{
+            //$oferta =  Oferta::where(['id', $ofertaId]);
+            //$oferta = Oferta::with("Publicacion:id,nombre,descripcion")->select("Publicacion:*")->find($ofertaId);
+            $oferta = DB::table("ofertas")
+                        ->join('publicacions', "ofertas.id_publicacion", "=", "publicacions.id")
+                        ->select("publicacions.*", "ofertas.Precio")
+                        ->where("ofertas.id", "=", $ofertaId)
+                        ->get()
+                        ->first();
+            $queries = DB::getQueryLog();
+            $last_query = end($queries);
+            LOG::info("Used Query ");
+            LOG::info($last_query);
+            LOG::info("with oferId ".$ofertaId);
+            LOG::info("Oferta found");
+            LOG::info(json_encode($oferta));
+        }
+        catch(Exception $e){
+            Log::info("oferta search failed ".$e->getMessage());
+        }
+        return $oferta;
+    }
+
+    public function findDemandaById(int $demandaId){
+        $demanda = DB::table("demandas")
+            ->join('publicacions', "demandas.id_publicacion", "=", "publicacions.id")
+            ->select("publicacions.*", "demandas.Presupuesto")
+            ->where("demandas.id", "=", $demandaId)
+            ->get()
+            ->first();
+        LOG::info("with demandaId ".$demandaId);
+        return $demanda;
+    }
+
+    public function crearOferta(Request $request){
+        $oferta = new Oferta();
+        $oferta->id_publicacion = $request->id_publicacion;
+        $oferta->Precio = $request->Precio;
+        $oferta->save();
+        return $oferta;
+    }
+
+    public function crearDemanda(Request $request){
+        $demanda = new Demanda();
+        $demanda->id_publicacion = $request->id_publicacion;
+        $demanda->Presupuesto = $request->Presupuesto;
+        $demanda->save();
+        return $demanda;
+    }
+
 }

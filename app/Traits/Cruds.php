@@ -1194,7 +1194,6 @@ trait Cruds
         }
     }
 
-
     //Este hace de Crear/Editar y Borrar
     public function Editar_ofertas(Request $request)
     {
@@ -2152,6 +2151,46 @@ trait Cruds
         $demanda->Presupuesto = $request->Presupuesto;
         $demanda->save();
         return $demanda;
+    }
+
+    public function updatePublicacion(Request $request){
+        $publicacionId = $this->findPublicacionIdFromOferta($request->id);
+        $publicacion = $this->findSimplePublicacion($publicacionId->id);
+        $publicacion->Nombre = $request->Nombre;
+        $publicacion->Descripcion = $request->Descripcion;
+        $publicacion->save();
+    }
+
+    public function findSimplePublicacion(int $idPublicacion){
+        $publicacion = Publicacion::find($idPublicacion);
+        LOG::info("Found publicacion");
+        LOG::info(json_encode($publicacion));
+        return $publicacion;
+    }
+
+    public function saveOferta(Request $request){
+        $oferta = $this->findSimpleOferta($request->id);
+        $oferta->Precio = $request->Precio;
+        $oferta->save();
+    }
+
+    public function findSimpleOferta(int $ofertaId){
+        $oferta = Oferta::find($ofertaId);
+        LOG::info("Single oferta found");
+        LOG::info(json_encode($oferta));
+        return $oferta;
+    }
+
+    public function findPublicacionIdFromOferta(int $ofertaId){
+        $oferta = DB::table("ofertas")
+            ->join('publicacions', "ofertas.id_publicacion", "=", "publicacions.id")
+            ->select("publicacions.id")
+            ->where("ofertas.id", "=", $ofertaId)
+            ->get()
+            ->first();
+        LOG::info("Single oferta found");
+        LOG::info(json_encode($oferta));
+        return $oferta;
     }
 
 }

@@ -27,6 +27,34 @@ class PublicacionesController extends Controller{
         return response()->json($this->findDemandaById($demandaId), 200);
     }
 
+    public function updateOferta(Request $request){
+        LOG::info("On update function");
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer|present',
+            'Precio' => 'required|integer|present',
+            'Nombre' => 'required|string|present',
+            'Descripcion' => 'required|string|present',
+        ]);
+        if($validator->fails()){
+            LOG::info("Validator failed");
+            return response()->json(["message" => $validator->errors()->all()], 400);
+        }
+        LOG::info("Userid ".$request->user()->id);
+        LOG::info("OfferId ".$request->id);
+        if(Gate::allows('admin-action', $request->user()) || Gate::allows('user-owns-oferta', $request)){
+            LOG::info("Valid user");
+            $this->saveOferta($request);
+            $this->updatePublicacion($request);
+            return response()->json($this->findOfertaById($request->id), 200);
+        }
+        LOG::info("Not enough permissions to do that!");
+        return response()->json(["message" => "You are not the owner of this offer"], 403);
+    }
+
+    public function updateDemanda(){
+
+    }
+
     public function create(Request $request){
         Log::info("creating a post show request info");
         Log::info(json_encode($request));

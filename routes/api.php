@@ -70,6 +70,15 @@ Route::get('/demanda/{demandaId}', [
     PublicacionesController::class, 'findDemanda'
 ])->middleware('auth:sanctum');
 
+Route::put('/oferta', [
+    PublicacionesController::class, 'updateOferta'
+])->middleware('auth:sanctum');
+
+Route::put('/demanda', [
+    PublicacionesController::class, 'updateDemanda'
+])->middleware('auth:sanctum');
+
+
 
 Route::post('editar',[TestController::class, 'editar'])->name('editar');
 Route::put('editar',[TestController::class, 'editar'])->name('editar');

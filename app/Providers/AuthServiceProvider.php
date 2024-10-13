@@ -10,6 +10,7 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Ramsey\Uuid\Type\Integer;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -32,6 +33,18 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define('admin-action', function(User $user){
             $tipo = $this->getUserTypeByUserId($user->id)->first();
             return $tipo->Etiqueta === 0;
+        });
+
+        Gate::define('user-owns-oferta', function(User $user, Request $request){
+            LOG::info($user);
+            LOG::info("ValidationInfo");
+            LOG::info(json_encode($request));
+            $userId = $user->id;
+            $oferta = $this->findOfertaById($request->id);
+            LOG::info("Found ".json_encode($oferta));
+            LOG::info("Compare to ".$userId);
+            LOG::info($oferta->id_usuario === $userId);
+            return $oferta->id_usuario === $userId;
         });
     }
 }

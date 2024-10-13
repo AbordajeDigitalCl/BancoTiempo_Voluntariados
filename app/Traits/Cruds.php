@@ -2314,9 +2314,10 @@ trait Cruds
      * @param String $direction dirección de ordenamiento ASC o DESC
      * @param int $type filtro por tipo -1: ambos, 0: ofertas, 1: demandas
      * @param String $str filtro por wildcard para el campo publicacions.nombre
+     * @param int $visible filtro para publicaciones visibles, 1: solo visibles
      * @return Publicacion[] Lista de publicaciones
      */
-    public function findAllPublicacion($orderBy, $direction, $type, $str){
+    public function findAllPublicacion($orderBy, $direction, $type, $str, $user, $visible = 1){
         $publicaciones = DB::table("publicacions")
         ->join('users', 'users.id', '=', 'publicacions.id_usuario')
         ->leftJoin('demandas', 'demandas.id_publicacion', '=', 'publicacions.id')
@@ -2331,12 +2332,17 @@ trait Cruds
             'users.Apellido_Materno',
             'demandas.Presupuesto',
             'ofertas.Precio',
-            'publicacions.Tipo_Publicacion'
+            'publicacions.Tipo_Publicacion',
+            'publicacions.visible'
         )->orderBy($orderBy, $direction);
         if($type > -1)
             $publicaciones->where("publicacions.Tipo_Publicacion", $type);
         if($str != "")
             $publicaciones->where("publicacions.Nombre", "like", "%$str%");
+        if($visible == 1)
+            $publicaciones->where("publicacions.visible", true);
+        if($user != null)
+            $publicaciones->where("publicacions.id_usuario", $user);
         return $publicaciones->paginate(10);
     }
 

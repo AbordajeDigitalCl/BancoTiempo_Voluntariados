@@ -16,6 +16,8 @@ class PublicacionesController extends Controller{
 
     public function showAllPublicaciones(Request $request){
         $orderBy = $request->query('orderBy', 'publicacions.updated_at');
+        $user = $request->query('user', null);
+        $onlyVisible = true;
         if($orderBy == "precio")
             $orderBy = "ofertas.Precio";
         $direction = $request->query("asc", "ASC") == "true" ? "ASC" : "DESC";
@@ -24,8 +26,11 @@ class PublicacionesController extends Controller{
             $type = 0;
         elseif($type == "demanda")
             $type = 1;
+        if($user != null && ($user == $request->user()->id || Gate::allows('admin-action', $request->user())))
+            $onlyVisible = false;
+
         $str = $request->query("str","");
-        return response()->json($this->findAllPublicacion($orderBy, $direction, $type, $str), 200);
+        return response()->json($this->findAllPublicacion($orderBy, $direction, $type, $str, $user, $onlyVisible), 200);
     }
 
     public function find(Request $request){

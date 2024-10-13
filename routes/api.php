@@ -25,7 +25,7 @@ use function PHPUnit\Framework\isNull;
 */
 
 /*** Se usarán para pruebas, no tocar por favor -JJ- ***/
-
+/** Test info de usuario */
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -77,6 +77,10 @@ Route::put('/oferta', [
 Route::put('/demanda', [
     PublicacionesController::class, 'updateDemanda'
 ])->middleware('auth:sanctum');
+
+Route::get('/publicaciones', [
+    PublicacionesController::class, 'showAllPublicaciones'
+])->middleware("auth:sanctum");
 
 
 

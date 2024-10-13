@@ -14,6 +14,20 @@ class PublicacionesController extends Controller{
 
     use Cruds;
 
+    public function showAllPublicaciones(Request $request){
+        $orderBy = $request->query('orderBy', 'publicacions.updated_at');
+        if($orderBy == "precio")
+            $orderBy = "ofertas.Precio";
+        $direction = $request->query("asc", "ASC") == "true" ? "ASC" : "DESC";
+        $type = $request->query("tipo", -1);
+        if($type == "oferta")
+            $type = 0;
+        elseif($type == "demanda")
+            $type = 1;
+        $str = $request->query("str","");
+        return response()->json($this->findAllPublicacion($orderBy, $direction, $type, $str), 200);
+    }
+
     public function find(Request $request){
         $result = $this->Obtener_publicacions($request, $use_for = 0, $offset = 0, $ammount = 20);
         return response()->json($result, 200);
@@ -28,7 +42,7 @@ class PublicacionesController extends Controller{
     }
 
     public function updateOferta(Request $request){
-        LOG::info("On update function");
+        LOG::info("On update oferta function");
         $validator = Validator::make($request->all(), [
             'id' => 'required|integer|present',
             'Precio' => 'required|integer|present',
@@ -51,8 +65,28 @@ class PublicacionesController extends Controller{
         return response()->json(["message" => "You are not the owner of this offer"], 403);
     }
 
-    public function updateDemanda(){
-
+    public function updateDemanda(Request $request){
+        LOG::info("On update demanda function");
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|integer|present',
+            'Presupuesto' => 'required|integer|present',
+            'Nombre' => 'required|string|present',
+            'Descripcion' => 'required|string|present',
+        ]);
+        if($validator->fails()){
+            LOG::info("Validator failed");
+            return response()->json(["message" => $validator->errors()->all()], 400);
+        }
+        LOG::info("Userid ".$request->user()->id);
+        LOG::info("demandaId ".$request->id);
+        if(Gate::allows('admin-action', $request->user()) || Gate::allows('user-owns-demanda', $request)){
+            LOG::info("Valid user");
+            $this->saveDemanda($request);
+            $this->updatePublicacionDemanda($request);
+            return response()->json($this->findDemandaById($request->id), 200);
+        }
+        LOG::info("Not enough permissions to do that!");
+        return response()->json(["message" => "You are not the owner of this offer"], 403);
     }
 
     public function create(Request $request){

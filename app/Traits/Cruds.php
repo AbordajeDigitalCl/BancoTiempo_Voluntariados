@@ -2092,7 +2092,13 @@ trait Cruds
      * Funciones extras para funciones con tipos de datos especificos
      */
 
-    public function findUserByEmail(Request $request) : User | null{
+    /**
+     * Busca si ya existe un usuario con ese mail.
+     *
+     * @param Request $request Objeto del request con el mail
+     * @return User|null registro de usuario encontrado por el mail o null si no existe.
+     */
+    public function findUserByEmail(Request $request) : User|null{
         $usuarios = null;
         if($request->has("email")){
             $usuarios = User::where([['email', $request->input("email")]])->get();
@@ -2100,6 +2106,12 @@ trait Cruds
         return sizeof($usuarios) > 0 ? $usuarios[0] : null;
     }
 
+    /**
+     * Busca una oferta por el id y regresa la información del join con la tabla publicacions
+     *
+     * @param int $ofertaId id de la tabla oferta a buscar
+     * @return Oferta Registro de oferta join con publicacions
+     */
     public function findOfertaById(int $ofertaId){
         DB::enableQueryLog();
         LOG::info("search for oferta");
@@ -2126,6 +2138,13 @@ trait Cruds
         return $oferta;
     }
 
+    /**
+     * Funcion para encontrar una demanda por su ID
+     *
+     * @param int $demandaId Id de la demanda
+     * @return Demanda registro de la demanda, join con publicacion
+     */
+
     public function findDemandaById(int $demandaId){
         $demanda = DB::table("demandas")
             ->join('publicacions', "demandas.id_publicacion", "=", "publicacions.id")
@@ -2137,6 +2156,12 @@ trait Cruds
         return $demanda;
     }
 
+    /**
+     * Funcion para crear una oferta
+     *
+     * @param Request $request Request con la informacion de la oferta
+     * @return Oferta registro de la oferta creada
+     */
     public function crearOferta(Request $request){
         $oferta = new Oferta();
         $oferta->id_publicacion = $request->id_publicacion;
@@ -2145,6 +2170,12 @@ trait Cruds
         return $oferta;
     }
 
+    /**
+     * Funcion para crear una demanda
+     *
+     * @param Request $request Request con la información de la demanda
+     * @return Demanda registro de la demanda creada
+     */
     public function crearDemanda(Request $request){
         $demanda = new Demanda();
         $demanda->id_publicacion = $request->id_publicacion;
@@ -2153,6 +2184,11 @@ trait Cruds
         return $demanda;
     }
 
+    /**
+     * Funcion para actualizar una oferta
+     *
+     * @param Request $request Información de la oferta
+     */
     public function updatePublicacion(Request $request){
         $publicacionId = $this->findPublicacionIdFromOferta($request->id);
         $publicacion = $this->findSimplePublicacion($publicacionId->id);
@@ -2161,6 +2197,25 @@ trait Cruds
         $publicacion->save();
     }
 
+    /**
+     * Funcion para actualizar una demanda
+     *
+     * @param Request $request Request con la información de la demanda
+     */
+    public function updatePublicacionDemanda(Request $request){
+        $publicacionId = $this->findPublicacionIdFromDemanda($request->id);
+        $publicacion = $this->findSimplePublicacion($publicacionId->id);
+        $publicacion->Nombre = $request->Nombre;
+        $publicacion->Descripcion = $request->Descripcion;
+        $publicacion->save();
+    }
+
+    /**
+     * Busqueda de una publicacion por su ID
+     *
+     * @param int $idPublicacion
+     * @return Publicacion publicacion encontrada
+     */
     public function findSimplePublicacion(int $idPublicacion){
         $publicacion = Publicacion::find($idPublicacion);
         LOG::info("Found publicacion");
@@ -2168,12 +2223,47 @@ trait Cruds
         return $publicacion;
     }
 
+    /**
+     * Funcion para guardar una oferta
+     *
+     * @param Request $request informacion de la oferta a guardar
+     */
     public function saveOferta(Request $request){
         $oferta = $this->findSimpleOferta($request->id);
         $oferta->Precio = $request->Precio;
         $oferta->save();
     }
 
+    /**
+     * Funcion para guardar una demanda
+     *
+     * @param Request $request informacion de la demanda a guardar
+     */
+    public function saveDemanda(Request $request){
+        $demanda = $this->findSimpleDemanda($request->id);
+        $demanda->Presupuesto = $request->Presupuesto;
+        $demanda->save();
+    }
+
+    /**
+     * Busqueda de una demanda por su ID
+     *
+     * @param int $demandaId id de la demanda a buscar
+     * @return Demanda demanda encontrada
+     */
+    public function findSimpleDemanda(int $demandaId){
+        $demanda = Demanda::find($demandaId);
+        LOG::info("Single demanda found");
+        LOG::info(json_encode($demanda));
+        return $demanda;
+    }
+
+    /**
+     * Busqueda de una oferta por su ID
+     *
+     * @param int $ofertaId
+     * @return Oferta oferta encontrada
+     */
     public function findSimpleOferta(int $ofertaId){
         $oferta = Oferta::find($ofertaId);
         LOG::info("Single oferta found");
@@ -2181,6 +2271,12 @@ trait Cruds
         return $oferta;
     }
 
+    /**
+     * Busqueda de publicacion join con Ofertas
+     *
+     * @param $ofertaId
+     * @return Publicacion publicacion encontrada por id de oferta
+     */
     public function findPublicacionIdFromOferta(int $ofertaId){
         $oferta = DB::table("ofertas")
             ->join('publicacions', "ofertas.id_publicacion", "=", "publicacions.id")
@@ -2191,6 +2287,57 @@ trait Cruds
         LOG::info("Single oferta found");
         LOG::info(json_encode($oferta));
         return $oferta;
+    }
+
+    /**
+     * Busqueda de publicacion join demandas
+     *
+     * @param int $ofertaId id de la oferta
+     * @return Publicacion publicacion encontrada por id de demanda
+     */
+    public function findPublicacionIdFromDemanda(int $ofertaId){
+        $oferta = DB::table("demandas")
+            ->join('publicacions', "demandas.id_publicacion", "=", "publicacions.id")
+            ->select("publicacions.id")
+            ->where("demandas.id", "=", $ofertaId)
+            ->get()
+            ->first();
+        LOG::info("Single demanda found");
+        LOG::info(json_encode($oferta));
+        return $oferta;
+    }
+
+    /**
+     * Busqueda de todas las publicaciones para mostrar en lista
+     *
+     * @param String $orderBy nombre del campo respecto al cual se ordenará
+     * @param String $direction dirección de ordenamiento ASC o DESC
+     * @param int $type filtro por tipo -1: ambos, 0: ofertas, 1: demandas
+     * @param String $str filtro por wildcard para el campo publicacions.nombre
+     * @return Publicacion[] Lista de publicaciones
+     */
+    public function findAllPublicacion($orderBy, $direction, $type, $str){
+        $publicaciones = DB::table("publicacions")
+        ->join('users', 'users.id', '=', 'publicacions.id_usuario')
+        ->leftJoin('demandas', 'demandas.id_publicacion', '=', 'publicacions.id')
+        ->leftJoin('ofertas', 'ofertas.id_publicacion', '=', 'publicacions.id')
+        ->select(
+            'publicacions.id as publicacion_id',
+            'publicacions.Nombre',
+            'publicacions.Descripcion',
+            'users.id as user_id',
+            'users.name',
+            'users.Apellido_Paterno',
+            'users.Apellido_Materno',
+            'demandas.Presupuesto',
+            'ofertas.Precio',
+            'publicacions.Tipo_Publicacion'
+        )->orderBy($orderBy, $direction);
+        if($type > -1)
+            $publicaciones->where("publicacions.Tipo_Publicacion", $type);
+        if($str != "")
+            $publicaciones->where("publicacions.Nombre", "like", "%$str%");
+        return $publicaciones->paginate(10);
     }
 
 }

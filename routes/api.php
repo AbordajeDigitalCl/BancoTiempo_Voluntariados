@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\TipoUsuario;
+use App\Http\Controllers\TransaccionController;
 use App\Http\Controllers\UserController;
 use App\Models\Tipo_Usuario;
 use Illuminate\Support\Facades\Log;
@@ -82,6 +83,13 @@ Route::get('/publicaciones', [
     PublicacionesController::class, 'showAllPublicaciones'
 ])->middleware("auth:sanctum");
 
+Route::post('/buy', [
+    TransaccionController::class, "buy"
+])->middleware("auth:sanctum");
+
+Route::post('/pay', [
+    TransaccionController::class, "pay"
+])->middleware("auth:sanctum");
 
 
 Route::post('editar',[TestController::class, 'editar'])->name('editar');

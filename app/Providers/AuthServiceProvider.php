@@ -58,5 +58,11 @@ class AuthServiceProvider extends ServiceProvider
             LOG::info($demanda->id_usuario === $userId);
             return $demanda->id_usuario === $userId;
         });
+
+        Gate::define('can-user-buy', function(User $user, $costo){
+            LOG::info("In can user buy validation");
+            $balance = $this->balance($user->id);
+            return $balance >= $costo;
+        });
     }
 }

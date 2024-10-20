@@ -816,14 +816,16 @@ trait Cruds
     //Este hace de Crear/Editar y Borrar
     public function Editar_publicacions(Request $request)
     {
+        Log::info("on Editar_publicacions");
         try {
             $Publicacion = null;
-
+            /*
+            Already validated in controller
             if (!$this->Internal_Validation_Publicacions($request)) {
                 session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
                 return "{}";
             }
-
+            */
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
                 Log::info("create a new publicacion");
@@ -2115,6 +2117,7 @@ trait Cruds
     public function findOfertaById(int $ofertaId){
         DB::enableQueryLog();
         LOG::info("search for oferta");
+        $oferta = null;
         try{
             //$oferta =  Oferta::where(['id', $ofertaId]);
             //$oferta = Oferta::with("Publicacion:id,nombre,descripcion")->select("Publicacion:*")->find($ofertaId);
@@ -2344,6 +2347,58 @@ trait Cruds
         if($user != null)
             $publicaciones->where("publicacions.id_usuario", $user);
         return $publicaciones->paginate(10);
+    }
+
+    /**
+     * Consulta para balance, consta en dos consultas, saldo positivo y negativo a partir de los registros de transacciones
+     * de la tabla transaccions y la cantidad registrada en inter__transa__publics
+     * Consulta preparada para validación o saldo informativo
+     *
+     * @param int $userId Id del usuario para crear su balance
+     * @return int Saldo total
+     */
+    public function balance($userId){
+        $incomingTransactions = DB::table('transaccions')
+            ->join('inter__transa__publics', 'inter__transa__publics.id_transaccion', '=', 'transaccions.id')
+            ->where('transaccions.id_usuario_destino', $userId)
+            ->select(DB::raw('SUM(COALESCE(inter__transa__publics.cantidad, 0)) as saldo'))
+            ->groupBy('transaccions.id_usuario_origen', 'transaccions.id_usuario_destino');
+
+        $outgoingTransactions = DB::table('transaccions')
+            ->join('inter__transa__publics', 'inter__transa__publics.id_transaccion', '=', 'transaccions.id')
+            ->where('transaccions.id_usuario_origen', $userId)
+            ->select(DB::raw('SUM(COALESCE(inter__transa__publics.cantidad, 0)) * -1 as saldo'))
+            ->groupBy('transaccions.id_usuario_origen', 'transaccions.id_usuario_destino');
+
+        $balanceQuery = DB::table(DB::raw("({$incomingTransactions->toSql()}) as incoming"))
+            ->mergeBindings($incomingTransactions)
+            ->unionAll($outgoingTransactions);
+
+        $totalBalance = DB::table(DB::raw("({$balanceQuery->toSql()}) as balance"))
+            ->mergeBindings($balanceQuery)
+            ->select(DB::raw('SUM(saldo) as saldo'))
+            ->first();
+
+        $totalSaldo = $totalBalance->saldo ?? 0;
+        return $totalSaldo;
+    }
+
+    public function makeTransaction($userOriginId, $userTargetId, $type){
+        $transaction = new Transaccion();
+        $transaction->id_usuario_origen = $userOriginId;
+        $transaction->id_usuario_destino = $userTargetId;
+        $transaction->Tipo_Transaccion = 0;
+        $transaction->save();
+        return $transaction;
+    }
+
+    public function savePurchase($idPublicacion, $idTransaccion, $cantidad){
+        $itp = new Inter_Transa_Public();
+        $itp->id_publicacion = $idPublicacion;
+        $itp->id_transaccion = $idTransaccion;
+        $itp->cantidad = $cantidad;
+        $itp->save();
+        return $itp;
     }
 
 }

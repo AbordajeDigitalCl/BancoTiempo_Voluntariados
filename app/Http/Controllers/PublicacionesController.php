@@ -8,7 +8,7 @@ use App\Traits\Cruds;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Symfony\Component\HttpFoundation\Request;
+use Illuminate\Http\Request;
 
 class PublicacionesController extends Controller{
 

@@ -2401,4 +2401,13 @@ trait Cruds
         return $itp;
     }
 
+    public function saveImagen($filename, $idUsuario){
+        $image = new Imagen();
+        $image->Direccion = $filename;
+        $image->id_usuario_origen = $idUsuario;
+        $image->Tipo = 0;
+        $image->save();
+        return $image;
+    }
+
 }

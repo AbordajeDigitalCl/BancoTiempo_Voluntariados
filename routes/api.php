@@ -9,6 +9,7 @@ use App\Http\Controllers\TestController;
 use App\Http\Controllers\TipoUsuario;
 use App\Http\Controllers\TransaccionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\FileUploadController;
 use App\Models\Tipo_Usuario;
 use Illuminate\Support\Facades\Log;
 
@@ -91,8 +92,20 @@ Route::post('/pay', [
     TransaccionController::class, "pay"
 ])->middleware("auth:sanctum");
 
+Route::post('/upload', [
+    FileUploadController::class, 'upload'
+])->middleware("auth:sanctum");
+Route::get('/file/{filename}', [
+    FileUploadController::class, 'show'
+])->middleware("auth:sanctum");
+Route::delete('/file/{filename}', [
+    FileUploadController::class, 'delete'
+])->middleware("auth:sanctum");
+
+
 
 Route::post('editar',[TestController::class, 'editar'])->name('editar');
 Route::put('editar',[TestController::class, 'editar'])->name('editar');
 Route::delete('editar',[TestController::class, 'editar'])->name('editar');
 Route::get('obtener', [TestController::class, 'obtener'])->name('obtener');
+

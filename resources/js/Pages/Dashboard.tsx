@@ -19,10 +19,10 @@ export default function Dashboard({ auth }: PageProps) {
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             You're logged in!
-                            <HelloReact></HelloReact>
+                            <HelloReact brand="AALOO!"></HelloReact>
                             <Counter></Counter>
-                            <DynamicSelect></DynamicSelect>
-                            <DynamicListView></DynamicListView>
+                            <DynamicSelect whereTo="select3"></DynamicSelect>
+                            <DynamicListView whereTo="select3"></DynamicListView>
                         </div>
                     </div>
                 </div>

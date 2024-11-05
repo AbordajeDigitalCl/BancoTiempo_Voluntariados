@@ -1,19 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-const DynamicSelect = () => {
+const DynamicSelect = (props) => {
     const [options, setOptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    type Props = {
+        parameter: string;
+    };
+
     useEffect(() => {
         const fetchOptions = async () => {
             try {
-                const response = await axios.post('/select3',{})
-                .then(function (response)
-                {
-                  setOptions(response.data);
-                }); 
+                const response = await axios.post('/'+props.whereTo, {})
+                    .then(function (response) {
+                        setOptions(response.data);
+                    });
             } catch (err) {
                 // setError(err.message);
             } finally {

@@ -64,5 +64,12 @@ class AuthServiceProvider extends ServiceProvider
             $balance = $this->balance($user->id);
             return $balance >= $costo;
         });
+
+        Gate::define('same-user', function(User $user, $id){
+            LOG::info("Validate same user action");
+            LOG::info("-> request user id = ".$user->id);
+            LOG::info("-> user entity id = ".$id);
+            return $user->id == $id;
+        });
     }
 }

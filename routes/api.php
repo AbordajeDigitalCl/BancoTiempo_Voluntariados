@@ -52,6 +52,14 @@ Route::post('/user',[
     RegisteredUserController::class, 'storeApi'
 ]);
 
+Route::put('/user',[
+    UserController::class, 'update'
+])->middleware('auth:sanctum');
+
+Route::put('/user/password',[
+    UserController::class, 'updatePassword'
+])->middleware('auth:sanctum');
+
 Route::put('/user/type', [
     TipoUsuario::class, 'edit'
 ])->middleware('auth:sanctum');

@@ -23,6 +23,7 @@ use Exception;
 //use Validator;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Ramsey\Uuid\Type\Integer;
 use stdClass;
@@ -2408,6 +2409,48 @@ trait Cruds
         $image->Tipo = 0;
         $image->save();
         return $image;
+    }
+
+    /**
+     * Funcion para actualizar info de usuario
+     *
+     * @param Request $request informacion del usuario
+     */
+    public function saveUser(Request $request){
+        $user = $this->findUserById($request->id);
+        $user->name = $request->name;
+        $user->Apellido_Paterno = $request->Apellido_Paterno;
+        $user->Apellido_Materno = $request->Apellido_Materno;
+        $user->Age = $request->Age;
+        $user->Telefono = $request->Telefono;
+        $user->Direccion = $request->Direccion;
+        $user->Ciudad = $request->Ciudad;
+        if($this->findUserByEmail($request) == null){
+            $user->email = $request->email;
+
+        }
+        $user->save();
+        return $user;
+    }
+
+    /**
+     * Funcion para actualizar contraseña de usuario
+     *
+     * @param Request $request con nueva contraseña
+     */
+    public function updatePassword(Request $request){
+        $user = $this->findUserById($request->id);
+        $user->password = Hash::make($request->password);
+        $user->save();
+        return $user;
+    }
+
+    /**
+     * Funcion para buscar un usuario por ID
+     */
+    public function findUserById(int $userId){
+        $user = User::find($userId);
+        return $user;
     }
 
 }

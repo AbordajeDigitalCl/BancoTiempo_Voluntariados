@@ -57,6 +57,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+Route::get('/z', function(){
+    return "abc";
+});
+
+
+
 require __DIR__.'/auth.php';
 
 Route::post('count', function (Request $request) {

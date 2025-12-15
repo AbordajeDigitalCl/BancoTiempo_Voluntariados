@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tipo_Usuario;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
@@ -141,6 +142,11 @@ class RegisteredUserController extends Controller
             'Ciudad' => $request->Ciudad,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+        ]);
+        Tipo_Usuario::create([
+            'id_usuario' => $user->id,
+            'Nombre_Tipo_Usuario' => "cliente",
+            'Etiqueta' => 1
         ]);
 
         event(new Registered($user));

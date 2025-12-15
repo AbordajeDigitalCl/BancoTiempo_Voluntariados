@@ -19,9 +19,12 @@ use App\Models\Oferta;
 use App\Models\Imagen;
 use App\Models\Inter_Calif_Public;
 use App\Models\Calificacion;
+use Exception;
 //use Validator;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Ramsey\Uuid\Type\Integer;
 use stdClass;
 
 // use PDF;
@@ -757,7 +760,7 @@ trait Cruds
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
-    //Este obtiene un dato, varios o todos 
+    //Este obtiene un dato, varios o todos
     public function Obtener_publicacions(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
@@ -813,16 +816,19 @@ trait Cruds
     //Este hace de Crear/Editar y Borrar
     public function Editar_publicacions(Request $request)
     {
+        Log::info("on Editar_publicacions");
         try {
             $Publicacion = null;
-
+            /*
+            Already validated in controller
             if (!$this->Internal_Validation_Publicacions($request)) {
                 session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
                 return "{}";
             }
-
+            */
             //Crear objeto nuevo
             if ($request->isMethod('post')) {
+                Log::info("create a new publicacion");
                 $Publicacion = new Publicacion();
                 $Publicacion->id_usuario = $request->has("id_usuario") ? $request->input("id_usuario") : $Publicacion->id_usuario;
                 $Publicacion->Nombre = $request->has("Nombre") ? $request->input("Nombre") : $Publicacion->Nombre;
@@ -856,6 +862,7 @@ trait Cruds
         } catch (Exception  $e) {
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
+            Log::info("Publicacion Error ".$e->getMessage());
             //print_r("Error ---: " . $e->getMessage());
             return "{}";
         }
@@ -965,7 +972,7 @@ trait Cruds
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
-    //Este obtiene un dato, varios o todos 
+    //Este obtiene un dato, varios o todos
     public function Obtener_demandas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
@@ -985,7 +992,7 @@ trait Cruds
                 return "{}";
             }
 
-            
+
             if (!$this->Internal_Validation_Demandas($request)) {
                 session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
                 return "{}";
@@ -1039,7 +1046,7 @@ trait Cruds
     public function Editar_demandas(Request $request)
     {
         try {
-            
+
             if (!$this->Internal_Validation_Demandas($request)) {
                 session()->flash('failure', "Data enviada incorrecta: por favor corroja intente nuevamente");
                 return "{}";
@@ -1051,7 +1058,7 @@ trait Cruds
                 $Demanda = new Demanda();
                 $Demanda->id_publicacion = 0;
                 $Demanda->Presupuesto = $request->has("Presupuesto") ? $request->input("Presupuesto") : $Demanda->Presupuesto;
-                
+
                 $this->Internal_Editar_publicacions($Demanda, $request);
                 $DemandaNw = new Demanda();
                 $DemandaNw->id_publicacion = $Demanda->id_publicacion;
@@ -1121,7 +1128,7 @@ trait Cruds
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
-    //Este obtiene un dato, varios o todos 
+    //Este obtiene un dato, varios o todos
     public function Obtener_ofertas(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
@@ -1204,7 +1211,7 @@ trait Cruds
                 $Oferta = new Oferta();
                 $Oferta->id_publicacion = 0;
                 $Oferta->Precio = $request->has("Precio") ? $request->input("Precio") : $Oferta->Precio;
-                
+
                 $this->Internal_Editar_publicacions($Oferta, $request);
                 $OfertaNw = new Oferta();
                 $OfertaNw->id_publicacion = $Oferta->id_publicacion;
@@ -1272,7 +1279,7 @@ trait Cruds
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
-    //Este obtiene un dato, varios o todos 
+    //Este obtiene un dato, varios o todos
     public function Obtener_imagens(Request $request, $use_for = 0, $offset = 0, $ammount = 20)
     {
         try {
@@ -1721,7 +1728,9 @@ trait Cruds
         return $result;
     }
 
-
+    public function getUserTypeByUserId(int $userId){
+        return Tipo_Usuario::where([["id_usuario", $userId]])->get();
+    }
 
 
 
@@ -1810,7 +1819,7 @@ trait Cruds
 
             //Actualizar objeto
             if ($request->isMethod('put')) {
-                $Tipo_Usuario = Tipo_Usuario::where([['id', $request->input("id")]])->first();
+                $Tipo_Usuario = Tipo_Usuario::where([['id_usuario', $request->input("id_usuario")]])->first();
                 if ($Tipo_Usuario != null) {
                     $Tipo_Usuario->id_usuario =  $request->has("id_usuario") ? $request->input("id_usuario") : $Tipo_Usuario->id_usuario;
                     $Tipo_Usuario->Nombre_Tipo_Usuario =  $request->has("Nombre_Tipo_Usuario") ? $request->input("Nombre_Tipo_Usuario") : $Tipo_Usuario->Nombre_Tipo_Usuario;
@@ -1829,6 +1838,7 @@ trait Cruds
 
             return $Tipo_Usuario;
         } catch (Exception  $e) {
+            Log::error("Error on tipo!!!");
             DB::rollback();
             session()->flash('failure', "Error al procesar la solicitud: por favor intente de nuevo");
             //print_r("Error ---: " . $e->getMessage());
@@ -1862,7 +1872,6 @@ trait Cruds
         }
         return $result;
     }
-
 
     //De necesitar otro filtro, favor avisar
     //-Jose-
@@ -2080,4 +2089,325 @@ trait Cruds
             return false;
         }
     }
+
+    /**
+     * Funciones extras para funciones con tipos de datos especificos
+     */
+
+    /**
+     * Busca si ya existe un usuario con ese mail.
+     *
+     * @param Request $request Objeto del request con el mail
+     * @return User|null registro de usuario encontrado por el mail o null si no existe.
+     */
+    public function findUserByEmail(Request $request) : User|null{
+        $usuarios = null;
+        if($request->has("email")){
+            $usuarios = User::where([['email', $request->input("email")]])->get();
+        }
+        return sizeof($usuarios) > 0 ? $usuarios[0] : null;
+    }
+
+    /**
+     * Busca una oferta por el id y regresa la información del join con la tabla publicacions
+     *
+     * @param int $ofertaId id de la tabla oferta a buscar
+     * @return Oferta Registro de oferta join con publicacions
+     */
+    public function findOfertaById(int $ofertaId){
+        DB::enableQueryLog();
+        LOG::info("search for oferta");
+        $oferta = null;
+        try{
+            //$oferta =  Oferta::where(['id', $ofertaId]);
+            //$oferta = Oferta::with("Publicacion:id,nombre,descripcion")->select("Publicacion:*")->find($ofertaId);
+            $oferta = DB::table("ofertas")
+                        ->join('publicacions', "ofertas.id_publicacion", "=", "publicacions.id")
+                        ->select("publicacions.*", "ofertas.Precio")
+                        ->where("ofertas.id", "=", $ofertaId)
+                        ->get()
+                        ->first();
+            $queries = DB::getQueryLog();
+            $last_query = end($queries);
+            LOG::info("Used Query ");
+            LOG::info($last_query);
+            LOG::info("with oferId ".$ofertaId);
+            LOG::info("Oferta found");
+            LOG::info(json_encode($oferta));
+        }
+        catch(Exception $e){
+            Log::info("oferta search failed ".$e->getMessage());
+        }
+        return $oferta;
+    }
+
+    /**
+     * Funcion para encontrar una demanda por su ID
+     *
+     * @param int $demandaId Id de la demanda
+     * @return Demanda registro de la demanda, join con publicacion
+     */
+
+    public function findDemandaById(int $demandaId){
+        $demanda = DB::table("demandas")
+            ->join('publicacions', "demandas.id_publicacion", "=", "publicacions.id")
+            ->select("publicacions.*", "demandas.Presupuesto")
+            ->where("demandas.id", "=", $demandaId)
+            ->get()
+            ->first();
+        LOG::info("with demandaId ".$demandaId);
+        return $demanda;
+    }
+
+    /**
+     * Funcion para crear una oferta
+     *
+     * @param Request $request Request con la informacion de la oferta
+     * @return Oferta registro de la oferta creada
+     */
+    public function crearOferta(Request $request){
+        $oferta = new Oferta();
+        $oferta->id_publicacion = $request->id_publicacion;
+        $oferta->Precio = $request->Precio;
+        $oferta->save();
+        return $oferta;
+    }
+
+    /**
+     * Funcion para crear una demanda
+     *
+     * @param Request $request Request con la información de la demanda
+     * @return Demanda registro de la demanda creada
+     */
+    public function crearDemanda(Request $request){
+        $demanda = new Demanda();
+        $demanda->id_publicacion = $request->id_publicacion;
+        $demanda->Presupuesto = $request->Presupuesto;
+        $demanda->save();
+        return $demanda;
+    }
+
+    /**
+     * Funcion para actualizar una oferta
+     *
+     * @param Request $request Información de la oferta
+     */
+    public function updatePublicacion(Request $request){
+        $publicacionId = $this->findPublicacionIdFromOferta($request->id);
+        $publicacion = $this->findSimplePublicacion($publicacionId->id);
+        $publicacion->Nombre = $request->Nombre;
+        $publicacion->Descripcion = $request->Descripcion;
+        $publicacion->save();
+    }
+
+    /**
+     * Funcion para actualizar una demanda
+     *
+     * @param Request $request Request con la información de la demanda
+     */
+    public function updatePublicacionDemanda(Request $request){
+        $publicacionId = $this->findPublicacionIdFromDemanda($request->id);
+        $publicacion = $this->findSimplePublicacion($publicacionId->id);
+        $publicacion->Nombre = $request->Nombre;
+        $publicacion->Descripcion = $request->Descripcion;
+        $publicacion->save();
+    }
+
+    /**
+     * Busqueda de una publicacion por su ID
+     *
+     * @param int $idPublicacion
+     * @return Publicacion publicacion encontrada
+     */
+    public function findSimplePublicacion(int $idPublicacion){
+        $publicacion = Publicacion::find($idPublicacion);
+        LOG::info("Found publicacion");
+        LOG::info(json_encode($publicacion));
+        return $publicacion;
+    }
+
+    /**
+     * Funcion para guardar una oferta
+     *
+     * @param Request $request informacion de la oferta a guardar
+     */
+    public function saveOferta(Request $request){
+        $oferta = $this->findSimpleOferta($request->id);
+        $oferta->Precio = $request->Precio;
+        $oferta->save();
+    }
+
+    /**
+     * Funcion para guardar una demanda
+     *
+     * @param Request $request informacion de la demanda a guardar
+     */
+    public function saveDemanda(Request $request){
+        $demanda = $this->findSimpleDemanda($request->id);
+        $demanda->Presupuesto = $request->Presupuesto;
+        $demanda->save();
+    }
+
+    /**
+     * Busqueda de una demanda por su ID
+     *
+     * @param int $demandaId id de la demanda a buscar
+     * @return Demanda demanda encontrada
+     */
+    public function findSimpleDemanda(int $demandaId){
+        $demanda = Demanda::find($demandaId);
+        LOG::info("Single demanda found");
+        LOG::info(json_encode($demanda));
+        return $demanda;
+    }
+
+    /**
+     * Busqueda de una oferta por su ID
+     *
+     * @param int $ofertaId
+     * @return Oferta oferta encontrada
+     */
+    public function findSimpleOferta(int $ofertaId){
+        $oferta = Oferta::find($ofertaId);
+        LOG::info("Single oferta found");
+        LOG::info(json_encode($oferta));
+        return $oferta;
+    }
+
+    /**
+     * Busqueda de publicacion join con Ofertas
+     *
+     * @param $ofertaId
+     * @return Publicacion publicacion encontrada por id de oferta
+     */
+    public function findPublicacionIdFromOferta(int $ofertaId){
+        $oferta = DB::table("ofertas")
+            ->join('publicacions', "ofertas.id_publicacion", "=", "publicacions.id")
+            ->select("publicacions.id")
+            ->where("ofertas.id", "=", $ofertaId)
+            ->get()
+            ->first();
+        LOG::info("Single oferta found");
+        LOG::info(json_encode($oferta));
+        return $oferta;
+    }
+
+    /**
+     * Busqueda de publicacion join demandas
+     *
+     * @param int $ofertaId id de la oferta
+     * @return Publicacion publicacion encontrada por id de demanda
+     */
+    public function findPublicacionIdFromDemanda(int $ofertaId){
+        $oferta = DB::table("demandas")
+            ->join('publicacions', "demandas.id_publicacion", "=", "publicacions.id")
+            ->select("publicacions.id")
+            ->where("demandas.id", "=", $ofertaId)
+            ->get()
+            ->first();
+        LOG::info("Single demanda found");
+        LOG::info(json_encode($oferta));
+        return $oferta;
+    }
+
+    /**
+     * Busqueda de todas las publicaciones para mostrar en lista
+     *
+     * @param String $orderBy nombre del campo respecto al cual se ordenará
+     * @param String $direction dirección de ordenamiento ASC o DESC
+     * @param int $type filtro por tipo -1: ambos, 0: ofertas, 1: demandas
+     * @param String $str filtro por wildcard para el campo publicacions.nombre
+     * @param int $visible filtro para publicaciones visibles, 1: solo visibles
+     * @return Publicacion[] Lista de publicaciones
+     */
+    public function findAllPublicacion($orderBy, $direction, $type, $str, $user, $visible = 1){
+        $publicaciones = DB::table("publicacions")
+        ->join('users', 'users.id', '=', 'publicacions.id_usuario')
+        ->leftJoin('demandas', 'demandas.id_publicacion', '=', 'publicacions.id')
+        ->leftJoin('ofertas', 'ofertas.id_publicacion', '=', 'publicacions.id')
+        ->select(
+            'publicacions.id as publicacion_id',
+            'publicacions.Nombre',
+            'publicacions.Descripcion',
+            'users.id as user_id',
+            'users.name',
+            'users.Apellido_Paterno',
+            'users.Apellido_Materno',
+            'demandas.Presupuesto',
+            'ofertas.Precio',
+            'publicacions.Tipo_Publicacion',
+            'publicacions.visible'
+        )->orderBy($orderBy, $direction);
+        if($type > -1)
+            $publicaciones->where("publicacions.Tipo_Publicacion", $type);
+        if($str != "")
+            $publicaciones->where("publicacions.Nombre", "like", "%$str%");
+        if($visible == 1)
+            $publicaciones->where("publicacions.visible", true);
+        if($user != null)
+            $publicaciones->where("publicacions.id_usuario", $user);
+        return $publicaciones->paginate(10);
+    }
+
+    /**
+     * Consulta para balance, consta en dos consultas, saldo positivo y negativo a partir de los registros de transacciones
+     * de la tabla transaccions y la cantidad registrada en inter__transa__publics
+     * Consulta preparada para validación o saldo informativo
+     *
+     * @param int $userId Id del usuario para crear su balance
+     * @return int Saldo total
+     */
+    public function balance($userId){
+        $incomingTransactions = DB::table('transaccions')
+            ->join('inter__transa__publics', 'inter__transa__publics.id_transaccion', '=', 'transaccions.id')
+            ->where('transaccions.id_usuario_destino', $userId)
+            ->select(DB::raw('SUM(COALESCE(inter__transa__publics.cantidad, 0)) as saldo'))
+            ->groupBy('transaccions.id_usuario_origen', 'transaccions.id_usuario_destino');
+
+        $outgoingTransactions = DB::table('transaccions')
+            ->join('inter__transa__publics', 'inter__transa__publics.id_transaccion', '=', 'transaccions.id')
+            ->where('transaccions.id_usuario_origen', $userId)
+            ->select(DB::raw('SUM(COALESCE(inter__transa__publics.cantidad, 0)) * -1 as saldo'))
+            ->groupBy('transaccions.id_usuario_origen', 'transaccions.id_usuario_destino');
+
+        $balanceQuery = DB::table(DB::raw("({$incomingTransactions->toSql()}) as incoming"))
+            ->mergeBindings($incomingTransactions)
+            ->unionAll($outgoingTransactions);
+
+        $totalBalance = DB::table(DB::raw("({$balanceQuery->toSql()}) as balance"))
+            ->mergeBindings($balanceQuery)
+            ->select(DB::raw('SUM(saldo) as saldo'))
+            ->first();
+
+        $totalSaldo = $totalBalance->saldo ?? 0;
+        return $totalSaldo;
+    }
+
+    public function makeTransaction($userOriginId, $userTargetId, $type){
+        $transaction = new Transaccion();
+        $transaction->id_usuario_origen = $userOriginId;
+        $transaction->id_usuario_destino = $userTargetId;
+        $transaction->Tipo_Transaccion = 0;
+        $transaction->save();
+        return $transaction;
+    }
+
+    public function savePurchase($idPublicacion, $idTransaccion, $cantidad){
+        $itp = new Inter_Transa_Public();
+        $itp->id_publicacion = $idPublicacion;
+        $itp->id_transaccion = $idTransaccion;
+        $itp->cantidad = $cantidad;
+        $itp->save();
+        return $itp;
+    }
+
+    public function saveImagen($filename, $idUsuario){
+        $image = new Imagen();
+        $image->Direccion = $filename;
+        $image->id_usuario_origen = $idUsuario;
+        $image->Tipo = 0;
+        $image->save();
+        return $image;
+    }
+
 }

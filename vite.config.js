@@ -10,4 +10,10 @@ export default defineConfig({
         }),
         react(),
     ],
+    server: {
+        cors: {
+            // Replace 'your-site.test' with your actual Herd site name
+            origin: /^https?:\/\/(?:(?:[^\:]+\.)?localhost|bancotiempo_voluntariados\.test|127\.0\.0\.1|\[::1\])(?::\d+)?$/,
+        },
+    },
 });

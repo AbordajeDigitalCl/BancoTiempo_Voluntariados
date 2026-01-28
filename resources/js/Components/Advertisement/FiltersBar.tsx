@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import React from 'react';
 
 export type TypeFilter = 'Servicio' | 'Producto';
 export type DistanceFilter = 'Cualquiera' | '1km' | '10km' | '20km' | '50km';
@@ -13,13 +13,15 @@ type Props = {
   onOrderChange: (v: OrderFilter) => void;
 };
 
-type TabProps = {
+function Tab({
+  active,
+  children,
+  onClick,
+}: {
   active: boolean;
-  children: ReactNode;
+  children: React.ReactNode;
   onClick: () => void;
-};
-
-function Tab({ active, children, onClick }: TabProps) {
+}) {
   return (
     <button
       type="button"
@@ -46,6 +48,7 @@ export default function FiltersBar({
 }: Props) {
   return (
     <div className="space-y-2">
+      {/* Tabs */}
       <div className="grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-2 border border-gray-200">
         <Tab active={type === 'Servicio'} onClick={() => onTypeChange('Servicio')}>
           Servicio
@@ -55,6 +58,7 @@ export default function FiltersBar({
         </Tab>
       </div>
 
+      {/* Selects */}
       <div className="grid grid-cols-2 gap-2">
         <select
           value={distance}

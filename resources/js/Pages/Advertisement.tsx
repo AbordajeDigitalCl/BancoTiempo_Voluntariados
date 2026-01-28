@@ -1,17 +1,18 @@
-import AuthenticatedLayout from '../Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 import FiltersBar, {
   DistanceFilter,
   OrderFilter,
   TypeFilter,
-} from '../Components/Advertisement/FiltersBar';
+} from '@/Components/Advertisement/FiltersBar';
 
-import AdCard, { AdvertisementItem } from '../Components/Advertisement/AdCard';
+import AdCard, { AdvertisementItem } from '@/Components/Advertisement/AdCard';
 
 type Props = {
   auth: { user: any };
+  createdAds?: AdvertisementItem[];
 };
 
 const seed: AdvertisementItem[] = [
@@ -59,28 +60,38 @@ const seed: AdvertisementItem[] = [
   },
 ];
 
-export default function Advertisement({ auth }: Props) {
+export default function Advertisement({ auth, createdAds = [] }: Props) {
   const [query, setQuery] = useState('');
   const [type, setType] = useState<TypeFilter>('Servicio');
   const [distance, setDistance] = useState<DistanceFilter>('Cualquiera');
   const [order, setOrder] = useState<OrderFilter>('Más recientes');
 
+  const allAds = useMemo<AdvertisementItem[]>(() => {
+    const normalizedCreated = (createdAds || []).map((it: any) => ({
+      ...it,
+      hours: Number(it.hours),
+      canDelete: true,
+    }));
+
+    return [...normalizedCreated, ...seed];
+  }, [createdAds]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
 
-    return seed.filter((it) => {
+    return allAds.filter((it: any) => {
       const matchesQuery =
         q.length === 0 ||
-        it.title.toLowerCase().includes(q) ||
-        it.description.toLowerCase().includes(q) ||
-        it.author.toLowerCase().includes(q);
+        String(it.title).toLowerCase().includes(q) ||
+        String(it.description).toLowerCase().includes(q) ||
+        String(it.author).toLowerCase().includes(q);
 
       const matchesType =
         type === 'Servicio' ? it.type === 'Servicio' : it.type === 'Producto';
 
       return matchesQuery && matchesType;
     });
-  }, [query, type, distance, order]);
+  }, [allAds, query, type, distance, order]);
 
   return (
     <AuthenticatedLayout user={auth.user}>
@@ -88,19 +99,17 @@ export default function Advertisement({ auth }: Props) {
 
       <div className="w-full flex justify-center px-4 py-6">
         <div className="w-full max-w-md space-y-4">
-          {/* Header card */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-start justify-between gap-3">
               <h1 className="text-lg font-semibold">Publicaciones</h1>
 
-              <button
-                type="button"
-                className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
-                onClick={() => console.log('Crear publicación')}
+              <Link
+                href="/Advertisement/create"
+                className="w-9 h-9 rounded-lg border border-gray-300 bg-white flex items-center justify-center hover:bg-gray-50 active:bg-gray-100"
                 aria-label="Crear publicación"
               >
                 +
-              </button>
+              </Link>
             </div>
 
             <p className="mt-2 text-sm text-gray-600">
@@ -126,9 +135,8 @@ export default function Advertisement({ auth }: Props) {
             </div>
           </div>
 
-          {/* List */}
           <div className="space-y-3">
-            {filtered.map((it) => (
+            {filtered.map((it: any) => (
               <AdCard key={it.id} item={it} />
             ))}
           </div>
@@ -137,4 +145,3 @@ export default function Advertisement({ auth }: Props) {
     </AuthenticatedLayout>
   );
 }
-

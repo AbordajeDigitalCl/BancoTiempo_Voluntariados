@@ -13,13 +13,12 @@ type Ad = {
   mode: 'Oferta' | 'Demanda';
   status?: AdStatus;
   author?: string;
-  imageUrl?: string;
-  createdAt?: string;
+  imageUrl?: string | null;
+  imageUrls?: string[];
 };
 
 function StatusPill({ status }: { status: AdStatus }) {
   const label = status === 'active' ? 'Activa' : status === 'paused' ? 'Pausada' : 'Finalizada';
-
   const cls =
     status === 'active'
       ? 'bg-green-50 text-green-700 border-green-200'
@@ -34,35 +33,64 @@ function StatusPill({ status }: { status: AdStatus }) {
   );
 }
 
-const url = {
-  createAd: '/editarpublicacion',
-  myAds: '/MisPublicaciones',
-  chat: '/Mensajes',
-  detail: (id: number) => `/serviceview/${id}`,
-  edit: (id: number) => `/editarpublicacion/${id}`,
-  status: (id: number) => `/advertisement/${id}/status`,
-  destroy: (id: number) => `/advertisement/${id}`,
-};
-
-
 export default function Advertisement({ auth, createdAds }: any) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
-  const ads: Ad[] = useMemo(
-    () =>
-      (createdAds ?? []).map((x: any) => ({
-        ...x,
-        status: (x.status ?? 'active') as AdStatus,
-      })),
-    [createdAds]
-  );
+  // ✅ filtros reales
+  const [q, setQ] = useState('');
+  const [typeFilter, setTypeFilter] = useState<'Servicio' | 'Producto' | 'all'>('all');
+  const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
+
+  const ads: Ad[] = useMemo(() => {
+    return (createdAds ?? []).map((x: any) => ({
+      ...x,
+      status: (x.status ?? 'active') as AdStatus,
+      imageUrls: (x.imageUrls ?? []) as string[],
+    }));
+  }, [createdAds]);
+
+  const filteredAds: Ad[] = useMemo(() => {
+    const query = q.trim().toLowerCase();
+
+    let list = [...ads];
+
+    // type filter
+    if (typeFilter !== 'all') {
+      list = list.filter((a) => a.type === typeFilter);
+    }
+
+    // search filter
+    if (query.length) {
+      list = list.filter((a) => {
+        const hay = `${a.title ?? ''} ${a.description ?? ''} ${a.author ?? ''}`.toLowerCase();
+        return hay.includes(query);
+      });
+    }
+
+    // sort
+    list.sort((a, b) => (sort === 'newest' ? b.id - a.id : a.id - b.id));
+
+    return list;
+  }, [ads, q, typeFilter, sort]);
+
+  function isOwner(ad: Ad) {
+    return (ad.author ?? '') === (auth?.user?.name ?? '');
+  }
+
+  function getCover(ad: Ad) {
+    return ad.imageUrls?.[0] || ad.imageUrl || 'https://picsum.photos/seed/demo/900/600';
+  }
+
+  function closeMenu() {
+    setOpenMenuId(null);
+  }
 
   return (
     <AuthenticatedLayout user={auth.user}>
       <Head title="Publicaciones" />
 
-      <div className="w-full flex justify-center px-4 py-6">
-        <div className="w-full max-w-3xl space-y-4">
+      <div className="w-full flex justify-center px-4 py-6" onClick={() => closeMenu()}>
+        <div className="w-full max-w-3xl space-y-4" onClick={(e) => e.stopPropagation()}>
           {/* Header / filtros */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-start justify-between gap-3">
@@ -72,7 +100,7 @@ export default function Advertisement({ auth, createdAds }: any) {
               </div>
 
               <Link
-                href={url.createAd}
+                href="/Advertisement/create"
                 className="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-200 hover:bg-gray-50"
                 title="Crear publicación"
               >
@@ -83,60 +111,85 @@ export default function Advertisement({ auth, createdAds }: any) {
             <div className="mt-4 grid gap-3">
               <input
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Buscar"
+                placeholder="Buscar por título, descripción o autor"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
               />
 
               <div className="grid grid-cols-2 gap-3">
-                <button className="rounded-lg border border-gray-200 py-2 text-sm font-medium hover:bg-gray-50">
+                <button
+                  type="button"
+                  onClick={() => setTypeFilter((prev) => (prev === 'Servicio' ? 'all' : 'Servicio'))}
+                  className={`rounded-lg border py-2 text-sm font-medium hover:bg-gray-50 ${
+                    typeFilter === 'Servicio' ? 'border-black' : 'border-gray-200'
+                  }`}
+                >
                   Servicio
                 </button>
-                <button className="rounded-lg border border-gray-200 py-2 text-sm font-medium hover:bg-gray-50">
+
+                <button
+                  type="button"
+                  onClick={() => setTypeFilter((prev) => (prev === 'Producto' ? 'all' : 'Producto'))}
+                  className={`rounded-lg border py-2 text-sm font-medium hover:bg-gray-50 ${
+                    typeFilter === 'Producto' ? 'border-black' : 'border-gray-200'
+                  }`}
+                >
                   Producto
                 </button>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <select className="rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                {/* Distancia: si aún no tienes esa data, lo dejamos visual */}
+                <select className="rounded-lg border border-gray-200 px-3 py-2 text-sm" defaultValue="Distancia">
                   <option>Distancia</option>
                   <option>1 km</option>
                   <option>5 km</option>
                   <option>10 km</option>
                 </select>
 
-                <select className="rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                <select
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                  value={sort === 'newest' ? 'Más recientes' : 'Más antiguas'}
+                  onChange={(e) => setSort(e.target.value === 'Más antiguas' ? 'oldest' : 'newest')}
+                >
                   <option>Más recientes</option>
                   <option>Más antiguas</option>
                 </select>
               </div>
 
               <div className="text-sm text-gray-600">
-                <Link href={url.myAds} className="underline hover:text-gray-900">
+                <Link href="/MyAdvertisements" className="underline hover:text-gray-900">
                   Ir a Mis publicaciones
                 </Link>
+              </div>
+
+              <div className="text-xs text-gray-500">
+                Mostrando <b>{filteredAds.length}</b> de <b>{ads.length}</b>
               </div>
             </div>
           </div>
 
           {/* Listado */}
-          {ads.length === 0 ? (
+          {filteredAds.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <div className="text-sm text-gray-600">
-                Aún no hay publicaciones. Crea una con el botón <b>+</b>.
-              </div>
+              <div className="text-sm text-gray-600">No hay publicaciones con esos filtros.</div>
             </div>
           ) : (
             <div className="space-y-4">
-              {ads.map((ad) => (
+              {filteredAds.map((ad) => (
                 <div key={ad.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className="relative">
-                    <img
-                      src={ad.imageUrl || 'https://picsum.photos/seed/demo/900/600'}
-                      alt={ad.title}
-                      className="h-56 w-full object-cover"
-                    />
+                    {/* ✅ Click en la imagen abre detalle */}
+                    <button
+                      type="button"
+                      onClick={() => router.visit(`/Advertisement/${ad.id}`)}
+                      className="block w-full text-left"
+                      title="Ver detalle"
+                    >
+                      <img src={getCover(ad)} alt={ad.title} className="h-56 w-full object-cover" />
+                    </button>
 
-                    <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
-                      <span className="bg-white/90 rounded-full px-3 py-1 text-xs">Hace 8 horas</span>
+                    <div className="absolute top-3 left-3 flex flex-wrap gap-2">
                       <span className="bg-white/90 rounded-full px-3 py-1 text-xs">{ad.type}</span>
                       <span className="bg-white/90 rounded-full px-3 py-1 text-xs">{ad.mode}</span>
                       <span className="bg-white/90 rounded-full px-3 py-1 text-xs">
@@ -146,50 +199,91 @@ export default function Advertisement({ auth, createdAds }: any) {
 
                     <div className="absolute top-3 right-3">
                       <button
-                        onClick={() => setOpenMenuId(openMenuId === ad.id ? null : ad.id)}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === ad.id ? null : ad.id);
+                        }}
                         className="w-10 h-10 rounded-full bg-white/90 border border-gray-200 flex items-center justify-center hover:bg-white"
-                        title="Acción"
+                        title="Acciones"
                       >
                         ⋮
                       </button>
 
                       {openMenuId === ad.id && (
-                        <div className="absolute right-0 mt-2 w-52 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden z-10">
-                          <Link href={url.detail(ad.id)} className="block px-4 py-2 text-sm hover:bg-gray-50">
-                            Ver detalle
-                          </Link>
+                        <div
+                          className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden z-10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {isOwner(ad) ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  closeMenu();
+                                  router.visit(`/Advertisement/${ad.id}/edit`);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                              >
+                                Editar
+                              </button>
 
-                          <Link href={url.edit(ad.id)} className="block px-4 py-2 text-sm hover:bg-gray-50">
-                            Editar (solo dueño)
-                          </Link>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  closeMenu();
+                                  router.patch(`/Advertisement/${ad.id}/status`, { status: 'paused' });
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                              >
+                                Pausar
+                              </button>
 
-                          <button
-                            onClick={() => router.patch(url.status(ad.id), { status: 'paused' })}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
-                          >
-                            Pausar (solo dueño)
-                          </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  closeMenu();
+                                  router.patch(`/Advertisement/${ad.id}/status`, { status: 'active' });
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                              >
+                                Activar
+                              </button>
 
-                          <button
-                            onClick={() => router.patch(url.status(ad.id), { status: 'active' })}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
-                          >
-                            Activar (solo dueño)
-                          </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  closeMenu();
+                                  router.patch(`/Advertisement/${ad.id}/status`, { status: 'finished' });
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                              >
+                                Finalizar
+                              </button>
 
-                          <button
-                            onClick={() => router.patch(url.status(ad.id), { status: 'finished' })}
-                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
-                          >
-                            Finalizar (solo dueño)
-                          </button>
-
-                          <button
-                            onClick={() => router.delete(url.destroy(ad.id))}
-                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                          >
-                            Eliminar (solo dueño)
-                          </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  closeMenu();
+                                  if (confirm('¿Eliminar publicación?')) router.delete(`/Advertisement/${ad.id}`);
+                                }}
+                                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                              >
+                                Eliminar
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                closeMenu();
+                                if (confirm('¿Reportar esta publicación?')) router.post(`/Advertisement/${ad.id}/report`);
+                              }}
+                              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                            >
+                              Reportar publicación
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -202,13 +296,18 @@ export default function Advertisement({ auth, createdAds }: any) {
 
                     <div className="mt-4 flex items-center justify-end gap-3">
                       <Link
-                        href={url.chat}
+                        href="/chat"
                         className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
                       >
                         Chat
                       </Link>
-                      <button className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm text-white hover:bg-gray-900">
-                        Acción
+
+                      <button
+                        type="button"
+                        onClick={() => router.visit(`/Advertisement/${ad.id}`)}
+                        className="inline-flex items-center justify-center rounded-lg bg-black px-4 py-2 text-sm text-white hover:bg-gray-900"
+                      >
+                        Ver detalle
                       </button>
                     </div>
                   </div>
@@ -216,6 +315,7 @@ export default function Advertisement({ auth, createdAds }: any) {
               ))}
             </div>
           )}
+
         </div>
       </div>
     </AuthenticatedLayout>

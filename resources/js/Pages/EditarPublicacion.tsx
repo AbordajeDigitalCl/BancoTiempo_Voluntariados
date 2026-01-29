@@ -15,7 +15,6 @@ type Item = {
 };
 
 export default function EditarPublicacion({ auth, item }: { auth: any; item: Item | null }) {
-  // ✅ Si el backend no encontró el item, no rompemos la app
   if (!item) {
     return (
       <AuthenticatedLayout user={auth.user}>
@@ -48,8 +47,6 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
   function submit(e: React.FormEvent) {
     e.preventDefault();
 
-    // ✅ PATCH a la ruta real /Advertisement/{id}
-    // ✅ Laravel responde redirect()->route('myadvertisements'), o sea redirige solo
     patch(route('advertisement.update', item!.id));
   }
 

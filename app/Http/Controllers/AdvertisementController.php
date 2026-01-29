@@ -61,7 +61,7 @@ class AdvertisementController extends Controller
             'type' => ['required', 'in:Servicio,Producto'],
             'mode' => ['required', 'in:Oferta,Demanda'],
             'images' => ['nullable', 'array'],
-            'images.*' => ['file', 'image', 'max:4096'], // 4MB por foto
+            'images.*' => ['file', 'image', 'max:4096'],
         ]);
 
         $imageUrls = [];
@@ -105,7 +105,6 @@ class AdvertisementController extends Controller
 
         foreach ($createdAds as $ad) {
             if ((string)($ad['id'] ?? '') === (string)$id) {
-                // Solo el dueño puede cambiar estado
                 if (($ad['author'] ?? null) === $request->user()->name) {
                     $ad['status'] = $request->input('status');
                 }
@@ -123,7 +122,7 @@ class AdvertisementController extends Controller
         $createdAds = session('created_ads', []);
 
         $createdAds = array_values(array_filter($createdAds, function ($ad) use ($id, $request) {
-            // solo borras los tuyos
+
             if (($ad['author'] ?? null) !== $request->user()->name) return true;
             return (string)($ad['id'] ?? '') !== (string)$id;
         }));

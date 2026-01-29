@@ -73,16 +73,15 @@ type SharedProps = {
     };
 };
 
-// ✅ Evita que Ziggy rompa toda la app si una ruta no existe.
 function safeRoute(name: string, fallback: string) {
     try {
-        // @ts-ignore Ziggy global
+
         if (typeof route === 'function' && typeof route().has === 'function' && route().has(name)) {
-            // @ts-ignore
+
             return route(name);
         }
     } catch (e) {
-        // ignore
+
     }
     return fallback;
 }
@@ -98,14 +97,14 @@ export default function Authenticated({
     const unreadNotifications = Number(props?.nav?.badges?.notifications ?? 0);
     const unreadMessages = Number(props?.nav?.badges?.messages ?? 0);
 
-    // ✅ Fallbacks por URL (ajústalos si tus URLs reales son otras)
+
     const hrefDashboard = safeRoute('dashboard', '/dashboard');
-    const hrefAdvertisement = safeRoute('advertisement', '/Advertisement'); // o /advertisement
+    const hrefAdvertisement = safeRoute('advertisement', '/Advertisement');
     const hrefChat = safeRoute('chat', '/chat');
     const hrefProfile = safeRoute('verperfil', '/verperfil');
     const hrefEditService = safeRoute('editarservicio', '/editarservicio');
     const hrefEditPost = safeRoute('editarpublicacion', '/editarpublicacion');
-    const hrefNotifications = safeRoute('notifications', '/Notificaciones'); // o /notifications
+    const hrefNotifications = safeRoute('notifications', '/Notificaciones');
     const hrefLogout = safeRoute('logout', '/logout');
 
     return (

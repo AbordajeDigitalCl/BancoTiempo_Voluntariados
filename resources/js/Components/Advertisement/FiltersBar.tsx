@@ -48,7 +48,6 @@ export default function FiltersBar({
 }: Props) {
   return (
     <div className="space-y-2">
-      {/* Tabs */}
       <div className="grid grid-cols-2 gap-2 rounded-xl bg-gray-50 p-2 border border-gray-200">
         <Tab active={type === 'Servicio'} onClick={() => onTypeChange('Servicio')}>
           Servicio
@@ -58,7 +57,6 @@ export default function FiltersBar({
         </Tab>
       </div>
 
-      {/* Selects */}
       <div className="grid grid-cols-2 gap-2">
         <select
           value={distance}

@@ -79,7 +79,6 @@ export default function Dashboard({ auth }: any) {
       <Head title="Banco de tiempo" />
 
       <div className="w-full">
-        {/* Hero más profesional */}
         <div className="w-full bg-gradient-to-b from-blue-600 to-blue-700">
           <div className="mx-auto max-w-6xl px-4 py-12">
             <div className="max-w-3xl">

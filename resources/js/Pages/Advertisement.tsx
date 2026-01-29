@@ -36,7 +36,7 @@ function StatusPill({ status }: { status: AdStatus }) {
 export default function Advertisement({ auth, createdAds }: any) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
-  // ✅ filtros reales
+
   const [q, setQ] = useState('');
   const [typeFilter, setTypeFilter] = useState<'Servicio' | 'Producto' | 'all'>('all');
   const [sort, setSort] = useState<'newest' | 'oldest'>('newest');
@@ -91,7 +91,6 @@ export default function Advertisement({ auth, createdAds }: any) {
 
       <div className="w-full flex justify-center px-4 py-6" onClick={() => closeMenu()}>
         <div className="w-full max-w-3xl space-y-4" onClick={(e) => e.stopPropagation()}>
-          {/* Header / filtros */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -139,7 +138,6 @@ export default function Advertisement({ auth, createdAds }: any) {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                {/* Distancia: si aún no tienes esa data, lo dejamos visual */}
                 <select className="rounded-lg border border-gray-200 px-3 py-2 text-sm" defaultValue="Distancia">
                   <option>Distancia</option>
                   <option>1 km</option>
@@ -179,7 +177,6 @@ export default function Advertisement({ auth, createdAds }: any) {
               {filteredAds.map((ad) => (
                 <div key={ad.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   <div className="relative">
-                    {/* ✅ Click en la imagen abre detalle */}
                     <button
                       type="button"
                       onClick={() => router.visit(`/Advertisement/${ad.id}`)}

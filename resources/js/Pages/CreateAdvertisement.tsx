@@ -60,7 +60,7 @@ export default function CreateAdvertisement({ auth }: any) {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    post('/Advertisement'); // backend redirige a /MyAdvertisements
+    post('/Advertisement');
   }
 
   return (
@@ -137,7 +137,6 @@ export default function CreateAdvertisement({ auth }: any) {
                 />
               </div>
 
-              {/* ✅ Fotos */}
               <div>
                 <div className="flex items-center justify-between">
                   <label className="block text-xs text-gray-600 mb-1">Fotos (opcional, máx. 5)</label>

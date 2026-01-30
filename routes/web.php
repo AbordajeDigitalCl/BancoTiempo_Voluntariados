@@ -1,79 +1,193 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-use Illuminate\Http\Request;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
-
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect()->route('dashboard');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
 
-Route::get('/ServiceView', function () {
-    return Inertia::render('ServiceView');
-})->middleware(['auth', 'verified'])->name('serviceview');
+    Route::get('/dashboard', function () {
+        return Inertia::render('Dashboard');
+    })->name('dashboard');
 
-Route::get('/chat', function () {
-    return Inertia::render('Chat');
-})->middleware(['auth', 'verified'])->name('chat');
 
-Route::get('/VerPerfil', function () {
-    return Inertia::render('VerPerfil');
-})->middleware(['auth', 'verified'])->name('verperfil');
+    Route::get('/Advertisement', function (Request $request) {
+        $createdAds = session('created_ads', []);
+        return Inertia::render('Advertisement', [
+            'createdAds' => $createdAds,
+        ]);
+    })->name('advertisement');
 
-Route::get('/EditarServicio', function () {
-    return Inertia::render('EditarServicio');
-})->middleware(['auth', 'verified'])->name('editarservicio');
 
-Route::get('/EditarPublicacion', function () {
-    return Inertia::render('EditarPublicacion');
-})->middleware(['auth', 'verified'])->name('editarpublicacion');
+    Route::get('/Advertisement/{id}', function (Request $request, $id) {
+        $createdAds = session('created_ads', []);
+        $item = collect($createdAds)->firstWhere('id', (int)$id);
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+        return Inertia::render('AdvertisementShow', [
+            'item' => $item ?: null,
+        ]);
+    })->name('advertisement.show');
+
+
+    Route::get('/MyAdvertisements', function (Request $request) {
+        $createdAds = session('created_ads', []);
+        return Inertia::render('MyAdvertisements', [
+            'createdAds' => $createdAds,
+        ]);
+    })->name('myadvertisements');
+
+
+    Route::get('/Advertisement/create', function () {
+        return Inertia::render('CreateAdvertisement');
+    })->name('advertisement.create');
+
+
+    Route::post('/Advertisement', function (Request $request) {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:80'],
+            'description' => ['required', 'string', 'max:1000'],
+            'hours' => ['required', 'integer', 'min:1', 'max:999'],
+            'type' => ['required', 'in:Servicio,Producto'],
+            'mode' => ['required', 'in:Oferta,Demanda'],
+            'imageUrls' => ['nullable', 'array'],
+        ]);
+
+        $createdAds = session('created_ads', []);
+        $id = count($createdAds) > 0 ? (max(array_column($createdAds, 'id')) + 1) : 1;
+
+        $imgs = $data['imageUrls'] ?? [];
+        $imgs = array_slice($imgs, 0, 5);
+
+        $new = [
+            'id' => $id,
+            'title' => $data['title'],
+            'description' => $data['description'],
+            'hours' => (int)$data['hours'],
+            'type' => $data['type'],
+            'mode' => $data['mode'],
+            'status' => 'active',
+            'author' => $request->user()->name,
+            'imageUrls' => $imgs,
+            'imageUrl' => count($imgs) ? $imgs[0] : null, // compat
+        ];
+
+        $createdAds[] = $new;
+        session(['created_ads' => $createdAds]);
+
+        return redirect()->route('myadvertisements');
+    })->name('advertisement.store');
+
+
+    Route::get('/Advertisement/{id}/edit', function (Request $request, $id) {
+        $createdAds = session('created_ads', []);
+        $item = collect($createdAds)->firstWhere('id', (int)$id);
+
+        return Inertia::render('EditarPublicacion', [
+            'item' => $item ?: null,
+        ]);
+    })->name('advertisement.edit');
+
+
+    Route::patch('/Advertisement/{id}', function (Request $request, $id) {
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:80'],
+            'description' => ['required', 'string', 'max:1000'],
+            'hours' => ['required', 'integer', 'min:1', 'max:999'],
+            'type' => ['required', 'in:Servicio,Producto'],
+            'mode' => ['required', 'in:Oferta,Demanda'],
+            'imageUrls' => ['nullable', 'array'],
+        ]);
+
+        $createdAds = session('created_ads', []);
+        $idx = collect($createdAds)->search(fn ($x) => (int)$x['id'] === (int)$id);
+        if ($idx === false) return redirect()->route('myadvertisements');
+
+        if (($createdAds[$idx]['author'] ?? '') !== $request->user()->name) {
+            return redirect()->route('myadvertisements');
+        }
+
+        $createdAds[$idx]['title'] = $data['title'];
+        $createdAds[$idx]['description'] = $data['description'];
+        $createdAds[$idx]['hours'] = (int)$data['hours'];
+        $createdAds[$idx]['type'] = $data['type'];
+        $createdAds[$idx]['mode'] = $data['mode'];
+
+        $imgs = $data['imageUrls'] ?? [];
+        $imgs = array_slice($imgs, 0, 5);
+
+        $createdAds[$idx]['imageUrls'] = $imgs;
+        $createdAds[$idx]['imageUrl'] = count($imgs) ? $imgs[0] : null;
+
+        session(['created_ads' => $createdAds]);
+
+        return redirect()->route('myadvertisements');
+    })->name('advertisement.update');
+
+    Route::patch('/Advertisement/{id}/status', function (Request $request, $id) {
+        $data = $request->validate([
+            'status' => ['required', 'in:active,paused,finished'],
+        ]);
+
+        $createdAds = session('created_ads', []);
+        $idx = collect($createdAds)->search(fn ($x) => (int)$x['id'] === (int)$id);
+        if ($idx === false) return redirect()->back();
+
+        if (($createdAds[$idx]['author'] ?? '') !== $request->user()->name) {
+            return redirect()->back();
+        }
+
+        $createdAds[$idx]['status'] = $data['status'];
+        session(['created_ads' => $createdAds]);
+
+        return redirect()->back();
+    })->name('advertisement.status');
+
+    // Eliminar (autor)
+    Route::delete('/Advertisement/{id}', function (Request $request, $id) {
+        $createdAds = session('created_ads', []);
+        $createdAds = array_values(array_filter($createdAds, function ($x) use ($id, $request) {
+            if ((int)$x['id'] !== (int)$id) return true;
+            return ($x['author'] ?? '') !== $request->user()->name;
+        }));
+
+        session(['created_ads' => $createdAds]);
+        return redirect()->back();
+    })->name('advertisement.destroy');
+
+    // reportes
+    Route::post('/Advertisement/{id}/report', function (Request $request, $id) {
+        $reports = session('ad_reports', []);
+        $reports[] = [
+            'ad_id' => (int)$id,
+            'by' => $request->user()->name,
+            'at' => now()->toDateTimeString(),
+        ];
+        session(['ad_reports' => $reports]);
+
+        return redirect()->back();
+    })->name('advertisement.report');
+
+    //otras vistas
+
+    Route::get('/chat', function () {
+        return Inertia::render('Chat');
+    })->name('chat');
+
+    Route::get('/verperfil', function () {
+        return Inertia::render('VerPerfil');
+    })->name('verperfil');
+
+    Route::get('/editarservicio', function () {
+        return Inertia::render('EditarServicio');
+    })->name('editarservicio');
+
+    Route::get('/Notificaciones', function () {
+        return Inertia::render('Notifications');
+    })->name('notifications');
 });
 
-Route::get('/z', function(){
-    return "abc";
-});
-
-
-
-require __DIR__.'/auth.php';
-
-Route::post('count', function (Request $request) {
-    return response()->json([
-        'message' => $request->message,
-    ]);
-});
-
-Route::post('select3', function (Request $request) {
-    return response()->json([
-        ['id' => 1, 'value' => 'option1', 'label' => 'Option 1'],
-        ['id' => 2, 'value' => 'option2', 'label' => 'Option 2'],
-    ]);
-});
+require __DIR__ . '/auth.php';

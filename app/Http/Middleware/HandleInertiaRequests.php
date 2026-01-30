@@ -29,10 +29,50 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+
+        $messageNotifications = [];
+        $unreadMessageCount = 0;
+
+        if ($user) {
+            $all = $user->notifications()->latest()->take(15)->get();
+
+            $onlyMessages = $all->filter(function ($n) {
+                $type = (string) ($n->type ?? '');
+                return str_contains($type, 'NewMessageNotification') || str_contains($type, 'Message');
+            })->values();
+
+            $messageNotifications = $onlyMessages->map(function ($n) {
+                $data = (array) ($n->data ?? []);
+
+                return [
+                    'id' => $n->id,
+                    'title' => $data['title'] ?? 'Mensaje',
+                    'body' => $data['body'] ?? 'Tienes un nuevo mensaje.',
+                    'time' => $n->created_at ? $n->created_at->diffForHumans() : '',
+                    'unread' => $n->read_at === null,
+                    'conversation_id' => $data['conversation_id'] ?? null,
+                ];
+            });
+
+            $unreadMessageCount = $onlyMessages->whereNull('read_at')->count();
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+            ],
+            // Para tu UI actual (si lo quieres usar en Notifications.tsx)
+            'messageNotifications' => $messageNotifications,
+            'unreadMessageCount' => $unreadMessageCount,
+
+            // Para el dropdown del AuthenticatedLayout (BADGES)
+            'nav' => [
+                'badges' => [
+                    'messages' => $unreadMessageCount,
+                    'notifications' => 0, // por ahora NO usamos notificaciones “generales”
+                ],
             ],
         ];
     }

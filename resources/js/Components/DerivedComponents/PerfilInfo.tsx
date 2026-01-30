@@ -1,5 +1,10 @@
-//export default function PerfilInfo(props) {
-export default function PerfilInfo() {
+import { PerfilData } from '@/mockData/datosMockPerfil';
+
+interface PerfilInfoProps {
+    perfil: PerfilData;
+}
+
+export default function PerfilInfo({ perfil }: PerfilInfoProps) {
     return (
             <div className="w-full h-full flex items-center justify-center mt-3 bg-white">    
                 <div className="w-full p-4 box-border">
@@ -7,27 +12,29 @@ export default function PerfilInfo() {
                         {/* Left image (1/3 width) */}
                         <div className="w-1/3 h-full">
                             <img
-                                src="https://picsum.photos/200"
+                                src={perfil.foto}
                                 alt="Profile"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover rounded-lg"
                             />
                         </div>
 
                         {/* Middle list (1/3 width) */}
                         <div className="w-1/3 h-full flex flex-col justify-start pl-4 text-left">
-                            <span className="text-2xl font-bold">Juan Perez N.</span>
-                            <span className="text-xs text-left">Godín que cambia cosas</span>
-                            <span className="font-bold">Ciudad</span>
-                            <span className="font-bold">Telefono</span>
-                            <span className="font-bold">Dirección</span>
-                            <span className="font-bold">Correo Electronico</span>
-                            <span className="font-bold">Fecha de nacimiento</span>
+                            <span className="text-2xl font-bold">{perfil.nombre}</span>
+                            <span className="text-xs text-left">{perfil.titulo}</span>
+                            <div className="mt-2 space-y-1">
+                                <div><span className="font-bold">Ciudad:</span> <span>{perfil.ciudad}</span></div>
+                                <div><span className="font-bold">Teléfono:</span> <span>{perfil.telefono}</span></div>
+                                <div><span className="font-bold">Dirección:</span> <span>{perfil.direccion}</span></div>
+                                <div><span className="font-bold">Email:</span> <span>{perfil.email}</span></div>
+                                <div><span className="font-bold">Fecha de Nacimiento:</span> <span>{perfil.fechaNacimiento}</span></div>
+                            </div>
                         </div>
 
                         {/* Right section (1/3 width) aligned right */}
                         <div className="w-1/3 h-full flex flex-col justify-start items-end pr-4">
                             <div className="flex items-center text-right">
-                                <span className="text-xl font-bold mr-2">38 horas</span>
+                                <span className="text-xl font-bold mr-2">{perfil.saldoHoras} horas</span>
                                 <div className="flex flex-col items-center">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -47,7 +54,7 @@ export default function PerfilInfo() {
                                 </div>
                             </div>
                         <span className="text-gray-500 text-xs mt-2 text-right">
-                            Expiran el 30/04/2025
+                            Expiran el {perfil.fechaExpiracion}
                         </span>
                         </div>
                     </div>

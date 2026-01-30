@@ -43,6 +43,14 @@ Route::get('/VerPerfil', function () {
     return Inertia::render('VerPerfil');
 })->middleware(['auth', 'verified'])->name('verperfil');
 
+Route::get('/EditarPerfil', function () {
+    return Inertia::render('EditarPerfil');
+})->middleware(['auth', 'verified'])->name('editarperfil');
+
+Route::get('/MenuHeader', function () {
+    return Inertia::render('MenuHeader');
+})->middleware(['auth', 'verified'])->name('menuheader');
+
 Route::get('/EditarServicio', function () {
     return Inertia::render('EditarServicio');
 })->middleware(['auth', 'verified'])->name('editarservicio');

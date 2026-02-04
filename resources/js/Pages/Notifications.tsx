@@ -26,7 +26,7 @@ export default function Notifications({ auth }: any) {
               <div>
                 <h1 className="text-lg font-semibold">Notificaciones</h1>
                 <p className="mt-1 text-sm text-gray-600">
-                  Solo mensajes. {unreadCount > 0 ? `Tienes ${unreadCount} sin leer.` : 'No tienes mensajes sin leer.'}
+                   {unreadCount > 0 ? `Tienes ${unreadCount} sin leer.` : 'No tienes mensajes sin leer.'}
                 </p>
               </div>
 

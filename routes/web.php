@@ -5,8 +5,15 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
-});
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return Inertia::render('Welcome', [
+        'laravelVersion' => app()->version(),
+        'phpVersion' => PHP_VERSION,
+    ]);
+})->name('welcome');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -62,7 +69,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'status' => 'active',
             'author' => $request->user()->name,
             'imageUrls' => $imgs,
-            'imageUrl' => count($imgs) ? $imgs[0] : null, 
+            'imageUrl' => count($imgs) ? $imgs[0] : null,
         ];
 
         $createdAds[] = $new;

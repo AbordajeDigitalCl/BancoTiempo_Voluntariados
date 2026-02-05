@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
 
 type Noti = {
   id: string | number;
@@ -15,6 +16,12 @@ export default function Notifications({ auth }: any) {
   const items: Noti[] = (page?.props?.messageNotifications ?? []) as Noti[];
   const unreadCount: number = Number(page?.props?.unreadMessageCount ?? 0);
 
+  useEffect(() => {
+    if (unreadCount > 0) {
+      router.post('/Notificaciones/read-all', {}, { preserveScroll: true });
+    }
+  }, []);
+
   return (
     <AuthenticatedLayout user={auth.user}>
       <Head title="Notificaciones" />
@@ -26,7 +33,7 @@ export default function Notifications({ auth }: any) {
               <div>
                 <h1 className="text-lg font-semibold">Notificaciones</h1>
                 <p className="mt-1 text-sm text-gray-600">
-                   {unreadCount > 0 ? `Tienes ${unreadCount} sin leer.` : 'No tienes mensajes sin leer.'}
+                  {unreadCount > 0 ? `Tienes ${unreadCount} sin leer.` : 'No tienes mensajes sin leer.'}
                 </p>
               </div>
 

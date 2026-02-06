@@ -1,6 +1,23 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 
+type DashboardStats = {
+  me?: {
+    name?: string;
+  };
+  counts?: {
+    myAdsTotal?: number;
+    myAdsAvailable?: number;
+    myAdsSoldOut?: number;
+    myAdsDisabled?: number;
+    adsActiveTotal?: number;
+  };
+  badges?: {
+    unreadMessages?: number;
+    unreadNotifications?: number;
+  };
+};
+
 function Card({
   title,
   subtitle,
@@ -44,17 +61,8 @@ function IconGrid() {
 function IconUser() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-gray-700">
-      <path
-        d="M20 21a8 8 0 1 0-16 0"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-      <path
-        d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
+      <path d="M20 21a8 8 0 1 0-16 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
 }
@@ -73,7 +81,28 @@ function IconInfo() {
   );
 }
 
-export default function Dashboard({ auth }: any) {
+function StatPill({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm">
+      <span className="text-gray-600">{label}</span>
+      <span className="font-semibold text-gray-900 tabular-nums">{value}</span>
+    </div>
+  );
+}
+
+export default function Dashboard({ auth, stats }: { auth: any; stats?: DashboardStats }) {
+  const counts = stats?.counts ?? {};
+  const badges = stats?.badges ?? {};
+
+  const myTotal = Number(counts.myAdsTotal ?? 0);
+  const myAvailable = Number(counts.myAdsAvailable ?? 0);
+  const mySoldOut = Number(counts.myAdsSoldOut ?? 0);
+  const myDisabled = Number(counts.myAdsDisabled ?? 0);
+  const adsActiveTotal = Number(counts.adsActiveTotal ?? 0);
+
+  const unreadMessages = Number(badges.unreadMessages ?? 0);
+  const unreadNotifications = Number(badges.unreadNotifications ?? 0);
+
   return (
     <AuthenticatedLayout user={auth.user}>
       <Head title="Banco de tiempo" />
@@ -95,15 +124,14 @@ export default function Dashboard({ auth }: any) {
           </div>
         </div>
 
-        {/* Cards */}
         <div className="mx-auto max-w-6xl px-4 py-10">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <Card
-              title="Publicaciones"
-              subtitle="Explora ofertas y demandas disponibles."
-              icon={<IconGrid />}
-            >
-              <ul className="space-y-2 text-sm text-gray-600">
+            <Card title="Publicaciones" subtitle="Explora ofertas y demandas disponibles." icon={<IconGrid />}>
+              <div className="space-y-2">
+                <StatPill label="Publicaciones activas" value={adsActiveTotal} />
+              </div>
+
+              <ul className="mt-4 space-y-2 text-sm text-gray-600">
                 <li className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gray-300" />
                   Búsqueda por título, descripción o autor
@@ -131,21 +159,13 @@ export default function Dashboard({ auth }: any) {
               </div>
             </Card>
 
-            <Card
-              title="Mis publicaciones"
-              subtitle="Gestiona lo que tú has creado."
-              icon={<IconUser />}
-            >
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gray-300" />
-                  Editar, eliminar y ver estado
-                </li>
-                <li className="flex gap-2">
-                  <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gray-300" />
-                  Acceso directo a tus publicaciones
-                </li>
-              </ul>
+            <Card title="Mis publicaciones" subtitle="Gestiona lo que tú has creado." icon={<IconUser />}>
+              <div className="space-y-2">
+                <StatPill label="Total" value={myTotal} />
+                <StatPill label="Disponibles" value={myAvailable} />
+                <StatPill label="Agotadas" value={mySoldOut} />
+                <StatPill label="Desactivadas" value={myDisabled} />
+              </div>
 
               <div className="mt-6 flex flex-col gap-2">
                 <Link
@@ -164,11 +184,7 @@ export default function Dashboard({ auth }: any) {
               </div>
             </Card>
 
-            <Card
-              title="Nosotros"
-              subtitle="Información institucional (pendiente)."
-              icon={<IconInfo />}
-            >
+            <Card title="Nosotros" subtitle="Información institucional (pendiente)." icon={<IconInfo />}>
               <div className="rounded-lg border border-dashed border-gray-300 p-5 text-sm text-gray-500">
                 (Sección “Nosotros” pendiente de contenido)
               </div>
@@ -185,7 +201,30 @@ export default function Dashboard({ auth }: any) {
                   href={route('chat')}
                   className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
                 >
-                  Mensajes
+                  <span className="inline-flex items-center gap-2">
+                    Mensajes
+                    {unreadMessages > 0 && (
+                      <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                        {unreadMessages}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              </div>
+
+              <div className="mt-3">
+                <Link
+                  href={route('notifications')}
+                  className="inline-flex w-full items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    Notificaciones
+                    {unreadNotifications > 0 && (
+                      <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                        {unreadNotifications}
+                      </span>
+                    )}
+                  </span>
                 </Link>
               </div>
 

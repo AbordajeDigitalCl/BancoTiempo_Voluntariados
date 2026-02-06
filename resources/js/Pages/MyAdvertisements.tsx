@@ -15,15 +15,16 @@ type Ad = {
   author?: string;
   imageUrl?: string;
   imageUrls?: string[];
+  created_at?: string | null;
 };
 
-function StatusPill({ status }: { status: AdStatus }) {
-  const label = status === 'active' ? 'Activa' : status === 'paused' ? 'Pausada' : 'Finalizada';
+function OwnerStatusPill({ status }: { status: AdStatus }) {
+  const label = status === 'active' ? 'Disponible' : status === 'finished' ? 'Agotado' : 'Desactivado';
   const cls =
     status === 'active'
       ? 'bg-green-50 text-green-700 border-green-200'
-      : status === 'paused'
-      ? 'bg-yellow-50 text-yellow-800 border-yellow-200'
+      : status === 'finished'
+      ? 'bg-red-50 text-red-700 border-red-200'
       : 'bg-gray-50 text-gray-700 border-gray-200';
 
   return (
@@ -35,7 +36,12 @@ function StatusPill({ status }: { status: AdStatus }) {
 
 export default function MyAdvertisements({ auth, createdAds }: any) {
   const myAds: Ad[] = useMemo(() => {
-    return (createdAds ?? []).filter((ad: any) => ad.author === auth.user.name);
+    const list = (createdAds ?? []).filter((ad: any) => ad.author === auth.user.name);
+    const getTime = (x: any) => {
+      const t = x.created_at ? Date.parse(x.created_at) : NaN;
+      return Number.isFinite(t) ? t : x.id;
+    };
+    return list.sort((a: any, b: any) => getTime(b) - getTime(a));
   }, [createdAds, auth.user.name]);
 
   const pickImage = (ad: Ad) => {
@@ -52,7 +58,6 @@ export default function MyAdvertisements({ auth, createdAds }: any) {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-start justify-between">
             <div>
               <h1 className="text-lg font-semibold">Mis publicaciones</h1>
-              <p className="mt-1 text-sm text-gray-600">Aquí ves solo las publicaciones que tú creaste.</p>
             </div>
 
             <Link
@@ -77,7 +82,7 @@ export default function MyAdvertisements({ auth, createdAds }: any) {
                   <div className="p-4">
                     <div className="flex items-center justify-between gap-2">
                       <h2 className="font-semibold text-gray-900">{ad.title}</h2>
-                      <StatusPill status={(ad.status ?? 'active') as AdStatus} />
+                      <OwnerStatusPill status={(ad.status ?? 'active') as AdStatus} />
                     </div>
 
                     <p className="mt-1 text-sm text-gray-600">{ad.description}</p>
@@ -90,8 +95,17 @@ export default function MyAdvertisements({ auth, createdAds }: any) {
                         Editar
                       </Link>
 
+                      <Link
+                        href={route('advertisement.show', ad.id)}
+                        className="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50"
+                      >
+                        Ver detalle
+                      </Link>
+
                       <button
-                        onClick={() => router.delete(route('advertisement.destroy', ad.id))}
+                        onClick={() => {
+                          if (confirm('¿Eliminar publicación?')) router.delete(route('advertisement.destroy', ad.id));
+                        }}
                         className="px-3 py-1.5 rounded-lg border text-sm text-red-600 hover:bg-red-50"
                       >
                         Eliminar

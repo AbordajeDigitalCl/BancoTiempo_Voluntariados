@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type AdStatus = 'active' | 'paused' | 'finished';
 
@@ -36,12 +36,59 @@ function StatusPill({ status }: { status: AdStatus }) {
 export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad | null }) {
   const images = useMemo<string[]>(() => {
     const arr = (item?.imageUrls ?? []).filter(Boolean);
-    if (arr.length) return arr;
+    if (arr.length) return arr.slice(0, 5);
     if (item?.imageUrl) return [item.imageUrl];
     return ['https://picsum.photos/seed/demo/1200/800'];
   }, [item]);
 
   const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [open, setOpen] = useState(false);
+  const intervalRef = useRef<number | null>(null);
+
+  const isOwner = (item?.author ?? '') === (auth?.user?.name ?? '');
+
+  function goTo(idx: number) {
+    if (!images.length) return;
+    const safe = ((idx % images.length) + images.length) % images.length;
+    setActive(safe);
+  }
+
+  function next() {
+    goTo(active + 1);
+  }
+
+  function prev() {
+    goTo(active - 1);
+  }
+
+  useEffect(() => {
+    if (intervalRef.current) window.clearInterval(intervalRef.current);
+    if (!images.length || images.length === 1 || paused || open) return;
+
+    intervalRef.current = window.setInterval(() => {
+      setActive((i) => (i + 1) % images.length);
+    }, 4500);
+
+    return () => {
+      if (intervalRef.current) window.clearInterval(intervalRef.current);
+    };
+  }, [images.length, paused, open]);
+
+  useEffect(() => {
+    if (active >= images.length) setActive(0);
+  }, [images.length, active]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (!open) return;
+      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'ArrowRight') goTo(active + 1);
+      if (e.key === 'ArrowLeft') goTo(active - 1);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, active, images.length]);
 
   if (!item) {
     return (
@@ -60,11 +107,83 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
     );
   }
 
-  const isOwner = (item.author ?? '') === (auth?.user?.name ?? '');
-
   return (
     <AuthenticatedLayout user={auth.user}>
       <Head title={item.title} />
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: scale(0.995); }
+          to { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center px-3"
+          onClick={() => setOpen(false)}
+        >
+          <div className="relative w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="absolute -top-12 right-0 rounded-full bg-white/10 hover:bg-white/20 text-white w-10 h-10 flex items-center justify-center"
+              aria-label="Cerrar"
+              title="Cerrar"
+            >
+              ✕
+            </button>
+
+            <div className="relative rounded-xl overflow-hidden bg-black">
+              <img
+                key={`modal-${images[active]}`}
+                src={images[active]}
+                alt={`Imagen-${active}`}
+                className="w-full max-h-[80vh] object-contain select-none opacity-0 animate-[fadeIn_250ms_ease-out_forwards]"
+                draggable={false}
+              />
+
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={prev}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 hover:bg-white/25 text-white w-10 h-10 flex items-center justify-center"
+                    aria-label="Anterior"
+                    title="Anterior"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    onClick={next}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 hover:bg-white/25 text-white w-10 h-10 flex items-center justify-center"
+                    aria-label="Siguiente"
+                    title="Siguiente"
+                  >
+                    ›
+                  </button>
+
+                  <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2">
+                    {images.map((_, i) => (
+                      <button
+                        key={`modal-dot-${i}`}
+                        type="button"
+                        onClick={() => goTo(i)}
+                        className={`h-2.5 rounded-full transition-all ${
+                          i === active ? 'w-6 bg-white/80' : 'w-2.5 bg-white/30 hover:bg-white/45'
+                        }`}
+                        aria-label={`Ir a imagen ${i + 1}`}
+                        title={`Imagen ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="w-full flex justify-center px-4 py-6">
         <div className="w-full max-w-3xl space-y-4">
@@ -80,9 +199,28 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="relative">
-              <img src={images[active]} alt="Imagen" className="w-full h-[420px] object-cover" />
-              <div className="absolute top-3 left-3 flex gap-2">
+            <div
+              className="relative group"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+            >
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="block w-full text-left"
+                aria-label="Abrir imagen en grande"
+                title="Ver imagen"
+              >
+                <img
+                  key={images[active]}
+                  src={images[active]}
+                  alt={`Imagen-${active}`}
+                  className="w-full h-[420px] sm:h-[420px] max-sm:h-[360px] object-cover select-none opacity-0 animate-[fadeIn_250ms_ease-out_forwards]"
+                  draggable={false}
+                />
+              </button>
+
+              <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
                 <span className="bg-white/90 rounded-full px-3 py-1 text-xs">{item.type}</span>
                 <span className="bg-white/90 rounded-full px-3 py-1 text-xs">{item.mode}</span>
                 <span className="bg-white/90 rounded-full px-3 py-1 text-xs">
@@ -90,6 +228,45 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
                 </span>
                 <span className="bg-white/90 rounded-full px-3 py-1 text-xs">{item.hours} horas</span>
               </div>
+
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={prev}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white border border-gray-200 shadow-sm w-9 h-9 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Anterior"
+                    title="Anterior"
+                  >
+                    <span className="text-lg leading-none">‹</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={next}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white border border-gray-200 shadow-sm w-9 h-9 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Siguiente"
+                    title="Siguiente"
+                  >
+                    <span className="text-lg leading-none">›</span>
+                  </button>
+
+                  <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2">
+                    {images.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => goTo(i)}
+                        className={`h-2.5 rounded-full transition-all ${
+                          i === active ? 'w-6 bg-black/70' : 'w-2.5 bg-black/25 hover:bg-black/40'
+                        }`}
+                        aria-label={`Ir a imagen ${i + 1}`}
+                        title={`Imagen ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
             {images.length > 1 && (
@@ -99,8 +276,10 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => setActive(idx)}
-                      className={`rounded-lg overflow-hidden border ${idx === active ? 'border-black' : 'border-gray-200'}`}
+                      onClick={() => goTo(idx)}
+                      className={`rounded-lg overflow-hidden border ${
+                        idx === active ? 'border-black' : 'border-gray-200'
+                      }`}
                       title={`Foto ${idx + 1}`}
                     >
                       <img src={src} alt={`thumb-${idx}`} className="h-16 w-24 object-cover" />
@@ -119,10 +298,7 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
               </div>
 
               <div className="mt-5 flex flex-wrap gap-2 justify-end">
-                <Link
-                  href="/chat"
-                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
-                >
+                <Link href="/chat" className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50">
                   Chat
                 </Link>
 
@@ -135,6 +311,7 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
                     >
                       Editar
                     </button>
+
                     <button
                       type="button"
                       onClick={() => {
@@ -159,7 +336,6 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
               </div>
             </div>
           </div>
-
         </div>
       </div>
     </AuthenticatedLayout>

@@ -12,9 +12,18 @@ type Ad = {
   type: 'Servicio' | 'Producto';
   mode: 'Oferta' | 'Demanda';
   status?: AdStatus;
+
+
+  user_id?: number | null;
+
+
   author?: string;
+
+
   imageUrl?: string | null;
   imageUrls?: string[];
+  image_urls?: string[]; 
+
   created_at?: string | null;
 };
 
@@ -86,13 +95,22 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
   const debounceRef = useRef<number | null>(null);
   const firstRunRef = useRef(true);
 
+
   const ads: Ad[] = useMemo(() => {
-    return (createdAds ?? []).map((x: any) => ({
-      ...x,
-      status: (x.status ?? 'active') as AdStatus,
-      imageUrls: (x.imageUrls ?? []) as string[],
-      created_at: x.created_at ?? null,
-    }));
+    return (createdAds ?? []).map((x: any) => {
+      const normalizedImageUrls: string[] =
+        (x.imageUrls ?? x.image_urls ?? x.images ?? []) as string[];
+
+      return {
+        ...x,
+        status: (x.status ?? 'active') as AdStatus,
+        imageUrls: normalizedImageUrls,
+        created_at: x.created_at ?? null,
+
+        author: x.author ?? x?.user?.name ?? x?.user_name ?? x?.username ?? undefined,
+        user_id: x.user_id ?? x?.user?.id ?? null,
+      } as Ad;
+    });
   }, [createdAds]);
 
   const filteredAds: Ad[] = useMemo(() => {
@@ -117,11 +135,14 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
     return list;
   }, [ads, q, typeFilter, sort]);
 
+
   function isOwner(ad: Ad) {
-    return (ad.author ?? '') === (auth?.user?.name ?? '');
+    const myId = auth?.user?.id ?? null;
+    return myId != null && ad.user_id != null && Number(ad.user_id) === Number(myId);
   }
 
   function getCover(ad: Ad) {
+
     return ad.imageUrls?.[0] || ad.imageUrl || 'https://picsum.photos/seed/demo/900/600';
   }
 

@@ -63,15 +63,13 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
-            // Para tu UI actual (si lo quieres usar en Notifications.tsx)
             'messageNotifications' => $messageNotifications,
             'unreadMessageCount' => $unreadMessageCount,
 
-            // Para el dropdown del AuthenticatedLayout (BADGES)
             'nav' => [
                 'badges' => [
                     'messages' => $unreadMessageCount,
-                    'notifications' => 0, // por ahora NO usamos notificaciones “generales”
+                    'notifications' => 0,
                 ],
             ],
         ];

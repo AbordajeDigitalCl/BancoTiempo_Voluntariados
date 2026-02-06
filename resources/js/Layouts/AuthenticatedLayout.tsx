@@ -2,7 +2,7 @@ import { PropsWithChildren, ReactNode, useState } from 'react';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 export default function Authenticated({
   user,
@@ -11,9 +11,17 @@ export default function Authenticated({
 }: PropsWithChildren<{ user: any; header?: ReactNode }>) {
   const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
+
+  const page: any = usePage();
+  const unreadMessageCount: number = Number(page?.props?.unreadMessageCount ?? 0);
+  const unreadNotificationCount: number = Number(page?.props?.unreadNotificationCount ?? 0);
+
+
+  const totalBadge = unreadMessageCount + unreadNotificationCount;
+
   const hasRoute = (name: string) => {
     try {
-      // @ts-ignore
+
       return typeof route === 'function' && !!route().has?.(name);
     } catch {
       return false;
@@ -22,7 +30,7 @@ export default function Authenticated({
 
   const safeRoute = (name: string, fallback: string) => {
     try {
-      // @ts-ignore
+
       if (typeof route === 'function' && route().has?.(name)) return route(name);
     } catch {}
     return fallback;
@@ -34,6 +42,17 @@ export default function Authenticated({
   const hrefChat = safeRoute('chat', '/chat');
   const hrefProfile = safeRoute('profile.edit', '/profile');
   const hrefNotifications = safeRoute('notifications', '/Notificaciones');
+
+
+  const CountBadge = ({ value }: { value: number }) => {
+    if (!value || value <= 0) return null;
+
+    return (
+      <span className="ml-2 inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+        {value}
+      </span>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -58,6 +77,7 @@ export default function Authenticated({
 
                 <NavLink href={hrefChat} active={hasRoute('chat') ? route().current('chat') : false}>
                   Mensajes
+                  <CountBadge value={unreadMessageCount} />
                 </NavLink>
 
                 <NavLink
@@ -82,7 +102,15 @@ export default function Authenticated({
                         type="button"
                         className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
                       >
-                        {user.name}
+                        <span className="relative inline-flex items-center">
+                          {user.name}
+
+                          {totalBadge > 0 && (
+                            <span className="ml-2 inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                              {totalBadge}
+                            </span>
+                          )}
+                        </span>
 
                         <svg
                           className="ms-2 -me-0.5 h-4 w-4"
@@ -101,8 +129,28 @@ export default function Authenticated({
                   </Dropdown.Trigger>
 
                   <Dropdown.Content>
-                    <Dropdown.Link href={hrefChat}>Mensajes</Dropdown.Link>
-                    <Dropdown.Link href={hrefNotifications}>Notificaciones</Dropdown.Link>
+                    <Dropdown.Link href={hrefChat}>
+                      <span className="flex items-center justify-between">
+                        <span>Mensajes</span>
+                        {unreadMessageCount > 0 && (
+                          <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                            {unreadMessageCount}
+                          </span>
+                        )}
+                      </span>
+                    </Dropdown.Link>
+
+                    <Dropdown.Link href={hrefNotifications}>
+                      <span className="flex items-center justify-between">
+                        <span>Notificaciones</span>
+                        {unreadNotificationCount > 0 && (
+                          <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                            {unreadNotificationCount}
+                          </span>
+                        )}
+                      </span>
+                    </Dropdown.Link>
+
                     <Dropdown.Link href={hrefProfile}>Ver perfil</Dropdown.Link>
 
                     <div className="h-px bg-gray-100 my-1" />
@@ -146,26 +194,45 @@ export default function Authenticated({
             <ResponsiveNavLink href={hrefDashboard} active={hasRoute('dashboard') ? route().current('dashboard') : false}>
               Dashboard
             </ResponsiveNavLink>
+
             <ResponsiveNavLink href={hrefAds} active={hasRoute('advertisement') ? route().current('advertisement') : false}>
               Publicaciones
             </ResponsiveNavLink>
+
             <ResponsiveNavLink href={hrefChat} active={hasRoute('chat') ? route().current('chat') : false}>
-              Mensajes
+              <span className="flex items-center justify-between w-full">
+                <span>Mensajes</span>
+                {unreadMessageCount > 0 && (
+                  <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                    {unreadMessageCount}
+                  </span>
+                )}
+              </span>
             </ResponsiveNavLink>
+
             <ResponsiveNavLink
               href={hrefMyAds}
               active={hasRoute('myadvertisements') ? route().current('myadvertisements') : false}
             >
               Mis publicaciones
             </ResponsiveNavLink>
+
             <ResponsiveNavLink href={hrefProfile} active={hasRoute('profile.edit') ? route().current('profile.edit') : false}>
               Ver Perfil
             </ResponsiveNavLink>
+
             <ResponsiveNavLink
               href={hrefNotifications}
               active={hasRoute('notifications') ? route().current('notifications') : false}
             >
-              Notificaciones
+              <span className="flex items-center justify-between w-full">
+                <span>Notificaciones</span>
+                {unreadNotificationCount > 0 && (
+                  <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                    {unreadNotificationCount}
+                  </span>
+                )}
+              </span>
             </ResponsiveNavLink>
           </div>
 

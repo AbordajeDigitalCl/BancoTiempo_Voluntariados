@@ -32,7 +32,7 @@ export default function ServicioDropDown({ onTipoChange, tipoActual }: ServicioD
                     </button>
                 </Dropdown.Trigger>
 
-                <Dropdown.Content align="right" width="48">
+                <Dropdown.Content align="left" width="48">
                     <button 
                         onClick={() => handleTipoChange(null)}
                         className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"

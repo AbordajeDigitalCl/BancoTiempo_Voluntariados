@@ -38,7 +38,7 @@ export default function OrdenarDropDown({ onOrdenChange, ordenActual }: OrdenarD
                     </button>
                 </Dropdown.Trigger>
 
-                <Dropdown.Content align="right" width="48">
+                <Dropdown.Content align="left" width="48">
                     <button 
                         onClick={() => handleOrdenChange(null)}
                         className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"

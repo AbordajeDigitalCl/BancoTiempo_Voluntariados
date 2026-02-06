@@ -41,22 +41,22 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
     });
 
     return (
-        <form onSubmit={onSubmit} className="w-full max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
-            <h1 className="text-3xl font-bold mb-8 text-gray-800">Editar Información de Perfil</h1>
+        <form onSubmit={onSubmit} className="w-full max-w-4xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-md">
+            <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-gray-800">Editar Información de Perfil</h1>
 
-            {/* Sección de Foto */}
-            <div className="mb-8 pb-8 border-b border-gray-200">
-                <div className="flex items-center gap-6">
-                    {/* Foto actual */}
+            
+            <div className="mb-6 md:mb-8 pb-6 md:pb-8 border-b border-gray-200">
+                <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+                   
                     <img
                         src={previewFoto}
                         alt="Foto de perfil"
-                        className="w-32 h-32 rounded-full object-cover border-4 border-gray-300 flex-shrink-0"
+                        className="w-24 md:w-32 h-24 md:h-32 rounded-full object-cover border-4 border-gray-300 flex-shrink-0"
                     />
                     
-                    {/* Botón de cambiar foto */}
+                    
                     <label className="cursor-pointer flex-shrink-0">
-                        <div className="w-40 h-40 bg-gray-300 rounded-lg border-4 border-gray-400 flex flex-col items-center justify-end p-4 hover:bg-gray-400 transition">
+                        <div className="w-32 md:w-40 h-32 md:h-40 bg-gray-300 rounded-lg border-4 border-gray-400 flex flex-col items-center justify-end p-3 md:p-4 hover:bg-gray-400 transition">
                             <input
                                 type="file"
                                 accept="image/*"
@@ -70,7 +70,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                                     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
                                     input?.click();
                                 }}
-                                className="bg-white text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition"
+                                className="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition text-sm md:text-base"
                             >
                                 Actualizar foto
                             </button>
@@ -80,7 +80,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {/* Nombre */}
+               
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                         Nombre
@@ -95,7 +95,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     />
                 </div>
 
-                {/* Apellido Paterno */}
+               
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                         Apellido Paterno
@@ -110,7 +110,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     />
                 </div>
 
-                {/* Apellido Materno */}
+                
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                         Apellido Materno
@@ -125,7 +125,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     />
                 </div>
 
-                {/* Email */}
+                
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                         Correo Electrónico
@@ -140,7 +140,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     />
                 </div>
 
-                {/* Contraseña */}
+               
                 <PasswordInput
                     name="contrasena"
                     value={formData.contrasena}
@@ -151,7 +151,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     placeholder="Ingresa tu contraseña"
                 />
 
-                {/* Confirmar Contraseña */}
+             
                 <PasswordInput
                     name="confirmarContrasena"
                     value={formData.confirmarContrasena}
@@ -162,7 +162,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     placeholder="Confirma tu contraseña"
                 />
 
-                {/* Fecha de Nacimiento con calendario */}
+                
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                         Fecha de Nacimiento
@@ -176,7 +176,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     />
                 </div>
 
-                {/* Teléfono */}
+              
                 <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                         Teléfono
@@ -191,7 +191,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     />
                 </div>
 
-                {/* Dirección */}
+     
                 <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                         Dirección
@@ -206,7 +206,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     />
                 </div>
 
-                {/* Ciudad */}
+               
                 <div className="md:col-span-2">
                     <label className="block text-sm font-bold text-gray-700 mb-2">
                         Ciudad
@@ -222,18 +222,18 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                 </div>
             </div>
 
-            {/* Botones de acción */}
-            <div className="flex justify-between gap-4 mt-8">
+         
+            <div className="flex flex-col md:flex-row justify-between gap-3 md:gap-4 mt-6 md:mt-8">
                 <button
                     type="button"
                     onClick={() => window.history.back()}
-                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-bold"
+                    className="hidden md:inline-block px-4 md:px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-bold text-sm md:text-base"
                 >
                     Cancelar
                 </button>
                 <button
                     type="submit"
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-bold"
+                    className="w-full md:w-auto px-4 md:px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-bold text-sm md:text-base"
                 >
                     Guardar Cambios
                 </button>

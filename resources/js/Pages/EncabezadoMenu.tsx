@@ -7,13 +7,12 @@ export default function MenuHeader({ auth }: PageProps) {
     return (
         <AuthenticatedLayout user={auth.user}>
             <div className="w-full h-screen flex flex-col">
-                {/* Header con menú hamburguesa */}
                 <div className="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
                     <h1 className="text-2xl font-bold text-gray-800">Menú Hamburguesa</h1>
                     <MenuHamburguesa usuario={mockUsuarioHeader} opciones={mockOpcionesMenu} />
                 </div>
 
-                {/* Contenido principal */}
+                
                 <div className="flex-1 p-6">
                     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
                         <h2 className="text-xl font-bold text-gray-800 mb-4">Vista de Ejemplo</h2>
@@ -26,7 +25,6 @@ export default function MenuHeader({ auth }: PageProps) {
                             <li>Nombre de Usuario - Ir al perfil</li>
                             <li>Cerrar Sesión - Salir de la aplicación</li>
                         </ul>
-//Corregir VerPerfil
                         <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
                             <p className="text-sm text-blue-800">
                                 💡 <strong>Nota:</strong> Este es un menú con datos ficticios. 

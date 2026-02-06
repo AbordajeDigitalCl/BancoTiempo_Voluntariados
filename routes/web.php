@@ -30,6 +30,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('MenuHeader');
     })->middleware(['auth', 'verified'])->name('menuheader');
 
+    Route::get('/Administrar-Usuarios', function () {
+        return Inertia::render('AdministrarUsuarios');
+    })->middleware(['auth', 'verified'])->name('administrar-usuarios');
+
+    Route::get('/Editar-Publicacion', function () {
+        return Inertia::render('SeleccionarPublicacionEditarCRIS');
+    })->middleware(['auth', 'verified'])->name('editar-publicacion');
+
+    Route::get('/Editar-Publicacion/{id}', function ($id) {
+        return Inertia::render('EditarMiPublicacionCRIS', [
+            'publicacionId' => $id
+        ]);
+    })->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
+
     Route::get('/Advertisement/{id}', function (Request $request, $id) {
         $createdAds = session('created_ads', []);
         $item = collect($createdAds)->firstWhere('id', (int)$id);
@@ -153,7 +167,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.status');
 
-    // Eliminar (autor)
+    
     Route::delete('/Advertisement/{id}', function (Request $request, $id) {
         $createdAds = session('created_ads', []);
         $createdAds = array_values(array_filter($createdAds, function ($x) use ($id, $request) {
@@ -165,7 +179,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.destroy');
 
-    // reportes
+  
     Route::post('/Advertisement/{id}/report', function (Request $request, $id) {
         $reports = session('ad_reports', []);
         $reports[] = [
@@ -178,7 +192,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.report');
 
-    //otras vistas
+    
 
     Route::get('/chat', function () {
         return Inertia::render('Chat');
@@ -187,6 +201,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/verperfil', function () {
         return Inertia::render('VerPerfil');
     })->name('verperfil');
+
+    Route::get('/verperfil-Admin/{id?}', function ($id = null) {
+        return Inertia::render('VerPerfilAdmin', [
+            'usuarioId' => $id
+        ]);
+    })->name('verperfil-admin');
+
+    Route::get('/perfil-Admin/{id?}', function ($id = null) {
+        return Inertia::render('PerfilAdmin', [
+            'usuarioId' => $id
+        ]);
+    })->name('perfil-admin');
 
     Route::get('/editarservicio', function () {
         return Inertia::render('EditarServicio');

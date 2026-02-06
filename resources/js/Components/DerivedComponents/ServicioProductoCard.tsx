@@ -1,5 +1,6 @@
 import { Servicio } from '@/mockData/datosMockPerfil';
 import { getStateColors, STATE_COLORS } from '@/constants/coloresEstado';
+import { Link } from '@inertiajs/react';
 
 interface ServicioProductoCardProps {
     servicio: Servicio;
@@ -17,17 +18,17 @@ export default function ServicioProductoCard({ servicio }: ServicioProductoCardP
     };
 
     return (
-      <div className="w-full max-w-4xl mx-auto p-4 bg-white flex" style={cardStyle}>
-      <div className="w-3/11 aspect-square mr-4">
-        <img
-          src={servicio.imagen}
-          alt={servicio.titulo}
-          className="w-full h-full object-cover rounded-lg"
-        />
-      </div>
+      <div className="w-full max-w-4xl mx-auto p-4 bg-white flex flex-col md:flex-row gap-4" style={cardStyle}>
+        <div className="w-full md:w-1/3 md:flex-shrink-0 h-48 md:h-64">
+          <img
+            src={servicio.imagen}
+            alt={servicio.titulo}
+            className="w-full h-full object-cover rounded-lg"
+          />
+        </div>
 
-      <div className="flex flex-col justify-start w-full">
-        <div className="flex items-start justify-between mb-2">
+        <div className="flex-1 flex flex-col justify-between w-full gap-3">
+        <div className="flex items-start justify-between">
           <div className="flex items-center">
             <div className="flex flex-col items-center mr-2">
               <svg
@@ -97,17 +98,17 @@ export default function ServicioProductoCard({ servicio }: ServicioProductoCardP
           </div>
         </div>
 
-        <h3 className="text-2xl font-bold text-left">
+        <h3 className="text-lg font-bold text-left">
           {servicio.titulo}
         </h3>
 
-        <p className="text-justify text-sm mt-2">
+        <p className="text-justify text-sm">
           {servicio.descripcion}
         </p>
 
-        <div className="flex justify-between items-end mt-4">
+        <div className="flex justify-between items-end">
           <div className="flex items-center gap-4">
-            <div className="flex flex-col items-start">
+            <Link href={`/Editar-Publicacion/${servicio.id}`} className="flex flex-col items-start hover:opacity-75 transition">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-6 h-6"
@@ -123,7 +124,7 @@ export default function ServicioProductoCard({ servicio }: ServicioProductoCardP
                 />
               </svg>
               <span className="text-xs">Editar</span>
-            </div>
+            </Link>
             <div className="flex flex-col items-start">
               <span className="text-xs text-gray-500">{new Date(servicio.fecha).toLocaleDateString('es-ES')}</span>
             </div>

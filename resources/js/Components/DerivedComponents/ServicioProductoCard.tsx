@@ -1,16 +1,34 @@
-export default function ServicioProductoCard() {
-    return (
-      <div className="w-full max-w-4xl mx-auto p-4 bg-white border-2 border-solid border-blue-400 flex">
-      <div className="w-3/11 aspect-square mr-4">
-        <img
-          src="https://picsum.photos/200"
-          alt="Service"
-          className="w-full h-full object-cover rounded-lg"
-        />
-      </div>
+import { Servicio } from '@/mockData/datosMockPerfil';
+import { getStateColors, STATE_COLORS } from '@/constants/coloresEstado';
+import { Link } from '@inertiajs/react';
 
-      <div className="flex flex-col justify-start w-full">
-        <div className="flex items-start justify-between mb-2">
+interface ServicioProductoCardProps {
+    servicio: Servicio;
+}
+
+export default function ServicioProductoCard({ servicio }: ServicioProductoCardProps) {
+    const { hex } = getStateColors(servicio.estado);
+    
+    const cardStyle = {
+        border: `2px solid ${hex}`
+    };
+    
+    const circleStyle = {
+        backgroundColor: hex
+    };
+
+    return (
+      <div className="w-full max-w-4xl mx-auto p-4 bg-white flex flex-col md:flex-row gap-4" style={cardStyle}>
+        <div className="w-full md:w-1/3 md:flex-shrink-0 h-48 md:h-64">
+          <img
+            src={servicio.imagen}
+            alt={servicio.titulo}
+            className="w-full h-full object-cover rounded-lg"
+          />
+        </div>
+
+        <div className="flex-1 flex flex-col justify-between w-full gap-3">
+        <div className="flex items-start justify-between">
           <div className="flex items-center">
             <div className="flex flex-col items-center mr-2">
               <svg
@@ -29,7 +47,7 @@ export default function ServicioProductoCard() {
               </svg>
               <span className="text-xs">Costo</span>
             </div>
-            <span className="text-base font-bold">5 horas</span>
+            <span className="text-base font-bold">{servicio.costo}</span>
           </div>
           <div className="flex gap-4">
             <div className="flex flex-col items-center">
@@ -47,9 +65,50 @@ export default function ServicioProductoCard() {
                   d="M15 12l4.5 4.5M4 4l7 7m0 0l-7 7"
                 />
               </svg>
-              <span className="text-xs">Servicio</span>
+              <span className="text-xs">{servicio.tipo}</span>
             </div>
             <div className="flex flex-col items-center">
+              {servicio.ofertaDemanda === 'Oferta' ? (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <text x="12" y="16" textAnchor="middle" fontSize="12" fill="currentColor">$</text>
+                </svg>
+              ) : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <text x="12" y="15" textAnchor="middle" fontSize="14" fontWeight="bold" fill="currentColor">?</text>
+                </svg>
+              )}
+              <span className="text-xs">{servicio.ofertaDemanda}</span>
+            </div>
+          </div>
+        </div>
+
+        <h3 className="text-lg font-bold text-left">
+          {servicio.titulo}
+        </h3>
+
+        <p className="text-justify text-sm">
+          {servicio.descripcion}
+        </p>
+
+        <div className="flex justify-between items-end">
+          <div className="flex items-center gap-4">
+            <Link href={`/Editar-Publicacion/${servicio.id}`} className="flex flex-col items-start hover:opacity-75 transition">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-6 h-6"
@@ -58,45 +117,21 @@ export default function ServicioProductoCard() {
                 stroke="currentColor"
                 strokeWidth="2"
               >
-                <circle cx="12" cy="12" r="10" />
-                <text x="12" y="16" textAnchor="middle" fontSize="12" fill="currentColor">$</text>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5a4 4 0 0 1-2.828 1.172L2 21l.5-2.672A4 4 0 0 1 3.5 15.5L17 3z"
+                />
               </svg>
-              <span className="text-xs">Oferta</span>
+              <span className="text-xs">Editar</span>
+            </Link>
+            <div className="flex flex-col items-start">
+              <span className="text-xs text-gray-500">{new Date(servicio.fecha).toLocaleDateString('es-ES')}</span>
             </div>
           </div>
-        </div>
-
-        <h3 className="text-2xl font-bold text-left">
-          Servicio afinación y balanceo
-        </h3>
-
-        <p className="text-justify text-sm mt-2">
-          Este servicio incluye una revisión detallada del motor y el sistema de suspensión. 
-          Asegura un mejor rendimiento del vehículo y extiende la vida útil de los componentes mecánicos. 
-          Ideal para mantenimiento preventivo trimestral.
-        </p>
-
-        <div className="flex justify-between items-end mt-4">
-          <div className="flex flex-col items-start">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M11 5h2M12 4v2m0 14v2m0-6l2 2m-2-2l-2 2m-6-6h2m12 0h2"
-              />
-            </svg>
-            <span className="text-xs">Editar</span>
-          </div>
           <div className="flex flex-col items-center">
-            <div className="w-6 h-6 rounded-full bg-blue-500"></div>
-            <span className="text-xs text-blue-500">Desactivado</span>
+            <div className="w-6 h-6 rounded-full" style={circleStyle}></div>
+            <span className="text-xs" style={{color: hex}}>{servicio.estado}</span>
           </div>
         </div>
       </div>

@@ -1,33 +1,51 @@
-//export default function PerfilInfo(props) {
-export default function PerfilInfo() {
+import { PerfilData } from '@/mockData/datosMockPerfil';
+import {Link} from "@inertiajs/react";
+interface PerfilInfoProps {
+    perfil: PerfilData;
+}
+
+export default function PerfilInfo({ perfil }: PerfilInfoProps) {
     return (
-            <div className="w-full h-full flex items-center justify-center mt-3 bg-white">    
+        <div className="w-full h-full bg-white">
+           
+            <div className="hidden md:flex items-center justify-center mt-3">
                 <div className="w-full p-4 box-border">
                     <div className="flex w-full h-max">
-                        {/* Left image (1/3 width) */}
-                        <div className="w-1/3 h-full">
+                        
+                        <div className="w-1/3 h-full relative">
                             <img
-                                src="https://picsum.photos/200"
+                                src={perfil.foto}
                                 alt="Profile"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover rounded-lg"
                             />
+                            
+                            <Link
+                                href="/EditarPerfil"
+                                className="absolute top-2 right-2 bg-black-200 rounded-full p-2 shadow-lg hover:bg-gray-100 transition flex flex-col items-center"
+                                title="Actualizar foto"
+                            >
+                                <span className="text-lg font-bold">✎</span>
+                                <span className="text-xs font-bold text-gray-700">Actualizar</span>
+                            </Link>
                         </div>
 
-                        {/* Middle list (1/3 width) */}
+                   
                         <div className="w-1/3 h-full flex flex-col justify-start pl-4 text-left">
-                            <span className="text-2xl font-bold">Juan Perez N.</span>
-                            <span className="text-xs text-left">Godín que cambia cosas</span>
-                            <span className="font-bold">Ciudad</span>
-                            <span className="font-bold">Telefono</span>
-                            <span className="font-bold">Dirección</span>
-                            <span className="font-bold">Correo Electronico</span>
-                            <span className="font-bold">Fecha de nacimiento</span>
+                            <span className="text-2xl font-bold">{perfil.nombre}</span>
+                            <span className="text-xs text-left">{perfil.titulo}</span>
+                            <div className="mt-2 space-y-1">
+                                <div><span className="font-bold">Ciudad:</span> <span>{perfil.ciudad}</span></div>
+                                <div><span className="font-bold">Teléfono:</span> <span>{perfil.telefono}</span></div>
+                                <div><span className="font-bold">Dirección:</span> <span>{perfil.direccion}</span></div>
+                                <div><span className="font-bold">Email:</span> <span>{perfil.email}</span></div>
+                                <div><span className="font-bold">Fecha de Nacimiento:</span> <span>{perfil.fechaNacimiento}</span></div>
+                            </div>
                         </div>
 
-                        {/* Right section (1/3 width) aligned right */}
+                       
                         <div className="w-1/3 h-full flex flex-col justify-start items-end pr-4">
                             <div className="flex items-center text-right">
-                                <span className="text-xl font-bold mr-2">38 horas</span>
+                                <span className="text-xl font-bold mr-2">{perfil.saldoHoras} horas</span>
                                 <div className="flex flex-col items-center">
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -47,11 +65,71 @@ export default function PerfilInfo() {
                                 </div>
                             </div>
                         <span className="text-gray-500 text-xs mt-2 text-right">
-                            Expiran el 30/04/2025
+                            Expiran el {perfil.fechaExpiracion}
                         </span>
                         </div>
                     </div>
                 </div>
             </div>
+
+            
+            <div className="flex md:hidden flex-col items-center py-6 px-4">
+                
+                <div className="flex flex-col items-center text-center mb-4">
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="text-xl font-bold">{perfil.saldoHoras} horas</span>
+                        <div className="flex flex-col items-center">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="w-6 h-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                            >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                        </svg>
+                            <span className="text-sm">Saldo</span>
+                        </div>
+                    </div>
+                    <span className="text-gray-500 text-xs mt-1">
+                        Expiran el {perfil.fechaExpiracion}
+                    </span>
+                </div>
+
+             
+                <div className="relative mb-4 w-40 h-40">
+                    <img
+                        src={perfil.foto}
+                        alt="Profile"
+                        className="w-full h-full object-cover rounded-lg"
+                    />
+                    
+                    <Link
+                        href="/EditarPerfil"
+                        className="absolute top-2 right-2 bg-gray-200 rounded-full p-2 shadow-lg hover:bg-gray-300 transition flex flex-col items-center text-xs"
+                        title="Actualizar foto"
+                    >
+                        <span className="text-lg font-bold">✎</span>
+                    </Link>
+                </div>
+
+                <div className="w-full text-left">
+                    <span className="text-2xl font-bold block">{perfil.nombre}</span>
+                    <span className="text-xs text-gray-600 block mb-3">{perfil.titulo}</span>
+                    <div className="space-y-2 text-sm">
+                        <div><span className="font-bold">Ciudad:</span> <span>{perfil.ciudad}</span></div>
+                        <div><span className="font-bold">Teléfono:</span> <span>{perfil.telefono}</span></div>
+                        <div><span className="font-bold">Dirección:</span> <span>{perfil.direccion}</span></div>
+                        <div><span className="font-bold">Email:</span> <span>{perfil.email}</span></div>
+                        <div><span className="font-bold">Fecha de Nacimiento:</span> <span>{perfil.fechaNacimiento}</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 }

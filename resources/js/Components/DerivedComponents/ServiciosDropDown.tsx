@@ -1,12 +1,22 @@
+import React from 'react';
 import Dropdown from '../Dropdown';
 
-export default function ServicioDropDown() {
+interface ServicioDropDownProps {
+    onTipoChange: (tipo: 'Servicio' | 'Producto' | null) => void;
+    tipoActual: 'Servicio' | 'Producto' | null;
+}
+
+export default function ServicioDropDown({ onTipoChange, tipoActual }: ServicioDropDownProps) {
+    const handleTipoChange = (tipo: 'Servicio' | 'Producto' | null) => {
+        onTipoChange(tipo);
+    };
+
     return (
         <div className="flex justify-end">
             <Dropdown>
                 <Dropdown.Trigger>
                     <button className="inline-flex items-center px-3 py-2 border text-sm leading-4 font-medium rounded-md bg-white hover:bg-gray-50">
-                    Servicio
+                    Servicio {tipoActual && `(${tipoActual})`}
                         <svg
                             className="ml-2 -mr-0.5 h-4 w-4"
                             xmlns="http://www.w3.org/2000/svg"
@@ -20,14 +30,29 @@ export default function ServicioDropDown() {
                         />
                         </svg>
                     </button>
-                    </Dropdown.Trigger>
+                </Dropdown.Trigger>
 
-                    <Dropdown.Content align="right" width="48">
-                    <Dropdown.Link href="/servicio">Servicio</Dropdown.Link>
-                    <Dropdown.Link href="/producto">Producto</Dropdown.Link>
+                <Dropdown.Content align="left" width="48">
+                    <button 
+                        onClick={() => handleTipoChange(null)}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Todos
+                    </button>
+                    <button 
+                        onClick={() => handleTipoChange('Servicio')}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Servicio
+                    </button>
+                    <button 
+                        onClick={() => handleTipoChange('Producto')}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Producto
+                    </button>
                 </Dropdown.Content>
             </Dropdown>
         </div>
     );
 }
-

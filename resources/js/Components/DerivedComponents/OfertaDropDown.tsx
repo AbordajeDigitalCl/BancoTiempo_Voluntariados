@@ -1,12 +1,22 @@
+import React from 'react';
 import Dropdown from '../Dropdown';
 
-export default function ServicioDropDown() {
+interface OfertaDropDownProps {
+    onOfertaDemandaChange: (ofertaDemanda: 'Oferta' | 'Demanda' | null) => void;
+    ofertaDemandaActual: 'Oferta' | 'Demanda' | null;
+}
+
+export default function OfertaDropDown({ onOfertaDemandaChange, ofertaDemandaActual }: OfertaDropDownProps) {
+    const handleOfertaDemandaChange = (ofertaDemanda: 'Oferta' | 'Demanda' | null) => {
+        onOfertaDemandaChange(ofertaDemanda);
+    };
+
     return (
         <div className="flex justify-end">
             <Dropdown>
                 <Dropdown.Trigger>
                     <button className="inline-flex items-center px-3 py-2 border text-sm leading-4 font-medium rounded-md bg-white hover:bg-gray-50">
-                    Oferta
+                    Oferta {ofertaDemandaActual && `(${ofertaDemandaActual})`}
                         <svg
                             className="ml-2 -mr-0.5 h-4 w-4"
                             xmlns="http://www.w3.org/2000/svg"
@@ -20,11 +30,27 @@ export default function ServicioDropDown() {
                         />
                         </svg>
                     </button>
-                    </Dropdown.Trigger>
+                </Dropdown.Trigger>
 
-                    <Dropdown.Content align="right" width="48">
-                    <Dropdown.Link href="/perfil">Oferta</Dropdown.Link>
-                    <Dropdown.Link href="/configuracion">Demanda</Dropdown.Link>
+                <Dropdown.Content align="left" width="48">
+                    <button 
+                        onClick={() => handleOfertaDemandaChange(null)}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Todas
+                    </button>
+                    <button 
+                        onClick={() => handleOfertaDemandaChange('Oferta')}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Oferta
+                    </button>
+                    <button 
+                        onClick={() => handleOfertaDemandaChange('Demanda')}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Demanda
+                    </button>
                 </Dropdown.Content>
             </Dropdown>
         </div>

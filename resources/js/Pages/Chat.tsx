@@ -1,108 +1,204 @@
-import React from "react";
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head } from '@inertiajs/react';
+import FilaConversacion from '@/Components/DerivedComponents/FilaConversacion';
+import AreaChat from '@/Components/DerivedComponents/AreaChat';
+import BellNotificationButton from '@/Components/DerivedComponents/BellNotificationButton';
+import NotificacionesModalCRIS from '@/Components/DerivedComponents/NotificacionesModalCRIS';
+import { mockConversaciones } from '@/mockData/datosMockMensajes';
+import { mockMensajesConversaciones } from '@/mockData/datosMockChatMensajes';
+import { mockNotificaciones } from '@/mockData/datosMockNotificacionesCRIS';
+import { useState, useMemo, useEffect } from 'react';
+import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
-const people = [
-  {
-    id: 1,
-    image: "https://picsum.photos/100",
-    date: "19/05/2025",
-    name: "John Doe",
-    description: "Descripción breve en gris."
-  },
-  {
-    id: 2,
-    image: "https://picsum.photos/100",
-    date: "18/05/2025",
-    name: "Jane Smith",
-    description: "Otra descripción gris."
-  }
-  // Agrega más objetos según sea necesario
-];
+const CONVERSACIONES_PER_PAGE = 10;
 
-export default function SidebarWithContent() {
-  return (
-    <div className="grid grid-cols-[max-content_1fr] grid-rows-[auto_1fr_auto] h-screen w-screen bg-gray-100 overflow-hidden">
-      {/* Sidebar */}
-      <aside className="col-start-1 row-span-3 w-full max-w-xs bg-white p-4 overflow-hidden">
-        <div className="h-full pr-2 overflow-y-scroll scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 hover:scrollbar-thumb-gray-600 scrollbar-thumb-rounded-full scrollbar-track-rounded-full">
-          <div className="space-y-4">
-            {people.map((person) => (
-              <div
-                key={person.id}
-                className="flex bg-white shadow rounded-lg overflow-hidden"
-              >
-                <img
-                  src={person.image}
-                  alt={person.name}
-                  className="w-1/3 object-cover aspect-square"
-                />
-                <div className="flex flex-col justify-between p-2 w-2/3">
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span></span>
-                    <span>{person.date}</span>
-                  </div>
-                  <div className="text-xl font-bold">{person.name}</div>
-                  <div className="text-gray-500 text-sm">
-                    {person.description}
-                  </div>
+export default function Chat({ auth }: any) {
+    const [conversacionSeleccionada, setConversacionSeleccionada] = useState<number | null>(null);
+    const [conversacionesConEstado, setConversacionesConEstado] = useState(mockConversaciones);
+    const [conversacionesPaginadas, setConversacionesPaginadas] = useState(mockConversaciones.slice(0, CONVERSACIONES_PER_PAGE));
+    const [modalNotificacionesAbierto, setModalNotificacionesAbierto] = useState(false);
+    const [notificacionesConEstado, setNotificacionesConEstado] = useState(mockNotificaciones);
+
+
+    const tieneNotificacionesSinLeer = useMemo(
+        () => notificacionesConEstado.some((notif) => notif.mensajesNoLeidos > 0),
+        [notificacionesConEstado]
+    );
+
+    const conversacionActual = mockConversaciones.find((c) => c.id === conversacionSeleccionada);
+    const mensajesActuales = mockMensajesConversaciones.find(
+        (m) => m.conversacionId === conversacionSeleccionada
+    )?.mensajes || [];
+
+    const { isLoading, hasMore, observerTarget, resetPagination } = useInfiniteScroll({
+        itemsPerPage: CONVERSACIONES_PER_PAGE,
+        totalItems: conversacionesConEstado.length,
+        onLoadMore: (page) => {
+            const start = page * CONVERSACIONES_PER_PAGE;
+            const end = start + CONVERSACIONES_PER_PAGE;
+            setConversacionesPaginadas(prev => [
+                ...prev,
+                ...conversacionesConEstado.slice(start, end)
+            ]);
+        },
+    });
+
+    useEffect(() => {
+        const conversacionesActualizadas = conversacionesConEstado.map(conv => {
+            const paginada = conversacionesPaginadas.find(p => p.id === conv.id);
+            return paginada ? { ...paginada, ...conv } : conv;
+        });
+        setConversacionesPaginadas(conversacionesActualizadas.slice(0, conversacionesPaginadas.length));
+    }, [conversacionesConEstado]);
+
+    const handleSeleccionarConversacion = (conversacionId: number) => {
+        setConversacionSeleccionada(conversacionId);
+        setConversacionesConEstado((prevState) =>
+            prevState.map((conv) =>
+                conv.id === conversacionId
+                    ? { ...conv, mensajesNoLeidos: 0 }
+                    : conv
+            )
+        );
+        setNotificacionesConEstado((prevState) =>
+            prevState.map((notif) =>
+                notif.id === conversacionId
+                    ? { ...notif, mensajesNoLeidos: 0 }
+                    : notif
+            )
+        );
+    };
+
+    const handleSeleccionarUsuarioDesdeNotificaciones = (usuarioId: number) => {
+        const conversacion = conversacionesConEstado.find((c) => c.id === usuarioId);
+        if (conversacion) {
+            handleSeleccionarConversacion(usuarioId);
+        }
+    };
+
+    const handleMarcadasComoLeidas = (usuarioId: number) => {
+        setNotificacionesConEstado((prevState) =>
+            prevState.map((notif) =>
+                notif.id === usuarioId
+                    ? { ...notif, mensajesNoLeidos: 0 }
+                    : notif
+            )
+        );
+    };
+
+    return (
+        <AuthenticatedLayout user={auth.user}>
+            <Head title="Mensajes" />
+
+            <style>{`
+                .scrollbar-thin::-webkit-scrollbar {
+                    width: 8px;
+                }
+                .scrollbar-thin::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .scrollbar-thin::-webkit-scrollbar-thumb {
+                    background: #cbd5e1;
+                    border-radius: 4px;
+                }
+                .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+                    background: #94a3b8;
+                }
+                .scrollbar-thin {
+                    scrollbar-width: thin;
+                    scrollbar-color: #cbd5e1 transparent;
+                }
+            `}</style>
+
+            <div className="w-full flex justify-center px-4 py-6">
+                <div className="w-full max-w-6xl h-[calc(100vh-200px)] flex gap-4">
+                    <div className={`${conversacionSeleccionada ? 'hidden md:flex' : 'flex'} md:w-1/3 w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col`}>
+                        <div className="p-4 md:p-6 border-b border-gray-200 flex items-center justify-between relative">
+                            <h1 className="text-lg md:text-xl font-semibold text-gray-800">
+                                Mensajes
+                            </h1>
+                            <BellNotificationButton 
+                                hasNotifications={tieneNotificacionesSinLeer}
+                                onClick={() => setModalNotificacionesAbierto(!modalNotificacionesAbierto)}
+                            />
+                    
+                            <NotificacionesModalCRIS
+                                isOpen={modalNotificacionesAbierto}
+                                notificaciones={notificacionesConEstado}
+                                onClose={() => setModalNotificacionesAbierto(false)}
+                                onSeleccionarUsuario={handleSeleccionarUsuarioDesdeNotificaciones}
+                                onMarcadasComoLeidas={handleMarcadasComoLeidas}
+                            />
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto scrollbar-thin flex flex-col">
+                            <div className="flex-1">
+                                {conversacionesPaginadas.map((conversacion) => (
+                                    <FilaConversacion
+                                        key={conversacion.id}
+                                        conversacion={conversacion}
+                                        seleccionada={conversacionSeleccionada === conversacion.id}
+                                        onSeleccionar={handleSeleccionarConversacion}
+                                    />
+                                ))}
+                            </div>
+
+
+                            <div ref={observerTarget} className="flex justify-center py-4">
+                                {isLoading && (
+                                    <div className="text-center">
+                                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                    </div>
+                                )}
+                                {!hasMore && conversacionesPaginadas.length > 0 && (
+                                    <p className="text-gray-400 text-xs">No hay más conversaciones</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className={`${!conversacionSeleccionada ? 'hidden md:flex' : 'flex'} md:w-2/3 w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col`}>
+                        {conversacionSeleccionada && (
+                            <div className="md:hidden p-4 border-b border-gray-200 flex items-center gap-3">
+                                <button
+                                    onClick={() => setConversacionSeleccionada(null)}
+                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition font-medium"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="w-5 h-5"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M15 19l-7-7 7-7"
+                                        />
+                                    </svg>
+                                    Atrás
+                                </button>
+                            </div>
+                        )}
+                        {conversacionActual && mensajesActuales.length > 0 ? (
+                            <AreaChat
+                                conversacion={conversacionActual}
+                                mensajes={mensajesActuales}
+                            />
+                        ) : conversacionSeleccionada ? (
+                            <div className="flex items-center justify-center h-full text-gray-400">
+                                <p>Cargando chat...</p>
+                            </div>
+                        ) : (
+                            <div className="hidden md:flex items-center justify-center h-full text-gray-400">
+                                <p>Selecciona una conversación para empezar</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
-
-      {/* Top Card (modified layout) */}
-      <div className="col-start-2 row-start-1 flex w-full h-36 mb-0">
-        <img
-          src="https://picsum.photos/100"
-          alt="Preview"
-          className="w-1/6 object-cover aspect-square"
-        />
-        <div className="flex flex-col justify-between pl-4 pr-2 w-5/6">
-          <div className="pt-4 text-4xl font-bold text-left">John Doe</div>
-          <div className="text-gray-500 text-base text-left pb-2">Vista previa sin fecha</div>
-        </div>
-      </div>
-
-      {/* Scrollable Message Area */}
-      <main className="col-start-2 row-start-2 overflow-hidden">
-        <div className="h-full overflow-y-scroll space-y-4 pr-2 mb-4 scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200 hover:scrollbar-thumb-gray-600 scrollbar-thumb-rounded-full scrollbar-track-rounded-full">
-          {/* Left aligned message */}
-          <div className="max-w-2/3 w-2/3 bg-gray-300 text-black p-3 rounded-lg">
-            Cámara, ya quedó tu nave, ya nomás pasa por ella el domingo que ando libre.
-          </div>
-          <div className="text-gray-500 text-sm">19/05/2025 03:45 pm</div>
-
-          {/* Right aligned message */}
-          <div className="flex justify-end">
-            <div className="max-w-2/3 w-2/3 bg-blue-500 text-white p-3 rounded-lg text-right">
-              ¡Perfecto! Allí estaré, muchas gracias.
             </div>
-          </div>
-          <div className="flex justify-end text-gray-500 text-sm">19/05/2025 04:10 pm</div>
-        </div>
-      </main>
-
-      {/* Bottom Textarea & Buttons */}
-      <div className="col-start-2 row-start-3 bg-white px-4 py-3 flex items-end w-full">
-        <textarea
-          placeholder="Escribe algo..."
-          className="flex-1 resize-none p-2 rounded-md border border-gray-300 h-20"
-        ></textarea>
-        <div className="flex flex-col space-y-2 ml-4 items-center h-full justify-end">
-          <button className="flex flex-col items-center justify-center rounded-full bg-black text-white px-2 py-0.5 text-xs h-10">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
-              alt="Imagen"
-              className="w-4 h-4 mb-0.5"
-            />
-            <span className="text-[10px] leading-tight">Imagen</span>
-          </button>
-          <button className="rounded-full bg-white text-black border border-black px-4 py-1">
-            Enviar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+        </AuthenticatedLayout>
+    );
 }

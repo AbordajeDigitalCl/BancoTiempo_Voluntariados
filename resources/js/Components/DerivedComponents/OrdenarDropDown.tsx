@@ -1,12 +1,28 @@
+import React from 'react';
 import Dropdown from '../Dropdown';
 
-export default function ServicioDropDown() {
+interface OrdenarDropDownProps {
+    onOrdenChange: (orden: 'precio' | 'popular' | 'reciente' | null) => void;
+    ordenActual: 'precio' | 'popular' | 'reciente' | null;
+}
+
+export default function OrdenarDropDown({ onOrdenChange, ordenActual }: OrdenarDropDownProps) {
+    const labelOrden = 
+        ordenActual === 'precio' ? 'Precio' :
+        ordenActual === 'popular' ? 'Más Popular' :
+        ordenActual === 'reciente' ? 'Más Reciente' :
+        'Ordenar';
+
+    const handleOrdenChange = (orden: 'precio' | 'popular' | 'reciente' | null) => {
+        onOrdenChange(orden);
+    };
+
     return (
         <div className="flex justify-end">
             <Dropdown>
                 <Dropdown.Trigger>
                     <button className="inline-flex items-center px-3 py-2 border text-sm leading-4 font-medium rounded-md bg-white hover:bg-gray-50">
-                    Ordenar
+                    {labelOrden}
                         <svg
                             className="ml-2 -mr-0.5 h-4 w-4"
                             xmlns="http://www.w3.org/2000/svg"
@@ -20,12 +36,33 @@ export default function ServicioDropDown() {
                         />
                         </svg>
                     </button>
-                    </Dropdown.Trigger>
+                </Dropdown.Trigger>
 
-                    <Dropdown.Content align="right" width="48">
-                    <Dropdown.Link href="/precio">Precio</Dropdown.Link>
-                    <Dropdown.Link href="/popular">Mas Popular</Dropdown.Link>
-                    <Dropdown.Link method="post" href="/reciente" as="button">Mas Recientes</Dropdown.Link>
+                <Dropdown.Content align="left" width="48">
+                    <button 
+                        onClick={() => handleOrdenChange(null)}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Sin ordenar
+                    </button>
+                    <button 
+                        onClick={() => handleOrdenChange('precio')}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Precio
+                    </button>
+                    <button 
+                        onClick={() => handleOrdenChange('popular')}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Más Popular
+                    </button>
+                    <button 
+                        onClick={() => handleOrdenChange('reciente')}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Más Reciente
+                    </button>
                 </Dropdown.Content>
             </Dropdown>
         </div>

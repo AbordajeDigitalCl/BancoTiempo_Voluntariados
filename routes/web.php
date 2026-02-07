@@ -5,8 +5,15 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
-});
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    return Inertia::render('Welcome', [
+        'laravelVersion' => app()->version(),
+        'phpVersion' => PHP_VERSION,
+    ]);
+})->name('welcome');
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
@@ -44,14 +51,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
 
-    Route::get('/Advertisement/{id}', function (Request $request, $id) {
-        $createdAds = session('created_ads', []);
-        $item = collect($createdAds)->firstWhere('id', (int)$id);
-
-        return Inertia::render('AdvertisementShow', [
-            'item' => $item ?: null,
-        ]);
-    })->name('advertisement.show');
+    Route::get('/Advertisement/create', function () {
+        return Inertia::render('CreateAdvertisement');
+    })->name('advertisement.create');
 
 
     Route::get('/MyAdvertisements', function (Request $request) {
@@ -60,11 +62,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'createdAds' => $createdAds,
         ]);
     })->name('myadvertisements');
-
-
-    Route::get('/Advertisement/create', function () {
-        return Inertia::render('CreateAdvertisement');
-    })->name('advertisement.create');
 
 
     Route::post('/Advertisement', function (Request $request) {
@@ -93,7 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'status' => 'active',
             'author' => $request->user()->name,
             'imageUrls' => $imgs,
-            'imageUrl' => count($imgs) ? $imgs[0] : null, // compat
+            'imageUrl' => count($imgs) ? $imgs[0] : null,
         ];
 
         $createdAds[] = $new;
@@ -148,6 +145,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->route('myadvertisements');
     })->name('advertisement.update');
 
+
     Route::patch('/Advertisement/{id}/status', function (Request $request, $id) {
         $data = $request->validate([
             'status' => ['required', 'in:active,paused,finished'],
@@ -168,6 +166,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('advertisement.status');
 
     
+
     Route::delete('/Advertisement/{id}', function (Request $request, $id) {
         $createdAds = session('created_ads', []);
         $createdAds = array_values(array_filter($createdAds, function ($x) use ($id, $request) {
@@ -179,7 +178,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.destroy');
 
-  
+
     Route::post('/Advertisement/{id}/report', function (Request $request, $id) {
         $reports = session('ad_reports', []);
         $reports[] = [
@@ -192,7 +191,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.report');
 
-    
+
+    Route::get('/Advertisement/{id}', function (Request $request, $id) {
+        $createdAds = session('created_ads', []);
+        $item = collect($createdAds)->firstWhere('id', (int)$id);
+
+        return Inertia::render('AdvertisementShow', [
+            'item' => $item ?: null,
+        ]);
+    })->name('advertisement.show');
+
+
 
     Route::get('/chat', function () {
         return Inertia::render('Chat');

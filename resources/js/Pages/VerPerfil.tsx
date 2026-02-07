@@ -14,6 +14,7 @@ import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 const ITEMS_PER_PAGE = 5;
 
+
 export default function VerPerfil({ auth }: PageProps) {
     const [filtroTipo, setFiltroTipo] = useState<'Servicio' | 'Producto' | null>(null);
     const [filtroOfertaDemanda, setFiltroOfertaDemanda] = useState<'Oferta' | 'Demanda' | null>(null);

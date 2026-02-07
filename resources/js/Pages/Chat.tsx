@@ -19,6 +19,7 @@ export default function Chat({ auth }: any) {
     const [modalNotificacionesAbierto, setModalNotificacionesAbierto] = useState(false);
     const [notificacionesConEstado, setNotificacionesConEstado] = useState(mockNotificaciones);
 
+
     const tieneNotificacionesSinLeer = useMemo(
         () => notificacionesConEstado.some((notif) => notif.mensajesNoLeidos > 0),
         [notificacionesConEstado]

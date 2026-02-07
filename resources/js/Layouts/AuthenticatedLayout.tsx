@@ -51,6 +51,7 @@ export default function Authenticated({
       <span className="ml-2 inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
         {value}
       </span>
+
     );
   };
 

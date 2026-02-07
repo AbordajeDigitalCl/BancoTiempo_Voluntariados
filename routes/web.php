@@ -29,6 +29,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('advertisement');
 
+    Route::get('/EditarPerfil', function () {
+        return Inertia::render('EditarPerfil');
+    })->middleware(['auth', 'verified'])->name('editarperfil');
+
+    Route::get('/MenuHeader', function () {
+        return Inertia::render('MenuHeader');
+    })->middleware(['auth', 'verified'])->name('menuheader');
+
+    Route::get('/Administrar-Usuarios', function () {
+        return Inertia::render('AdministrarUsuarios');
+    })->middleware(['auth', 'verified'])->name('administrar-usuarios');
+
+    Route::get('/Editar-Publicacion', function () {
+        return Inertia::render('SeleccionarPublicacionEditarCRIS');
+    })->middleware(['auth', 'verified'])->name('editar-publicacion');
+
+    Route::get('/Editar-Publicacion/{id}', function ($id) {
+        return Inertia::render('EditarMiPublicacionCRIS', [
+            'publicacionId' => $id
+        ]);
+    })->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
 
     Route::get('/Advertisement/create', function () {
         return Inertia::render('CreateAdvertisement');
@@ -144,6 +165,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.status');
 
+    
 
     Route::delete('/Advertisement/{id}', function (Request $request, $id) {
         $createdAds = session('created_ads', []);
@@ -188,6 +210,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/verperfil', function () {
         return Inertia::render('VerPerfil');
     })->name('verperfil');
+
+    Route::get('/verperfil-Admin/{id?}', function ($id = null) {
+        return Inertia::render('VerPerfilAdmin', [
+            'usuarioId' => $id
+        ]);
+    })->name('verperfil-admin');
+
+    Route::get('/perfil-Admin/{id?}', function ($id = null) {
+        return Inertia::render('PerfilAdmin', [
+            'usuarioId' => $id
+        ]);
+    })->name('perfil-admin');
 
     Route::get('/editarservicio', function () {
         return Inertia::render('EditarServicio');

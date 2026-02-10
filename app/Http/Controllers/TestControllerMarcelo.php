@@ -54,4 +54,14 @@ class TestController extends Controller
         // return response()->json(is_numeric($request->input('Nombre_Tipo_Usuario')), 200);
         return response()->json($result, 200);
     }
+    
+    //Este cógido pertenece a Marcelo
+    /*
+    Comentario
+    De
+    prueba
+    */
+    public function nombre(Request $request)
+
 }
+

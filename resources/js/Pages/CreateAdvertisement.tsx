@@ -1,9 +1,18 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('No se pudo leer el archivo'));
+    reader.onload = () => resolve(String(reader.result));
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function CreateAdvertisement({ auth }: any) {
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>([]);
   const [imgError, setImgError] = useState<string>('');
 
   const { data, setData, post, processing, errors } = useForm({
@@ -12,22 +21,15 @@ export default function CreateAdvertisement({ auth }: any) {
     type: 'Servicio' as 'Servicio' | 'Producto',
     mode: 'Oferta' as 'Oferta' | 'Demanda',
     hours: '1',
-    images: [] as File[],
+    imageUrls: [] as string[],
   });
 
-  useEffect(() => {
-    return () => {
-      previews.forEach((u) => URL.revokeObjectURL(u));
-    };
-  }, []);
-
-  function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
+  async function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
     setImgError('');
-
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
 
-    const remaining = 5 - data.images.length;
+    const remaining = 5 - images.length;
     const sliced = files.slice(0, remaining);
 
     for (const f of sliced) {
@@ -36,7 +38,7 @@ export default function CreateAdvertisement({ auth }: any) {
         e.target.value = '';
         return;
       }
-      const maxBytes = 2 * 1024 * 1024; // 2MB
+      const maxBytes = 2 * 1024 * 1024;
       if (f.size > maxBytes) {
         setImgError('Una imagen supera el tamaño máximo (2MB).');
         e.target.value = '';
@@ -44,41 +46,27 @@ export default function CreateAdvertisement({ auth }: any) {
       }
     }
 
-    const newPreviews = sliced.map((f) => URL.createObjectURL(f));
-    const nextPreviews = [...previews, ...newPreviews].slice(0, 5);
-
-    const nextFiles = [...data.images, ...sliced].slice(0, 5);
-
-
-    if (nextPreviews.length < previews.length + newPreviews.length) {
-      newPreviews.slice(nextPreviews.length - previews.length).forEach((u) => URL.revokeObjectURL(u));
+    try {
+      const urls = await Promise.all(sliced.map(fileToDataUrl));
+      const next = [...images, ...urls].slice(0, 5);
+      setImages(next);
+      setData('imageUrls', next);
+    } catch {
+      setImgError('No se pudieron cargar una o más imágenes.');
+    } finally {
+      e.target.value = '';
     }
-
-    setPreviews(nextPreviews);
-    setData('images', nextFiles);
-
-    e.target.value = '';
   }
 
   function removeImage(idx: number) {
-    const url = previews[idx];
-    if (url) URL.revokeObjectURL(url);
-
-    const nextPreviews = previews.filter((_, i) => i !== idx);
-    const nextFiles = data.images.filter((_, i) => i !== idx);
-
-    setPreviews(nextPreviews);
-    setData('images', nextFiles);
+    const next = images.filter((_, i) => i !== idx);
+    setImages(next);
+    setData('imageUrls', next);
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-
-
-    post('/Advertisement', {
-      forceFormData: true,
-      preserveScroll: true,
-    });
+    post('/Advertisement', { preserveScroll: true });
   }
 
   const fieldError = (key: string) => (errors as any)?.[key] as string | undefined;
@@ -178,12 +166,12 @@ export default function CreateAdvertisement({ auth }: any) {
               <div>
                 <div className="flex items-center justify-between">
                   <label className="block text-xs text-gray-600 mb-1">Fotos (opcional, máx. 5)</label>
-                  <span className="text-xs text-gray-500">{data.images.length}/5</span>
+                  <span className="text-xs text-gray-500">{images.length}/5</span>
                 </div>
 
-                {previews.length > 0 && (
+                {images.length > 0 && (
                   <div className="grid grid-cols-3 gap-2 mb-2">
-                    {previews.map((src, idx) => (
+                    {images.map((src, idx) => (
                       <div key={idx} className="relative rounded-lg overflow-hidden border border-gray-200">
                         <img src={src} alt={`Foto ${idx + 1}`} className="h-24 w-full object-cover" />
                         <button
@@ -204,13 +192,12 @@ export default function CreateAdvertisement({ auth }: any) {
                   multiple
                   accept="image/*"
                   onChange={onPickFiles}
-                  disabled={data.images.length >= 5}
+                  disabled={images.length >= 5}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
                 />
 
                 {imgError && <p className="text-xs text-red-500 mt-1">{imgError}</p>}
-                {(errors as any)?.images && <p className="text-xs text-red-500 mt-1">{(errors as any).images}</p>}
-                {(errors as any)?.['images.0'] && <p className="text-xs text-red-500 mt-1">{(errors as any)['images.0']}</p>}
+                {(errors as any)?.imageUrls && <p className="text-xs text-red-500 mt-1">{(errors as any).imageUrls}</p>}
               </div>
 
               <button

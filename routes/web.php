@@ -16,6 +16,14 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    
+
+    Route::get('/Admin', function () {
+    return Inertia::render('AdminHome');
+    })->name('admin.home');
+
+
+    
 
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');

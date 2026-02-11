@@ -11,17 +11,14 @@ export default function Authenticated({
 }: PropsWithChildren<{ user: any; header?: ReactNode }>) {
   const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
-
   const page: any = usePage();
   const unreadMessageCount: number = Number(page?.props?.unreadMessageCount ?? 0);
   const unreadNotificationCount: number = Number(page?.props?.unreadNotificationCount ?? 0);
-
 
   const totalBadge = unreadMessageCount + unreadNotificationCount;
 
   const hasRoute = (name: string) => {
     try {
-
       return typeof route === 'function' && !!route().has?.(name);
     } catch {
       return false;
@@ -30,7 +27,6 @@ export default function Authenticated({
 
   const safeRoute = (name: string, fallback: string) => {
     try {
-
       if (typeof route === 'function' && route().has?.(name)) return route(name);
     } catch {}
     return fallback;
@@ -42,7 +38,7 @@ export default function Authenticated({
   const hrefChat = safeRoute('chat', '/chat');
   const hrefProfile = safeRoute('profile.edit', '/profile');
   const hrefNotifications = safeRoute('notifications', '/Notificaciones');
-
+  const hrefAdmin = safeRoute('admin.home', '/Admin');
 
   const CountBadge = ({ value }: { value: number }) => {
     if (!value || value <= 0) return null;
@@ -51,7 +47,6 @@ export default function Authenticated({
       <span className="ml-2 inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
         {value}
       </span>
-
     );
   };
 
@@ -154,6 +149,10 @@ export default function Authenticated({
 
                     <Dropdown.Link href={hrefProfile}>Ver perfil</Dropdown.Link>
 
+                    <Dropdown.Link href={hrefAdmin} className="hidden">
+                      Administración
+                    </Dropdown.Link>
+
                     <div className="h-px bg-gray-100 my-1" />
 
                     <Dropdown.Link href={safeRoute('logout', '/logout')} method="post" as="button">
@@ -234,6 +233,10 @@ export default function Authenticated({
                   </span>
                 )}
               </span>
+            </ResponsiveNavLink>
+
+            <ResponsiveNavLink href={hrefAdmin} className="hidden">
+              Administración
             </ResponsiveNavLink>
           </div>
 

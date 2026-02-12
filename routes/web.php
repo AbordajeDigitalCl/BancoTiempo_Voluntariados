@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Models\User;
+use App\Http\Controllers\TestControllerMarcelo;
+
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -15,20 +18,29 @@ Route::get('/', function () {
     ]);
 })->name('welcome');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    
-
-    Route::get('/Admin', function () {
+Route::get('/Admin', function () {
     return Inertia::render('AdminHome');
-    })->name('admin.home');
+})->name('admin.home');
 
+Route::middleware('guest')->group(function () {
 
-    
+    Route::get('/Admin/Login', function () {
+        session(['url.intended' => '/Advertisement']);
+        session(['is_admin' => true]);
+        return Inertia::render('AdminLogin');
+    })->name('admin.login');
+
+    Route::get('/Admin/Register', function () {
+        session(['is_admin' => true]);
+        return Inertia::render('AdminRegister');
+    })->name('admin.register');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
-
 
     Route::get('/Advertisement', function (Request $request) {
         $createdAds = session('created_ads', []);
@@ -59,10 +71,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
 
-    Route::get('/Advertisement/create', function () {
-        return Inertia::render('CreateAdvertisement');
-    })->name('advertisement.create');
+    Route::get('/Advertisement/create', function (Request $request) {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
 
+        return Inertia::render('CreateAdvertisement', [
+            'users' => $isAdmin ? User::query()->select('id', 'name')->orderBy('name')->get() : [],
+        ]);
+    })->name('advertisement.create');
 
     Route::get('/MyAdvertisements', function (Request $request) {
         $createdAds = session('created_ads', []);
@@ -71,8 +86,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('myadvertisements');
 
-
     Route::post('/Advertisement', function (Request $request) {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:80'],
             'description' => ['required', 'string', 'max:1000'],
@@ -80,6 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'type' => ['required', 'in:Servicio,Producto'],
             'mode' => ['required', 'in:Oferta,Demanda'],
             'imageUrls' => ['nullable', 'array'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
         ]);
 
         $createdAds = session('created_ads', []);
@@ -87,6 +104,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         $imgs = $data['imageUrls'] ?? [];
         $imgs = array_slice($imgs, 0, 5);
+
+        $targetUserId = $request->user()->id;
+        $targetAuthor = $request->user()->name;
+
+        if ($isAdmin && !empty($data['user_id'])) {
+            $u = User::query()->select('id', 'name')->find($data['user_id']);
+            if ($u) {
+                $targetUserId = $u->id;
+                $targetAuthor = $u->name;
+            }
+        }
 
         $new = [
             'id' => $id,
@@ -96,7 +124,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'type' => $data['type'],
             'mode' => $data['mode'],
             'status' => 'active',
-            'author' => $request->user()->name,
+            'author' => $targetAuthor,
+            'user_id' => $targetUserId,
             'imageUrls' => $imgs,
             'imageUrl' => count($imgs) ? $imgs[0] : null,
         ];
@@ -107,7 +136,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->route('myadvertisements');
     })->name('advertisement.store');
 
-
     Route::get('/Advertisement/{id}/edit', function (Request $request, $id) {
         $createdAds = session('created_ads', []);
         $item = collect($createdAds)->firstWhere('id', (int)$id);
@@ -117,8 +145,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('advertisement.edit');
 
-
     Route::patch('/Advertisement/{id}', function (Request $request, $id) {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:80'],
             'description' => ['required', 'string', 'max:1000'],
@@ -132,7 +161,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $idx = collect($createdAds)->search(fn ($x) => (int)$x['id'] === (int)$id);
         if ($idx === false) return redirect()->route('myadvertisements');
 
-        if (($createdAds[$idx]['author'] ?? '') !== $request->user()->name) {
+        if (!$isAdmin && (($createdAds[$idx]['author'] ?? '') !== $request->user()->name)) {
             return redirect()->route('myadvertisements');
         }
 
@@ -153,8 +182,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->route('myadvertisements');
     })->name('advertisement.update');
 
-
     Route::patch('/Advertisement/{id}/status', function (Request $request, $id) {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
         $data = $request->validate([
             'status' => ['required', 'in:active,paused,finished'],
         ]);
@@ -163,7 +193,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $idx = collect($createdAds)->search(fn ($x) => (int)$x['id'] === (int)$id);
         if ($idx === false) return redirect()->back();
 
-        if (($createdAds[$idx]['author'] ?? '') !== $request->user()->name) {
+        if (!$isAdmin && (($createdAds[$idx]['author'] ?? '') !== $request->user()->name)) {
             return redirect()->back();
         }
 
@@ -173,19 +203,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.status');
 
-    
-
     Route::delete('/Advertisement/{id}', function (Request $request, $id) {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
         $createdAds = session('created_ads', []);
-        $createdAds = array_values(array_filter($createdAds, function ($x) use ($id, $request) {
+        $createdAds = array_values(array_filter($createdAds, function ($x) use ($id, $request, $isAdmin) {
             if ((int)$x['id'] !== (int)$id) return true;
+            if ($isAdmin) return false;
             return ($x['author'] ?? '') !== $request->user()->name;
         }));
 
         session(['created_ads' => $createdAds]);
         return redirect()->back();
     })->name('advertisement.destroy');
-
 
     Route::post('/Advertisement/{id}/report', function (Request $request, $id) {
         $reports = session('ad_reports', []);
@@ -199,7 +229,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.report');
 
-
     Route::get('/Advertisement/{id}', function (Request $request, $id) {
         $createdAds = session('created_ads', []);
         $item = collect($createdAds)->firstWhere('id', (int)$id);
@@ -208,8 +237,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'item' => $item ?: null,
         ]);
     })->name('advertisement.show');
-
-
 
     Route::get('/chat', function () {
         return Inertia::render('Chat');
@@ -239,5 +266,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('Notifications');
     })->name('notifications');
 });
+
+
+Route::middleware('guest')->group(function () {
+    Route::get('/test/register', [TestControllerMarcelo::class, 'showRegister'])->name('test.register.view');
+    Route::post('/test/register', [TestControllerMarcelo::class, 'register'])->name('test.register.store');
+
+    Route::get('/test/login', [TestControllerMarcelo::class, 'showLogin'])->name('test.login.view');
+    Route::post('/test/login', [TestControllerMarcelo::class, 'login'])->name('test.login.store');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::post('/test/logout', [TestControllerMarcelo::class, 'logout'])->name('test.logout');
+});
+
 
 require __DIR__ . '/auth.php';

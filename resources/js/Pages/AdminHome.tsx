@@ -2,39 +2,71 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 
 export default function AdminHome({ auth }: any) {
+  const user = auth?.user ?? null;
+
+  if (!user) {
+    return (
+      <>
+        <Head title="Admin" />
+
+        <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-8">
+          <div className="w-full max-w-2xl bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h1 className="text-2xl font-semibold text-gray-900">Administrador</h1>
+            <p className="mt-2 text-sm text-gray-600">Acceso a visuales del administrador.</p>
+
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/Admin/Login"
+                className="inline-flex justify-center rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
+              >
+                Ver Login Admin
+              </Link>
+
+              <Link
+                href="/Admin/Register"
+                className="inline-flex justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
+              >
+                Ver Registro Admin
+              </Link>
+
+              <Link
+                href="/"
+                className="inline-flex justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
+              >
+                Volver
+              </Link>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
-    <AuthenticatedLayout user={auth.user}>
-      <Head title="Administración" />
+    <AuthenticatedLayout user={user}>
+      <Head title="Admin" />
 
       <div className="w-full flex justify-center px-4 py-6">
-        <div className="w-full max-w-5xl space-y-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <h1 className="text-lg font-semibold">Administración</h1>
-            <p className="mt-1 text-sm text-gray-600">Accesos a vistas de administrador.</p>
-          </div>
+        <div className="w-full max-w-4xl space-y-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h1 className="text-2xl font-semibold text-gray-900">Administrador</h1>
+            <p className="mt-2 text-sm text-gray-600">Acceso a visuales del administrador.</p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link
-              href="/Administrar-Usuarios"
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:bg-gray-50 transition"
-            >
-              <div className="text-sm text-gray-500">Módulo</div>
-              <div className="mt-1 text-base font-semibold text-gray-900">Administrar usuarios</div>
-              <div className="mt-2 text-sm text-gray-600">
-                Ver lista, buscar, filtrar y entrar a perfil/editar.
-              </div>
-            </Link>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/Advertisement"
+                className="inline-flex justify-center rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
+              >
+                Ir a Publicaciones
+              </Link>
 
-            <Link
-              href="/verperfil-Admin/1"
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:bg-gray-50 transition"
-            >
-              <div className="text-sm text-gray-500">Vista</div>
-              <div className="mt-1 text-base font-semibold text-gray-900">Ver perfil (Admin)</div>
-              <div className="mt-2 text-sm text-gray-600">
-                Vista de perfil con publicaciones/historial (mock por ahora).
-              </div>
-            </Link>
+              <Link
+                href="/Administrar-Usuarios"
+                className="inline-flex justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
+              >
+                Ir a Administrar Usuarios
+              </Link>
+            </div>
           </div>
         </div>
       </div>

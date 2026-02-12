@@ -36,9 +36,8 @@ export default function Authenticated({
   const hrefAds = safeRoute('advertisement', '/Advertisement');
   const hrefMyAds = safeRoute('myadvertisements', '/MyAdvertisements');
   const hrefChat = safeRoute('chat', '/chat');
-  const hrefProfile = safeRoute('profile.edit', '/profile');
+  const hrefProfile = safeRoute('verperfil', '/verperfil');
   const hrefNotifications = safeRoute('notifications', '/Notificaciones');
-  const hrefAdmin = safeRoute('admin.home', '/Admin');
 
   const CountBadge = ({ value }: { value: number }) => {
     if (!value || value <= 0) return null;
@@ -49,6 +48,8 @@ export default function Authenticated({
       </span>
     );
   };
+
+  const hasUser = !!user && typeof user === 'object';
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -83,84 +84,97 @@ export default function Authenticated({
                   Mis publicaciones
                 </NavLink>
 
-                <NavLink href={hrefProfile} active={hasRoute('profile.edit') ? route().current('profile.edit') : false}>
+                <NavLink href={hrefProfile} active={hasRoute('verperfil') ? route().current('verperfil') : false}>
                   Ver Perfil
                 </NavLink>
               </div>
             </div>
 
             <div className="hidden sm:flex sm:items-center sm:ms-6">
-              <div className="ms-3 relative">
-                <Dropdown>
-                  <Dropdown.Trigger>
-                    <span className="inline-flex rounded-md">
-                      <button
-                        type="button"
-                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
-                      >
-                        <span className="relative inline-flex items-center">
-                          {user.name}
+              {hasUser ? (
+                <div className="ms-3 relative">
+                  <Dropdown>
+                    <Dropdown.Trigger>
+                      <span className="inline-flex rounded-md">
+                        <button
+                          type="button"
+                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150"
+                        >
+                          <span className="relative inline-flex items-center">
+                            {user?.name}
 
-                          {totalBadge > 0 && (
-                            <span className="ml-2 inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
-                              {totalBadge}
+                            {totalBadge > 0 && (
+                              <span className="ml-2 inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                                {totalBadge}
+                              </span>
+                            )}
+                          </span>
+
+                          <svg
+                            className="ms-2 -me-0.5 h-4 w-4"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path
+                              fillRule="evenodd"
+                              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                              clipRule="evenodd"
+                            />
+                          </svg>
+                        </button>
+                      </span>
+                    </Dropdown.Trigger>
+
+                    <Dropdown.Content>
+                      <Dropdown.Link href={hrefChat}>
+                        <span className="flex items-center justify-between">
+                          <span>Mensajes</span>
+                          {unreadMessageCount > 0 && (
+                            <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                              {unreadMessageCount}
                             </span>
                           )}
                         </span>
+                      </Dropdown.Link>
 
-                        <svg
-                          className="ms-2 -me-0.5 h-4 w-4"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </span>
-                  </Dropdown.Trigger>
+                      <Dropdown.Link href={hrefNotifications}>
+                        <span className="flex items-center justify-between">
+                          <span>Notificaciones</span>
+                          {unreadNotificationCount > 0 && (
+                            <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
+                              {unreadNotificationCount}
+                            </span>
+                          )}
+                        </span>
+                      </Dropdown.Link>
 
-                  <Dropdown.Content>
-                    <Dropdown.Link href={hrefChat}>
-                      <span className="flex items-center justify-between">
-                        <span>Mensajes</span>
-                        {unreadMessageCount > 0 && (
-                          <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
-                            {unreadMessageCount}
-                          </span>
-                        )}
-                      </span>
-                    </Dropdown.Link>
+                      <Dropdown.Link href={hrefProfile}>Ver perfil</Dropdown.Link>
 
-                    <Dropdown.Link href={hrefNotifications}>
-                      <span className="flex items-center justify-between">
-                        <span>Notificaciones</span>
-                        {unreadNotificationCount > 0 && (
-                          <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
-                            {unreadNotificationCount}
-                          </span>
-                        )}
-                      </span>
-                    </Dropdown.Link>
+                      <div className="h-px bg-gray-100 my-1" />
 
-                    <Dropdown.Link href={hrefProfile}>Ver perfil</Dropdown.Link>
-
-                    <Dropdown.Link href={hrefAdmin} className="hidden">
-                      Administración
-                    </Dropdown.Link>
-
-                    <div className="h-px bg-gray-100 my-1" />
-
-                    <Dropdown.Link href={safeRoute('logout', '/logout')} method="post" as="button">
-                      Cerrar sesión
-                    </Dropdown.Link>
-                  </Dropdown.Content>
-                </Dropdown>
-              </div>
+                      <Dropdown.Link href={safeRoute('logout', '/logout')} method="post" as="button">
+                        Cerrar sesión
+                      </Dropdown.Link>
+                    </Dropdown.Content>
+                  </Dropdown>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/login"
+                    className="inline-flex items-center rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    Iniciar sesión
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="inline-flex items-center rounded-lg bg-black px-4 py-2 text-sm text-white hover:bg-gray-800"
+                  >
+                    Crear cuenta
+                  </Link>
+                </div>
+              )}
             </div>
 
             <div className="-me-2 flex items-center sm:hidden">
@@ -217,7 +231,7 @@ export default function Authenticated({
               Mis publicaciones
             </ResponsiveNavLink>
 
-            <ResponsiveNavLink href={hrefProfile} active={hasRoute('profile.edit') ? route().current('profile.edit') : false}>
+            <ResponsiveNavLink href={hrefProfile} active={hasRoute('verperfil') ? route().current('verperfil') : false}>
               Ver Perfil
             </ResponsiveNavLink>
 
@@ -234,24 +248,29 @@ export default function Authenticated({
                 )}
               </span>
             </ResponsiveNavLink>
-
-            <ResponsiveNavLink href={hrefAdmin} className="hidden">
-              Administración
-            </ResponsiveNavLink>
           </div>
 
           <div className="pt-4 pb-1 border-t border-gray-200">
-            <div className="px-4">
-              <div className="font-medium text-base text-gray-800">{user.name}</div>
-              <div className="font-medium text-sm text-gray-500">{user.email}</div>
-            </div>
+            {hasUser ? (
+              <>
+                <div className="px-4">
+                  <div className="font-medium text-base text-gray-800">{user?.name}</div>
+                  <div className="font-medium text-sm text-gray-500">{user?.email}</div>
+                </div>
 
-            <div className="mt-3 space-y-1">
-              <ResponsiveNavLink href={hrefProfile}>Ver perfil</ResponsiveNavLink>
-              <ResponsiveNavLink method="post" href={safeRoute('logout', '/logout')} as="button">
-                Cerrar sesión
-              </ResponsiveNavLink>
-            </div>
+                <div className="mt-3 space-y-1">
+                  <ResponsiveNavLink href={hrefProfile}>Ver perfil</ResponsiveNavLink>
+                  <ResponsiveNavLink method="post" href={safeRoute('logout', '/logout')} as="button">
+                    Cerrar sesión
+                  </ResponsiveNavLink>
+                </div>
+              </>
+            ) : (
+              <div className="px-4 space-y-2">
+                <ResponsiveNavLink href="/login">Iniciar sesión</ResponsiveNavLink>
+                <ResponsiveNavLink href="/register">Crear cuenta</ResponsiveNavLink>
+              </div>
+            )}
           </div>
         </div>
       </nav>

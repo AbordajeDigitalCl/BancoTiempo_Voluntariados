@@ -3,7 +3,7 @@ import { PageProps } from '@/types';
 import { Link } from '@inertiajs/react';
 import FilaUsuario from '@/Components/DerivedComponents/FilaUsuario';
 import { mockUsuariosAdmin } from '@/mockData/datosMockUsuarios';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 const ITEMS_PER_PAGE = 8;
@@ -11,7 +11,7 @@ const ITEMS_PER_PAGE = 8;
 export default function AdministrarUsuarios({ auth }: PageProps) {
   const [busquedaNombre, setBusquedaNombre] = useState('');
   const [busquedaCiudad, setBusquedaCiudad] = useState('');
-  const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroTipo, setFiltroTipo] = useState<'todos' | 'usuarios' | 'admin'>('todos');
   const [usuariosEliminados, setUsuariosEliminados] = useState<number[]>([]);
   const [usuariosPaginados, setUsuariosPaginados] = useState<typeof mockUsuariosAdmin>([]);
 
@@ -19,30 +19,33 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
     setUsuariosEliminados((prev) => [...prev, usuarioId]);
   };
 
-  const usuariosFiltrados = mockUsuariosAdmin
-    .filter((usuario) => !usuariosEliminados.includes(usuario.id))
-    .filter((usuario) => {
-      const nombre = (usuario.nombre ?? '').toLowerCase();
-      const apellido = (usuario.apellido ?? '').toLowerCase();
-      const direccion = (usuario.direccion ?? '').toLowerCase();
-      const ciudad = (usuario.ciudad ?? '').toLowerCase();
-      const rol = (usuario.rol ?? '').toLowerCase();
+  const usuariosFiltrados = useMemo(() => {
+    const n = busquedaNombre.trim().toLowerCase();
+    const c = busquedaCiudad.trim().toLowerCase();
 
-      const qNombre = busquedaNombre.toLowerCase();
-      const qCiudad = busquedaCiudad.toLowerCase();
+    return mockUsuariosAdmin
+      .filter((usuario) => !usuariosEliminados.includes(usuario.id))
+      .filter((usuario) => {
+        if (filtroTipo === 'todos') return true;
+        const rol = (usuario as any).rol ? String((usuario as any).rol).toLowerCase() : '';
+        if (filtroTipo === 'admin') return rol.includes('admin');
+        return !rol.includes('admin');
+      })
+      .filter((usuario) => {
+        const nombre = String(usuario.nombre ?? '').toLowerCase();
+        const apellido = String((usuario as any).apellido ?? '').toLowerCase();
+        const full = `${nombre} ${apellido}`.trim();
 
-      const cumpleNombre = `${nombre} ${apellido}`.includes(qNombre);
-      const cumpleCiudad = `${ciudad} ${direccion}`.includes(qCiudad);
+        const ciudad = String((usuario as any).ciudad ?? '').toLowerCase();
+        const direccion = String((usuario as any).direccion ?? '').toLowerCase();
+        const lugar = ciudad || direccion;
 
-      const cumpleTipo =
-        filtroTipo === 'todos'
-          ? true
-          : filtroTipo === 'admin'
-          ? rol.includes('admin')
-          : !rol.includes('admin');
+        const cumpleNombre = n ? full.includes(n) : true;
+        const cumpleCiudad = c ? lugar.includes(c) : true;
 
-      return cumpleNombre && cumpleCiudad && cumpleTipo;
-    });
+        return cumpleNombre && cumpleCiudad;
+      });
+  }, [busquedaNombre, busquedaCiudad, filtroTipo, usuariosEliminados]);
 
   const { isLoading, hasMore, observerTarget, resetPagination } = useInfiniteScroll({
     itemsPerPage: ITEMS_PER_PAGE,
@@ -62,25 +65,26 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
   return (
     <AuthenticatedLayout user={auth.user}>
       <div className="w-full flex flex-col items-center space-y-8 p-4 md:p-6">
-        <div className="w-full max-w-6xl bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="w-full max-w-6xl bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-4 md:p-6 border-b border-gray-200">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Administración Usuarios</h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Administración de usuarios</h1>
+            <p className="mt-1 text-sm text-gray-600">Gestiona usuarios y administradores.</p>
           </div>
 
-          <div className="p-4 md:p-6 border-b border-gray-200 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="p-4 md:p-6 border-b border-gray-200 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <Link
               href="/register"
-              className="w-12 h-12 rounded-full bg-blue-700 hover:bg-blue-800 transition flex items-center justify-center text-white text-2xl font-bold flex-shrink-0 shadow-md hover:shadow-lg"
+              className="w-full md:w-auto inline-flex items-center justify-center rounded-lg bg-black text-white px-4 py-2 text-sm font-medium hover:bg-gray-800"
               title="Crear nuevo usuario"
             >
-              +
+              Crear usuario
             </Link>
 
-            <div className="flex-1 flex items-center gap-3 ml-0 md:ml-4">
-              <div className="flex-1 relative">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full md:w-auto md:flex-1">
+              <div className="relative">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -89,19 +93,17 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Buscar"
+                  placeholder="Buscar por nombre"
                   value={busquedaNombre}
                   onChange={(e) => setBusquedaNombre(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-            </div>
 
-            <div className="flex-1 flex items-center gap-3">
-              <div className="flex-1 relative">
+              <div className="relative">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -110,19 +112,17 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Ciudad"
+                  placeholder="Buscar por ciudad"
                   value={busquedaCiudad}
                   onChange={(e) => setBusquedaCiudad(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
-            </div>
 
-            <div className="flex-shrink-0">
               <select
                 value={filtroTipo}
-                onChange={(e) => setFiltroTipo(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                onChange={(e) => setFiltroTipo(e.target.value as any)}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
               >
                 <option value="todos">Todos</option>
                 <option value="usuarios">Usuarios</option>
@@ -132,18 +132,37 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
           </div>
 
           <div className="p-4 md:p-6 border-b border-gray-200">
-            <h2 className="text-xl md:text-2xl font-bold text-gray-800">Lista de Usuarios</h2>
-            <p className="text-gray-600 text-sm mt-1">Total: {usuariosFiltrados.length} usuarios</p>
+            <div className="flex items-end justify-between gap-2">
+              <div>
+                <h2 className="text-xl md:text-2xl font-semibold text-gray-900">Lista de usuarios</h2>
+                <p className="text-gray-600 text-sm mt-1">Total: {usuariosFiltrados.length}</p>
+              </div>
+
+              {(busquedaNombre.trim() || busquedaCiudad.trim() || filtroTipo !== 'todos' || usuariosEliminados.length) ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBusquedaNombre('');
+                    setBusquedaCiudad('');
+                    setFiltroTipo('todos');
+                    setUsuariosEliminados([]);
+                  }}
+                  className="text-sm text-gray-600 hover:underline"
+                >
+                  Limpiar
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div className="p-4 md:p-6 space-y-3">
             {usuariosPaginados.length > 0 ? (
-              usuariosPaginados.map((usuario) => (
-                <FilaUsuario key={usuario.id} usuario={usuario as any} onDelete={handleEliminarUsuario} />
+              usuariosPaginados.map((usuario: any) => (
+                <FilaUsuario key={usuario.id} usuario={usuario} onEliminar={handleEliminarUsuario} />
               ))
             ) : (
-              <div className="text-center">
-                <p className="text-gray-600 font-medium">Ningún usuario coincide con los criterios de búsqueda</p>
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-center">
+                <p className="text-gray-700 font-medium">Ningún usuario coincide con los criterios de búsqueda</p>
               </div>
             )}
           </div>
@@ -151,7 +170,7 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
           <div ref={observerTarget} className="flex justify-center py-8 border-t border-gray-200">
             {isLoading && (
               <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 <p className="text-gray-500 mt-2">Cargando más usuarios...</p>
               </div>
             )}

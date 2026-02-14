@@ -11,9 +11,10 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-export default function CreateAdvertisement({ auth }: any) {
+export default function CreateAdvertisement({ auth, users }: any) {
   const [images, setImages] = useState<string[]>([]);
   const [imgError, setImgError] = useState<string>('');
+  const isAdmin = Array.isArray(users) && users.length > 0;
 
   const { data, setData, post, processing, errors } = useForm({
     title: '',
@@ -22,6 +23,7 @@ export default function CreateAdvertisement({ auth }: any) {
     mode: 'Oferta' as 'Oferta' | 'Demanda',
     hours: '1',
     imageUrls: [] as string[],
+    user_id: null as number | null,
   });
 
   async function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
@@ -88,6 +90,35 @@ export default function CreateAdvertisement({ auth }: any) {
             <p className="mt-2 text-sm text-gray-600">Completa los datos y presiona Crear.</p>
 
             <form onSubmit={submit} className="mt-4 space-y-3">
+              {isAdmin && (
+                <div>
+                  <select
+                    className={
+                      'w-full rounded-lg border px-3 py-2 text-sm bg-white ' +
+                      (fieldError('user_id') ? 'border-red-400 focus:border-red-500 focus:ring-red-500' : 'border-gray-300')
+                    }
+                    value={data.user_id ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setData('user_id', v ? Number(v) : null);
+                    }}
+                  >
+                    <option value="">(Yo / por defecto)</option>
+                    {(users ?? []).map((u: any) => (
+                      <option key={u.id} value={u.id}>
+                        {u.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  {fieldError('user_id') && <p className="text-xs text-red-500 mt-1">{fieldError('user_id')}</p>}
+
+                  <p className="mt-1 text-xs text-gray-500">
+                    Asignar publicacion a otro usuario.
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs text-gray-600 mb-1">Título</label>
                 <input

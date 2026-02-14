@@ -1,11 +1,17 @@
+import { useEffect, FormEventHandler } from 'react';
+import GuestLayout from '@/Layouts/GuestLayout';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import PrimaryButton from '@/Components/PrimaryButton';
+import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm, router } from '@inertiajs/react';
 
 export default function AdminRegister() {
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, processing, errors, reset } = useForm({
     name: '',
     Apellido_Paterno: '',
     Apellido_Materno: '',
-    Age: '',
+    Age: '', // <-- backend: date
     Telefono: '',
     Direccion: '',
     Ciudad: '',
@@ -14,165 +20,182 @@ export default function AdminRegister() {
     password_confirmation: '',
   });
 
-  function submit(e: React.FormEvent) {
+  useEffect(() => {
+    return () => reset('password', 'password_confirmation');
+  }, []);
+
+  const submit: FormEventHandler = (e) => {
     e.preventDefault();
 
-    post('/register', {
+    post(route('register'), {
       preserveScroll: true,
       onSuccess: () => {
+        // ✅ luego de registrarse, llevar al AdminHome
         router.visit('/Admin');
       },
     });
-  }
+  };
 
   return (
-    <>
-      <Head title="Admin - Registrarse" />
+    <GuestLayout>
+      <Head title="Registro Admin" />
 
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-4xl bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="grid grid-cols-1 md:grid-cols-2">
-            <div className="p-6 sm:p-8">
-              <h1 className="text-xl font-semibold text-gray-900">Registrarse</h1>
+      <div className="w-full flex justify-center px-4 py-6">
+        <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6">
+            <h1 className="text-xl font-semibold text-gray-900">Registro Administrador</h1>
+            <p className="mt-1 text-sm text-gray-600">Crea una cuenta para el panel de administración.</p>
 
-              <form onSubmit={submit} className="mt-6 space-y-4">
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Nombre</label>
-                  <input
-                    type="text"
-                    value={data.name}
-                    onChange={(e) => setData('name', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
-                </div>
+            <form onSubmit={submit} className="mt-6 space-y-4">
+              <div>
+                <InputLabel htmlFor="name" value="Nombre" />
+                <TextInput
+                  id="name"
+                  name="name"
+                  value={data.name}
+                  className="mt-1 block w-full"
+                  isFocused
+                  onChange={(e) => setData('name', e.target.value)}
+                  required
+                />
+                <InputError message={errors.name} className="mt-2" />
+              </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Apellido Paterno</label>
-                  <input
-                    type="text"
-                    value={data.Apellido_Paterno}
-                    onChange={(e) => setData('Apellido_Paterno', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.Apellido_Paterno && <p className="text-xs text-red-500 mt-1">{errors.Apellido_Paterno}</p>}
-                </div>
+              <div>
+                <InputLabel htmlFor="Apellido_Paterno" value="Apellido Paterno" />
+                <TextInput
+                  id="Apellido_Paterno"
+                  name="Apellido_Paterno"
+                  value={data.Apellido_Paterno}
+                  className="mt-1 block w-full"
+                  onChange={(e) => setData('Apellido_Paterno', e.target.value)}
+                  required
+                />
+                <InputError message={(errors as any).Apellido_Paterno} className="mt-2" />
+              </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Apellido Materno</label>
-                  <input
-                    type="text"
-                    value={data.Apellido_Materno}
-                    onChange={(e) => setData('Apellido_Materno', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.Apellido_Materno && <p className="text-xs text-red-500 mt-1">{errors.Apellido_Materno}</p>}
-                </div>
+              <div>
+                <InputLabel htmlFor="Apellido_Materno" value="Apellido Materno" />
+                <TextInput
+                  id="Apellido_Materno"
+                  name="Apellido_Materno"
+                  value={data.Apellido_Materno}
+                  className="mt-1 block w-full"
+                  onChange={(e) => setData('Apellido_Materno', e.target.value)}
+                  required
+                />
+                <InputError message={(errors as any).Apellido_Materno} className="mt-2" />
+              </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Edad</label>
-                  <input
-                    type="text"
-                    value={data.Age}
-                    onChange={(e) => setData('Age', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.Age && <p className="text-xs text-red-500 mt-1">{errors.Age}</p>}
-                </div>
+              <div>
+                <InputLabel htmlFor="Age" value="Fecha de nacimiento" />
+                <TextInput
+                  id="Age"
+                  type="date"
+                  name="Age"
+                  value={data.Age}
+                  className="mt-1 block w-full"
+                  onChange={(e) => setData('Age', e.target.value)}
+                  required
+                />
+                <InputError message={(errors as any).Age} className="mt-2" />
+              </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Teléfono</label>
-                  <input
-                    type="text"
-                    value={data.Telefono}
-                    onChange={(e) => setData('Telefono', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.Telefono && <p className="text-xs text-red-500 mt-1">{errors.Telefono}</p>}
-                </div>
+              <div>
+                <InputLabel htmlFor="Telefono" value="Teléfono" />
+                <TextInput
+                  id="Telefono"
+                  name="Telefono"
+                  value={data.Telefono}
+                  className="mt-1 block w-full"
+                  onChange={(e) => setData('Telefono', e.target.value)}
+                  required
+                />
+                <InputError message={(errors as any).Telefono} className="mt-2" />
+              </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Dirección</label>
-                  <input
-                    type="text"
-                    value={data.Direccion}
-                    onChange={(e) => setData('Direccion', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.Direccion && <p className="text-xs text-red-500 mt-1">{errors.Direccion}</p>}
-                </div>
+              <div>
+                <InputLabel htmlFor="Direccion" value="Dirección" />
+                <TextInput
+                  id="Direccion"
+                  name="Direccion"
+                  value={data.Direccion}
+                  className="mt-1 block w-full"
+                  onChange={(e) => setData('Direccion', e.target.value)}
+                  required
+                />
+                <InputError message={(errors as any).Direccion} className="mt-2" />
+              </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Ciudad</label>
-                  <input
-                    type="text"
-                    value={data.Ciudad}
-                    onChange={(e) => setData('Ciudad', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.Ciudad && <p className="text-xs text-red-500 mt-1">{errors.Ciudad}</p>}
-                </div>
+              <div>
+                <InputLabel htmlFor="Ciudad" value="Ciudad" />
+                <TextInput
+                  id="Ciudad"
+                  name="Ciudad"
+                  value={data.Ciudad}
+                  className="mt-1 block w-full"
+                  onChange={(e) => setData('Ciudad', e.target.value)}
+                  required
+                />
+                <InputError message={(errors as any).Ciudad} className="mt-2" />
+              </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Correo electrónico</label>
-                  <input
-                    type="email"
-                    value={data.email}
-                    onChange={(e) => setData('email', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
-                </div>
+              <div>
+                <InputLabel htmlFor="email" value="Correo electrónico" />
+                <TextInput
+                  id="email"
+                  type="email"
+                  name="email"
+                  value={data.email}
+                  className="mt-1 block w-full"
+                  onChange={(e) => setData('email', e.target.value)}
+                  required
+                />
+                <InputError message={errors.email} className="mt-2" />
+              </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Contraseña</label>
-                  <input
-                    type="password"
-                    value={data.password}
-                    onChange={(e) => setData('password', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
-                </div>
+              <div>
+                <InputLabel htmlFor="password" value="Contraseña" />
+                <TextInput
+                  id="password"
+                  type="password"
+                  name="password"
+                  value={data.password}
+                  className="mt-1 block w-full"
+                  onChange={(e) => setData('password', e.target.value)}
+                  required
+                />
+                <InputError message={errors.password} className="mt-2" />
+              </div>
 
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Confirmar contraseña</label>
-                  <input
-                    type="password"
-                    value={data.password_confirmation}
-                    onChange={(e) => setData('password_confirmation', e.target.value)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  {errors.password_confirmation && <p className="text-xs text-red-500 mt-1">{errors.password_confirmation}</p>}
-                </div>
+              <div>
+                <InputLabel htmlFor="password_confirmation" value="Confirmar contraseña" />
+                <TextInput
+                  id="password_confirmation"
+                  type="password"
+                  name="password_confirmation"
+                  value={data.password_confirmation}
+                  className="mt-1 block w-full"
+                  onChange={(e) => setData('password_confirmation', e.target.value)}
+                  required
+                />
+                <InputError message={(errors as any).password_confirmation} className="mt-2" />
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={processing}
-                  className="w-full rounded-lg bg-black text-white py-2 text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
-                >
-                  {processing ? 'Registrando...' : 'Registrarse'}
-                </button>
+              <PrimaryButton className="w-full justify-center" disabled={processing}>
+                Registrarse
+              </PrimaryButton>
 
-                <div className="text-sm text-gray-600 text-center">
-                  ¿Ya tiene una cuenta?{' '}
-                  <Link href="/Admin/Login" className="text-gray-900 hover:underline">
-                    Iniciar sesión
-                  </Link>
-                </div>
-
-                <div className="text-sm text-center">
-                  <Link href="/Admin" className="text-gray-600 hover:underline">
-                    Volver
-                  </Link>
-                </div>
-              </form>
-            </div>
-
-            <div className="hidden md:block bg-[#B56B93]" />
+              <div className="flex items-center justify-center gap-2 pt-2 text-sm text-gray-600">
+                <span>¿Ya tienes cuenta?</span>
+                <Link href="/Admin/Login" className="font-medium text-gray-900 hover:underline">
+                  Iniciar sesión (Admin)
+                </Link>
+              </div>
+            </form>
           </div>
         </div>
       </div>
-    </>
+    </GuestLayout>
   );
 }

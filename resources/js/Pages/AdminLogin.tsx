@@ -1,4 +1,4 @@
-import { Head, Link, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function AdminLogin() {
   const { data, setData, post, processing, errors } = useForm({
@@ -10,11 +10,9 @@ export default function AdminLogin() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
 
-    post('/login', {
+    // ✅ Cambiado: login admin
+    post('/Admin/Login', {
       preserveScroll: true,
-      onSuccess: () => {
-        router.visit('/Admin');
-      },
     });
   }
 

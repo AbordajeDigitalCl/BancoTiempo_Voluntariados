@@ -62,7 +62,7 @@ function buildParams(q: string, type: string, sort: string, distance: string) {
   return params;
 }
 
-export default function Advertisement({ auth, createdAds, filters }: any) {
+export default function Advertisement({ auth, createdAds, filters, isAdmin }: any) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   const initial = useMemo(() => {
@@ -128,6 +128,8 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
   }, [ads, q, typeFilter, sort]);
 
   function isOwner(ad: Ad) {
+    if (isAdmin) return true;
+
     const myId = auth?.user?.id ?? null;
     if (myId != null && ad.user_id != null) return Number(ad.user_id) === Number(myId);
     const myName = String(auth?.user?.name ?? '');

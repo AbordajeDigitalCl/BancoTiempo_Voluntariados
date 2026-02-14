@@ -1,4 +1,3 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 
 export default function AdminHome({ auth }: any) {
@@ -43,33 +42,35 @@ export default function AdminHome({ auth }: any) {
   }
 
   return (
-    <AuthenticatedLayout user={user}>
+    <>
       <Head title="Admin" />
 
-      <div className="w-full flex justify-center px-4 py-6">
-        <div className="w-full max-w-4xl space-y-4">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h1 className="text-2xl font-semibold text-gray-900">Administrador</h1>
-            <p className="mt-2 text-sm text-gray-600">Acceso a visuales del administrador.</p>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-2xl bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Administrador</h1>
+          <p className="mt-2 text-sm text-gray-600">Acceso a visuales del administrador.</p>
 
-            <div className="mt-6 flex flex-col sm:flex-row gap-3">
-              <Link
-                href="/Advertisement"
-                className="inline-flex justify-center rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
-              >
-                Ir a Publicaciones
-              </Link>
+          <p className="mt-4 text-xs text-gray-500">
+            Sesión iniciada como <span className="font-medium text-gray-700">{user?.name}</span>
+          </p>
 
-              <Link
-                href="/Administrar-Usuarios"
-                className="inline-flex justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
-              >
-                Ir a Administrar Usuarios
-              </Link>
-            </div>
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <Link
+              href="/Advertisement"
+              className="inline-flex justify-center rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
+            >
+              Ir a Publicaciones
+            </Link>
+
+            <Link
+              href="/Administrar-Usuarios"
+              className="inline-flex justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              Ir a Administrar Usuarios
+            </Link>
           </div>
         </div>
       </div>
-    </AuthenticatedLayout>
+    </>
   );
 }

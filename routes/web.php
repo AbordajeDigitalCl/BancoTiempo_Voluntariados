@@ -6,7 +6,6 @@ use Inertia\Inertia;
 use App\Models\User;
 use App\Http\Controllers\TestControllerMarcelo;
 
-
 Route::get('/', function () {
     if (auth()->check()) {
         return redirect()->route('dashboard');
@@ -34,21 +33,16 @@ Route::middleware('guest')->group(function () {
         session(['is_admin' => true]);
         return Inertia::render('AdminRegister');
     })->name('admin.register');
+
+    Route::post('/Admin/Register', [TestControllerMarcelo::class, 'adminRegister'])->name('admin.register.store');
+    Route::post('/Admin/Login', [TestControllerMarcelo::class, 'adminLogin'])->name('admin.login.store');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [TestControllerMarcelo::class, 'dashboard'])->name('dashboard');
 
-    Route::get('/Advertisement', function (Request $request) {
-        $createdAds = session('created_ads', []);
-        return Inertia::render('Advertisement', [
-            'createdAds' => $createdAds,
-        ]);
-    })->name('advertisement');
-
+    Route::get('/Advertisement', [TestControllerMarcelo::class, 'advertisementIndex'])->name('advertisement');
     Route::get('/EditarPerfil', function () {
         return Inertia::render('EditarPerfil');
     })->middleware(['auth', 'verified'])->name('editarperfil');
@@ -71,20 +65,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
 
-    Route::get('/Advertisement/create', function (Request $request) {
-        $isAdmin = (bool) $request->session()->get('is_admin', false);
-
-        return Inertia::render('CreateAdvertisement', [
-            'users' => $isAdmin ? User::query()->select('id', 'name')->orderBy('name')->get() : [],
-        ]);
-    })->name('advertisement.create');
-
-    Route::get('/MyAdvertisements', function (Request $request) {
-        $createdAds = session('created_ads', []);
-        return Inertia::render('MyAdvertisements', [
-            'createdAds' => $createdAds,
-        ]);
-    })->name('myadvertisements');
+    Route::get('/Advertisement/create', [TestControllerMarcelo::class, 'advertisementCreate'])
+    ->name('advertisement.create');
+    
+    Route::get('/MyAdvertisements', [TestControllerMarcelo::class, 'myAdvertisementsIndex'])->name('myadvertisements');
 
     Route::post('/Advertisement', function (Request $request) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
@@ -136,14 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->route('myadvertisements');
     })->name('advertisement.store');
 
-    Route::get('/Advertisement/{id}/edit', function (Request $request, $id) {
-        $createdAds = session('created_ads', []);
-        $item = collect($createdAds)->firstWhere('id', (int)$id);
-
-        return Inertia::render('EditarPublicacion', [
-            'item' => $item ?: null,
-        ]);
-    })->name('advertisement.edit');
+    Route::get('/Advertisement/{id}/edit', [TestControllerMarcelo::class, 'advertisementEdit'])->name('advertisement.edit');
 
     Route::patch('/Advertisement/{id}', function (Request $request, $id) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
@@ -229,14 +206,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.report');
 
-    Route::get('/Advertisement/{id}', function (Request $request, $id) {
-        $createdAds = session('created_ads', []);
-        $item = collect($createdAds)->firstWhere('id', (int)$id);
-
-        return Inertia::render('AdvertisementShow', [
-            'item' => $item ?: null,
-        ]);
-    })->name('advertisement.show');
+    Route::get('/Advertisement/{id}', [TestControllerMarcelo::class, 'advertisementShow'])->name('advertisement.show');
 
     Route::get('/chat', function () {
         return Inertia::render('Chat');
@@ -267,7 +237,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('notifications');
 });
 
-
 Route::middleware('guest')->group(function () {
     Route::get('/test/register', [TestControllerMarcelo::class, 'showRegister'])->name('test.register.view');
     Route::post('/test/register', [TestControllerMarcelo::class, 'register'])->name('test.register.store');
@@ -279,6 +248,5 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::post('/test/logout', [TestControllerMarcelo::class, 'logout'])->name('test.logout');
 });
-
 
 require __DIR__ . '/auth.php';

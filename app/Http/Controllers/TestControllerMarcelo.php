@@ -17,7 +17,7 @@ use Inertia\Response;
 class TestControllerMarcelo extends Controller
 {
     /*
-     REGISTER (Usuario) - Vista y Acción
+     register (Usuario) - Vista y Acción
      vista: resources/js/Pages/Auth/Register.tsx
     
      migracion (users):
@@ -56,7 +56,6 @@ class TestControllerMarcelo extends Controller
         ]);
 
         /*
-   
          Cuando se cree una columna (ej: profile_photo_path),
          Guardar con:
          $path = $request->file('profile_photo')->store('profiles', 'public');
@@ -78,14 +77,13 @@ class TestControllerMarcelo extends Controller
         event(new Registered($user));
 
         Auth::login($user);
-
         $request->session()->regenerate();
 
         return redirect()->intended(RouteServiceProvider::HOME);
     }
 
     /*
-     LOGIN (Usuario) - Vista y Acción
+     login (Usuario) - vista y accion
      Vista: resources/js/Pages/Auth/Login.tsx
     
      Shape esperado por LoginRequest:
@@ -105,7 +103,6 @@ class TestControllerMarcelo extends Controller
     public function login(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
 
         return redirect()->intended(RouteServiceProvider::HOME);
@@ -120,16 +117,225 @@ class TestControllerMarcelo extends Controller
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');
     }
-}
-
 
     /*
-     DASHBOARD - vista dinamica
+    admin register - accion
+     Vista: resources/js/Pages/AdminRegister.tsx
+    */
+    public function adminRegister(Request $request): RedirectResponse
+    {
+        $request->session()->put('is_admin', true);
+
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'Apellido_Paterno' => ['required', 'string', 'max:255'],
+            'Apellido_Materno' => ['required', 'string', 'max:255'],
+            'Age' => ['required', 'date'],
+            'Telefono' => ['required', 'string', 'max:15'],
+            'Direccion' => ['required', 'string', 'max:255'],
+            'Ciudad' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'Apellido_Paterno' => $request->Apellido_Paterno,
+            'Apellido_Materno' => $request->Apellido_Materno,
+            'Age' => $request->Age,
+            'Telefono' => $request->Telefono,
+            'Direccion' => $request->Direccion,
+            'Ciudad' => $request->Ciudad,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        event(new Registered($user));
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->intended('/Advertisement');
+    }
+
+    /*
+     admin login - accion
+     Vista: resources/js/Pages/AdminLogin.tsx
+    */
+    public function adminLogin(Request $request): RedirectResponse
+    {
+        $request->session()->put('is_admin', true);
+
+        $request->validate([
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $remember = (bool) $request->input('remember', false);
+
+        if (!Auth::attempt($request->only('email', 'password'), $remember)) {
+            return back()->withErrors([
+                'email' => 'Credenciales incorrectas.',
+            ])->withInput();
+        }
+
+        $request->session()->regenerate();
+
+        return redirect()->intended('/Advertisement');
+    }
+
+    /*
+     publicaciones - vista dinamica
+     vista: resources/js/Pages/Advertisement.tsx
+
+     Props que consume Advertisement.tsx:
+      createdAds: array (session)
+      isAdmin: boolean (session is_admin)
+      filters?: { q, type, sort, distance } (opcional)
+
+     Fuente actual:
+      session('created_ads', []) -> se llena en routes/web.php en POST /Advertisement
+     */
+    public function advertisementIndex(Request $request): Response
+    {
+        $createdAds = $request->session()->get('created_ads', []);
+        $filters = $this->parseAdvertisementFilters($request);
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
+        return Inertia::render('Advertisement', [
+            'createdAds' => $createdAds,
+            'filters' => $filters,
+            'isAdmin' => $isAdmin,
+        ]);
+    }
+
+    /*
+       ajustes pequeños a los filtros desde la url
+       evita valores inválidos
+    */
+    private function parseAdvertisementFilters(Request $request): array
+    {
+        $q = (string) $request->query('q', '');
+        $type = (string) $request->query('type', 'all');
+        $sort = (string) $request->query('sort', 'newest');
+        $distance = (string) $request->query('distance', 'Cualquiera');
+
+        if (!in_array($type, ['all', 'Servicio', 'Producto'], true)) $type = 'all';
+        if (!in_array($sort, ['newest', 'oldest'], true)) $sort = 'newest';
+        if (!in_array($distance, ['Cualquiera', '1', '5', '10', '20', '30', '50'], true)) $distance = 'Cualquiera';
+
+        return [
+            'q' => $q,
+            'type' => $type,
+            'sort' => $sort,
+            'distance' => $distance,
+        ];
+    }
+
+    /*
+     mis publicaciones (LISTADO) - vista dinamica
+     vista: resources/js/Pages/MyAdvertisements.tsx
+
+     Props MyAdvertisements.tsx:
+      createdAds: array (session)
+      (el front filtra por auth.user.name)
+
+     fuente actual:
+     session('created_ads', []) -> se llena en routes/web.php en POST /Advertisement
+     */
+    public function myAdvertisementsIndex(Request $request): Response
+    {
+        $createdAds = $request->session()->get('created_ads', []);
+
+        return Inertia::render('MyAdvertisements', [
+            'createdAds' => $createdAds,
+        ]);
+    }
+
+    /*
+     publicacion (DETALLE) - vista dinamica
+     vista: resources/js/Pages/AdvertisementShow.tsx
+
+     Props esperadas:
+      item: object|null (publicacion encontrada por id)
+     Fuente actual:
+      session('created_ads', [])
+     */
+    public function advertisementShow(Request $request, int $id): Response
+    {
+        $createdAds = $request->session()->get('created_ads', []);
+        $item = collect($createdAds)->firstWhere('id', (int) $id);
+
+        return Inertia::render('AdvertisementShow', [
+            'item' => $item ?: null,
+        ]);
+    }
+
+    /*
+     publicacion (EDITAR FORM) - vista dinamica
+     vista: resources/js/Pages/EditarPublicacion.tsx
+
+     Props esperadas:
+      item: object|null (publicacion encontrada por id)
+     Fuente actual:
+      session('created_ads', [])
+      La accion de guardar cambios sigue en web.php (PATCH /Advertisement/{id})
+     */
+    public function advertisementEdit(Request $request, int $id): Response
+    {
+        $createdAds = $request->session()->get('created_ads', []);
+        $item = collect($createdAds)->firstWhere('id', (int) $id);
+
+        return Inertia::render('EditarPublicacion', [
+            'item' => $item ?: null,
+        ]);
+    }
+
+    /*
+     crear publicacion (FORM) - vista dinamica
+     vista: resources/js/Pages/CreateAdvertisement.tsx
+
+     Props esperadas por CreateAdvertisement.tsx:
+      users: array<{ id:number, name:string }>
+        - solo si el usuario es admin
+        - si no , vacio -> array vacio
+
+     fuente actual:
+      tabla users (App\Models\User)
+      session('is_admin') -> determina si puede crear publicaciones para otros usuarios
+
+     uso:
+      admin:
+        puede crear publicacion para cualquier usuario
+
+      usuario normal:
+        solo puede crear para si mismo (selector users llega vacio)
+    */
+    public function advertisementCreate(Request $request): Response
+    {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
+        $users = [];
+
+        if ($isAdmin) {
+            $users = User::query()
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        }
+
+        return Inertia::render('CreateAdvertisement', [
+            'users' => $users,
+        ]);
+    }
+
+    /*
+     dashboard - vista dinamica
      vista: resources/js/Pages/Dashboard.tsx
 
      shape esperado por Dashboard.tsx:
@@ -225,4 +431,4 @@ class TestControllerMarcelo extends Controller
             ],
         ];
     }
-
+}

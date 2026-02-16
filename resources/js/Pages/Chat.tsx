@@ -4,29 +4,34 @@ import FilaConversacion from '@/Components/DerivedComponents/FilaConversacion';
 import AreaChat from '@/Components/DerivedComponents/AreaChat';
 import BellNotificationButton from '@/Components/DerivedComponents/BellNotificationButton';
 import NotificacionesModalCRIS from '@/Components/DerivedComponents/NotificacionesModalCRIS';
-import { mockConversaciones } from '@/mockData/datosMockMensajes';
-import { mockMensajesConversaciones } from '@/mockData/datosMockChatMensajes';
 import { mockNotificaciones } from '@/mockData/datosMockNotificacionesCRIS';
 import { useState, useMemo, useEffect } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import type { Conversacion } from '@/mockData/datosMockMensajes';
+import type { ConversacionDetalle } from '@/mockData/datosMockChatMensajes';
 
 const CONVERSACIONES_PER_PAGE = 10;
 
-export default function Chat({ auth }: any) {
+interface ChatProps {
+    auth: any;
+    conversaciones: Conversacion[];
+    mensajesPorConversacion: ConversacionDetalle[];
+}
+
+export default function Chat({ auth, conversaciones: conversacionesServer, mensajesPorConversacion }: ChatProps) {
     const [conversacionSeleccionada, setConversacionSeleccionada] = useState<number | null>(null);
-    const [conversacionesConEstado, setConversacionesConEstado] = useState(mockConversaciones);
-    const [conversacionesPaginadas, setConversacionesPaginadas] = useState(mockConversaciones.slice(0, CONVERSACIONES_PER_PAGE));
+    const [conversacionesConEstado, setConversacionesConEstado] = useState(conversacionesServer || []);
+    const [conversacionesPaginadas, setConversacionesPaginadas] = useState((conversacionesServer || []).slice(0, CONVERSACIONES_PER_PAGE));
     const [modalNotificacionesAbierto, setModalNotificacionesAbierto] = useState(false);
     const [notificacionesConEstado, setNotificacionesConEstado] = useState(mockNotificaciones);
-
 
     const tieneNotificacionesSinLeer = useMemo(
         () => notificacionesConEstado.some((notif) => notif.mensajesNoLeidos > 0),
         [notificacionesConEstado]
     );
 
-    const conversacionActual = mockConversaciones.find((c) => c.id === conversacionSeleccionada);
-    const mensajesActuales = mockMensajesConversaciones.find(
+    const conversacionActual = conversacionesConEstado.find((c) => c.id === conversacionSeleccionada);
+    const mensajesActuales = mensajesPorConversacion.find(
         (m) => m.conversacionId === conversacionSeleccionada
     )?.mensajes || [];
 
@@ -86,6 +91,8 @@ export default function Chat({ auth }: any) {
         );
     };
 
+    const mostrarListaVacia = conversacionesPaginadas.length === 0;
+
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Mensajes" />
@@ -132,28 +139,35 @@ export default function Chat({ auth }: any) {
                         </div>
 
                         <div className="flex-1 overflow-y-auto scrollbar-thin flex flex-col">
-                            <div className="flex-1">
-                                {conversacionesPaginadas.map((conversacion) => (
-                                    <FilaConversacion
-                                        key={conversacion.id}
-                                        conversacion={conversacion}
-                                        seleccionada={conversacionSeleccionada === conversacion.id}
-                                        onSeleccionar={handleSeleccionarConversacion}
-                                    />
-                                ))}
-                            </div>
-
-
-                            <div ref={observerTarget} className="flex justify-center py-4">
-                                {isLoading && (
-                                    <div className="text-center">
-                                        <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                            {mostrarListaVacia ? (
+                                <div className="flex items-center justify-center h-full">
+                                    <p className="text-gray-400 text-center px-4">No hay conversaciones</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex-1">
+                                        {conversacionesPaginadas.map((conversacion) => (
+                                            <FilaConversacion
+                                                key={conversacion.id}
+                                                conversacion={conversacion}
+                                                seleccionada={conversacionSeleccionada === conversacion.id}
+                                                onSeleccionar={handleSeleccionarConversacion}
+                                            />
+                                        ))}
                                     </div>
-                                )}
-                                {!hasMore && conversacionesPaginadas.length > 0 && (
-                                    <p className="text-gray-400 text-xs">No hay más conversaciones</p>
-                                )}
-                            </div>
+
+                                    <div ref={observerTarget} className="flex justify-center py-4">
+                                        {isLoading && (
+                                            <div className="text-center">
+                                                <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                            </div>
+                                        )}
+                                        {!hasMore && conversacionesPaginadas.length > 0 && (
+                                            <p className="text-gray-400 text-xs">No hay más conversaciones</p>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -182,7 +196,7 @@ export default function Chat({ auth }: any) {
                                 </button>
                             </div>
                         )}
-                        {conversacionActual && mensajesActuales.length > 0 ? (
+                        {conversacionActual ? (
                             <AreaChat
                                 conversacion={conversacionActual}
                                 mensajes={mensajesActuales}

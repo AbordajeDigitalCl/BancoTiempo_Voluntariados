@@ -42,10 +42,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', [TestControllerMarcelo::class, 'dashboard'])->name('dashboard');
 
+
+    Route::get('/EditarPerfil', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil'])
+        ->middleware(['auth', 'verified'])->name('editarperfil');
+
+    Route::post('/EditarPerfil', [\App\Http\Controllers\TestControllerCris::class, 'guardarPerfil'])
+        ->middleware(['auth', 'verified']);
+
     Route::get('/Advertisement', [TestControllerMarcelo::class, 'advertisementIndex'])->name('advertisement');
-    Route::get('/EditarPerfil', function () {
-        return Inertia::render('EditarPerfil');
-    })->middleware(['auth', 'verified'])->name('editarperfil');
+    
+
 
     Route::get('/MenuHeader', function () {
         return Inertia::render('MenuHeader');
@@ -59,11 +65,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('SeleccionarPublicacionEditarCRIS');
     })->middleware(['auth', 'verified'])->name('editar-publicacion');
 
-    Route::get('/Editar-Publicacion/{id}', function ($id) {
-        return Inertia::render('EditarMiPublicacionCRIS', [
-            'publicacionId' => $id
-        ]);
-    })->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
+    Route::get('/Editar-Publicacion/{id}', [\App\Http\Controllers\TestControllerCris::class, 'editarPublicacion'])
+        ->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
+
+    Route::post('/Editar-Publicacion/{id}', [\App\Http\Controllers\TestControllerCris::class, 'guardarPublicacion'])
+        ->middleware(['auth', 'verified']);
 
     Route::get('/Advertisement/create', [TestControllerMarcelo::class, 'advertisementCreate'])
     ->name('advertisement.create');
@@ -208,13 +214,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/Advertisement/{id}', [TestControllerMarcelo::class, 'advertisementShow'])->name('advertisement.show');
 
-    Route::get('/chat', function () {
-        return Inertia::render('Chat');
-    })->name('chat');
+    Route::get('/chat', [\App\Http\Controllers\TestControllerCris::class, 'chat'])
+        ->middleware(['auth', 'verified'])->name('chat');
 
-    Route::get('/verperfil', function () {
-        return Inertia::render('VerPerfil');
-    })->name('verperfil');
+    Route::post('/chat/enviar-mensaje', [\App\Http\Controllers\TestControllerCris::class, 'enviarMensaje'])
+        ->middleware(['auth', 'verified']);
+
+    Route::get('/verperfil', [\App\Http\Controllers\TestControllerCris::class, 'verPerfil'])
+        ->middleware(['auth', 'verified'])->name('verperfil');
 
     Route::get('/verperfil-Admin/{id?}', function ($id = null) {
         return Inertia::render('VerPerfilAdmin', [

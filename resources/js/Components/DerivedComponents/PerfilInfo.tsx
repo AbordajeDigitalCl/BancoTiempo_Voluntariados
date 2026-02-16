@@ -1,10 +1,20 @@
 import { PerfilData } from '@/mockData/datosMockPerfil';
 import {Link} from "@inertiajs/react";
 interface PerfilInfoProps {
-    perfil: PerfilData;
+    perfil: PerfilData & { apellidoPaterno?: string; apellidoMaterno?: string };
 }
 
 export default function PerfilInfo({ perfil }: PerfilInfoProps) {
+    const getNombreCompleto = () => {
+        let nombre = perfil.nombre || '';
+        if (perfil.apellidoPaterno) {
+            nombre += ' ' + perfil.apellidoPaterno;
+        }
+        if (perfil.apellidoMaterno) {
+            nombre += ' ' + perfil.apellidoMaterno.charAt(0) + '.';
+        }
+        return nombre;
+    };
     return (
         <div className="w-full h-full bg-white">
            
@@ -31,8 +41,7 @@ export default function PerfilInfo({ perfil }: PerfilInfoProps) {
 
                    
                         <div className="w-1/3 h-full flex flex-col justify-start pl-4 text-left">
-                            <span className="text-2xl font-bold">{perfil.nombre}</span>
-                            <span className="text-xs text-left">{perfil.titulo}</span>
+                            <span className="text-2xl font-bold">{getNombreCompleto()}</span>
                             <div className="mt-2 space-y-1">
                                 <div><span className="font-bold">Ciudad:</span> <span>{perfil.ciudad}</span></div>
                                 <div><span className="font-bold">Teléfono:</span> <span>{perfil.telefono}</span></div>
@@ -64,9 +73,6 @@ export default function PerfilInfo({ perfil }: PerfilInfoProps) {
                                     <span className="text-sm">Saldo</span>
                                 </div>
                             </div>
-                        <span className="text-gray-500 text-xs mt-2 text-right">
-                            Expiran el {perfil.fechaExpiracion}
-                        </span>
                         </div>
                     </div>
                 </div>
@@ -96,9 +102,6 @@ export default function PerfilInfo({ perfil }: PerfilInfoProps) {
                             <span className="text-sm">Saldo</span>
                         </div>
                     </div>
-                    <span className="text-gray-500 text-xs mt-1">
-                        Expiran el {perfil.fechaExpiracion}
-                    </span>
                 </div>
 
              
@@ -119,8 +122,7 @@ export default function PerfilInfo({ perfil }: PerfilInfoProps) {
                 </div>
 
                 <div className="w-full text-left">
-                    <span className="text-2xl font-bold block">{perfil.nombre}</span>
-                    <span className="text-xs text-gray-600 block mb-3">{perfil.titulo}</span>
+                    <span className="text-2xl font-bold block">{getNombreCompleto()}</span>
                     <div className="space-y-2 text-sm">
                         <div><span className="font-bold">Ciudad:</span> <span>{perfil.ciudad}</span></div>
                         <div><span className="font-bold">Teléfono:</span> <span>{perfil.telefono}</span></div>

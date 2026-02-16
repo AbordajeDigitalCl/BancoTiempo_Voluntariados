@@ -13,17 +13,12 @@ type Ad = {
   mode: 'Oferta' | 'Demanda';
   status?: AdStatus;
 
-
   user_id?: number | null;
-
-
   author?: string;
-
 
   imageUrl?: string | null;
   imageUrls?: string[];
-  image_urls?: string[]; 
-
+  image_urls?: string[];
   created_at?: string | null;
 };
 
@@ -67,7 +62,7 @@ function buildParams(q: string, type: string, sort: string, distance: string) {
   return params;
 }
 
-export default function Advertisement({ auth, createdAds, filters }: any) {
+export default function Advertisement({ auth, createdAds, filters, isAdmin }: any) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   const initial = useMemo(() => {
@@ -87,7 +82,7 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
     };
   }, [filters]);
 
-  const [q, setQ] = useState(initial.q);
+  const [q, setQ] = useState<string>(typeof initial.q === 'string' ? initial.q : '');
   const [typeFilter, setTypeFilter] = useState(initial.type);
   const [sort, setSort] = useState(initial.sort);
   const [distance, setDistance] = useState(initial.distance);
@@ -95,18 +90,15 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
   const debounceRef = useRef<number | null>(null);
   const firstRunRef = useRef(true);
 
-
   const ads: Ad[] = useMemo(() => {
     return (createdAds ?? []).map((x: any) => {
-      const normalizedImageUrls: string[] =
-        (x.imageUrls ?? x.image_urls ?? x.images ?? []) as string[];
+      const normalizedImageUrls: string[] = (x.imageUrls ?? x.image_urls ?? x.images ?? []) as string[];
 
       return {
         ...x,
         status: (x.status ?? 'active') as AdStatus,
         imageUrls: normalizedImageUrls,
         created_at: x.created_at ?? null,
-
         author: x.author ?? x?.user?.name ?? x?.user_name ?? x?.username ?? undefined,
         user_id: x.user_id ?? x?.user?.id ?? null,
       } as Ad;
@@ -114,7 +106,7 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
   }, [createdAds]);
 
   const filteredAds: Ad[] = useMemo(() => {
-    const query = q.trim().toLowerCase();
+    const query = (q ?? '').trim().toLowerCase();
     let list = [...ads];
 
     if (typeFilter !== 'all') list = list.filter((a) => a.type === typeFilter);
@@ -135,15 +127,19 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
     return list;
   }, [ads, q, typeFilter, sort]);
 
-
   function isOwner(ad: Ad) {
+    if (isAdmin) return true;
+
     const myId = auth?.user?.id ?? null;
-    return myId != null && ad.user_id != null && Number(ad.user_id) === Number(myId);
+    if (myId != null && ad.user_id != null) return Number(ad.user_id) === Number(myId);
+    const myName = String(auth?.user?.name ?? '');
+    const author = String(ad.author ?? '');
+    return !!myName && !!author && myName === author;
   }
 
   function getCover(ad: Ad) {
-
-    return ad.imageUrls?.[0] || ad.imageUrl || 'https://picsum.photos/seed/demo/900/600';
+    const first = ad.imageUrls?.[0];
+    return first || ad.imageUrl || 'https://picsum.photos/seed/demo/900/600';
   }
 
   function closeMenu() {
@@ -216,7 +212,7 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
               <input
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Buscar por título, descripción o autor"
-                value={q}
+                value={q ?? ''}
                 onChange={(e) => setQ(e.target.value)}
               />
 
@@ -276,7 +272,7 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
                   Ir a Mis publicaciones
                 </Link>
 
-                {typeFilter !== 'all' || q.trim() || sort !== 'newest' || distance !== 'Cualquiera' ? (
+                {typeFilter !== 'all' || (q ?? '').trim() || sort !== 'newest' || distance !== 'Cualquiera' ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -312,12 +308,7 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
                   <div key={ad.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="flex flex-col md:flex-row">
                       <Link href={`/Advertisement/${ad.id}`} className="md:w-[320px] w-full shrink-0">
-                        <img
-                          src={cover}
-                          alt={ad.title}
-                          className="w-full h-56 md:h-full object-cover"
-                          loading="lazy"
-                        />
+                        <img src={cover} alt={ad.title} className="w-full h-56 md:h-full object-cover" loading="lazy" />
                       </Link>
 
                       <div className="flex-1 p-4 relative">
@@ -425,10 +416,7 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
                             Ver detalle
                           </Link>
 
-                          <button
-                            type="button"
-                            className="rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
-                          >
+                          <button type="button" className="rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800">
                             Acción
                           </button>
                         </div>

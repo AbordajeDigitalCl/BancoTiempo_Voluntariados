@@ -1,6 +1,7 @@
 import { Conversacion } from '@/mockData/datosMockMensajes';
 import { Mensaje } from '@/mockData/datosMockChatMensajes';
 import GloboMensaje from '@/Components/DerivedComponents/GloboMensaje';
+import { enviarMensaje } from '@/services/enviarMensaje';
 import { useState, useRef, useEffect } from 'react';
 import React from 'react';
 
@@ -17,6 +18,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
     );
     const [mensajes, setMensajes] = useState<Mensaje[]>(mensajesIniciales);
     const [imagenURL, setImagenURL] = useState('');
+    const [enviando, setEnviando] = useState(false);
     const mensajesContainerRef = useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
@@ -51,6 +53,14 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
 
         setMensajes([...mensajes, nuevoMensajeObj]);
         setNuevoMensaje('');
+
+        enviarMensaje({
+            conversacion_id: conversacion.id,
+            contenido: nuevoMensajeObj.contenido,
+            es_imagen: false,
+        }).catch((error) => {
+            console.error('Error al enviar mensaje:', error);
+        });
     };
 
     const handleSeleccionarImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,7 +68,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             const imagenData = event.target?.result as string;
             const fechaHoy = new Date();
             const fecha = `${String(fechaHoy.getDate()).padStart(2, '0')}/${String(
@@ -79,6 +89,20 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
             };
 
             setMensajes([...mensajes, nuevoMensajeConImagen]);
+            setEnviando(true);
+
+            try {
+                await enviarMensaje({
+                    conversacion_id: conversacion.id,
+                    contenido: file.name,
+                    es_imagen: true,
+                    nombre_archivo: file.name,
+                });
+            } catch (error) {
+                console.error('Error al enviar imagen:', error);
+            } finally {
+                setEnviando(false);
+            }
         };
         reader.readAsDataURL(file);
     };
@@ -165,9 +189,10 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
 
                   
                     <button
-                        onClick={() => document.getElementById('inputImagen')?.click()}
-                        className="flex flex-col items-center gap-1 text-gray-600 hover:text-blue-500 transition"
-                        title="Compartir imagen"
+                        onClick={() => {}}
+                        disabled={true}
+                        className="flex flex-col items-center gap-1 text-gray-400 cursor-not-allowed opacity-50"
+                        title="Próximamente"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -183,13 +208,14 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
                                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                             />
                         </svg>
-                        <span className="text-xs">Imagen</span>
+                        <span className="text-xs">Próximamente</span>
                     </button>
 
                   
                     <button
                         onClick={handleEnviarMensaje}
-                        className="mt-2 px-4 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg transition"
+                        disabled={nuevoMensaje.trim() === ''}
+                        className="mt-2 px-4 py-1 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Enviar
                     </button>
@@ -198,3 +224,4 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
         </div>
     );
 }
+       

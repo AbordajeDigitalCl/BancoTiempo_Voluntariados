@@ -5,7 +5,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\PublicacionesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\TestController;
+use App\Http\Controllers\TestControllerCris;
 use App\Http\Controllers\TipoUsuario;
 use App\Http\Controllers\TransaccionController;
 use App\Http\Controllers\UserController;
@@ -104,8 +104,8 @@ Route::delete('/file/{filename}', [
 
 
 
-Route::post('editar',[TestController::class, 'editar'])->name('editar');
-Route::put('editar',[TestController::class, 'editar'])->name('editar');
-Route::delete('editar',[TestController::class, 'editar'])->name('editar');
-Route::get('obtener', [TestController::class, 'obtener'])->name('obtener');
+Route::post('editar',[TestControllerCris::class, 'editar'])->name('editar');
+Route::put('editar',[TestControllerCris::class, 'editar'])->name('editar');
+Route::delete('editar',[TestControllerCris::class, 'editar'])->name('editar');
+Route::get('obtener', [TestControllerCris::class, 'obtener'])->name('obtener');
 

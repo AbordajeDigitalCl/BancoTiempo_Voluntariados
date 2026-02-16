@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Traits\Cruds;
 
 
-class TestController extends Controller
+class TestControllerMarcelo extends Controller
 {
     use Cruds;
 
@@ -62,6 +62,8 @@ class TestController extends Controller
     prueba
     */
     public function nombre(Request $request)
-
+    {
+        // Implementar aquí
+    }
 }
 

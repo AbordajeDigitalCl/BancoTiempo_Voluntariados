@@ -52,7 +52,7 @@ export default function Authenticated({
   const hasUser = !!user && typeof user === 'object';
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <nav className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -102,7 +102,6 @@ export default function Authenticated({
                         >
                           <span className="relative inline-flex items-center">
                             {user?.name}
-
                             {totalBadge > 0 && (
                               <span className="ml-2 inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
                                 {totalBadge}
@@ -130,22 +129,14 @@ export default function Authenticated({
                       <Dropdown.Link href={hrefChat}>
                         <span className="flex items-center justify-between">
                           <span>Mensajes</span>
-                          {unreadMessageCount > 0 && (
-                            <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
-                              {unreadMessageCount}
-                            </span>
-                          )}
+                          <CountBadge value={unreadMessageCount} />
                         </span>
                       </Dropdown.Link>
 
                       <Dropdown.Link href={hrefNotifications}>
                         <span className="flex items-center justify-between">
                           <span>Notificaciones</span>
-                          {unreadNotificationCount > 0 && (
-                            <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
-                              {unreadNotificationCount}
-                            </span>
-                          )}
+                          <CountBadge value={unreadNotificationCount} />
                         </span>
                       </Dropdown.Link>
 
@@ -180,7 +171,7 @@ export default function Authenticated({
             <div className="-me-2 flex items-center sm:hidden">
               <button
                 onClick={() => setShowingNavigationDropdown((previousState) => !previousState)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-500 transition duration-150 ease-in-out"
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 transition duration-150 ease-in-out"
               >
                 <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                   <path
@@ -205,72 +196,22 @@ export default function Authenticated({
 
         <div className={(showingNavigationDropdown ? 'block' : 'hidden') + ' sm:hidden'}>
           <div className="pt-2 pb-3 space-y-1">
-            <ResponsiveNavLink href={hrefDashboard} active={hasRoute('dashboard') ? route().current('dashboard') : false}>
-              Dashboard
-            </ResponsiveNavLink>
-
-            <ResponsiveNavLink href={hrefAds} active={hasRoute('advertisement') ? route().current('advertisement') : false}>
-              Publicaciones
-            </ResponsiveNavLink>
-
-            <ResponsiveNavLink href={hrefChat} active={hasRoute('chat') ? route().current('chat') : false}>
+            <ResponsiveNavLink href={hrefDashboard}>Dashboard</ResponsiveNavLink>
+            <ResponsiveNavLink href={hrefAds}>Publicaciones</ResponsiveNavLink>
+            <ResponsiveNavLink href={hrefChat}>
               <span className="flex items-center justify-between w-full">
                 <span>Mensajes</span>
-                {unreadMessageCount > 0 && (
-                  <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
-                    {unreadMessageCount}
-                  </span>
-                )}
+                <CountBadge value={unreadMessageCount} />
               </span>
             </ResponsiveNavLink>
-
-            <ResponsiveNavLink
-              href={hrefMyAds}
-              active={hasRoute('myadvertisements') ? route().current('myadvertisements') : false}
-            >
-              Mis publicaciones
-            </ResponsiveNavLink>
-
-            <ResponsiveNavLink href={hrefProfile} active={hasRoute('verperfil') ? route().current('verperfil') : false}>
-              Ver Perfil
-            </ResponsiveNavLink>
-
-            <ResponsiveNavLink
-              href={hrefNotifications}
-              active={hasRoute('notifications') ? route().current('notifications') : false}
-            >
+            <ResponsiveNavLink href={hrefMyAds}>Mis publicaciones</ResponsiveNavLink>
+            <ResponsiveNavLink href={hrefProfile}>Ver Perfil</ResponsiveNavLink>
+            <ResponsiveNavLink href={hrefNotifications}>
               <span className="flex items-center justify-between w-full">
                 <span>Notificaciones</span>
-                {unreadNotificationCount > 0 && (
-                  <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
-                    {unreadNotificationCount}
-                  </span>
-                )}
+                <CountBadge value={unreadNotificationCount} />
               </span>
             </ResponsiveNavLink>
-          </div>
-
-          <div className="pt-4 pb-1 border-t border-gray-200">
-            {hasUser ? (
-              <>
-                <div className="px-4">
-                  <div className="font-medium text-base text-gray-800">{user?.name}</div>
-                  <div className="font-medium text-sm text-gray-500">{user?.email}</div>
-                </div>
-
-                <div className="mt-3 space-y-1">
-                  <ResponsiveNavLink href={hrefProfile}>Ver perfil</ResponsiveNavLink>
-                  <ResponsiveNavLink method="post" href={safeRoute('logout', '/logout')} as="button">
-                    Cerrar sesión
-                  </ResponsiveNavLink>
-                </div>
-              </>
-            ) : (
-              <div className="px-4 space-y-2">
-                <ResponsiveNavLink href="/login">Iniciar sesión</ResponsiveNavLink>
-                <ResponsiveNavLink href="/register">Crear cuenta</ResponsiveNavLink>
-              </div>
-            )}
           </div>
         </div>
       </nav>
@@ -281,7 +222,29 @@ export default function Authenticated({
         </header>
       )}
 
-      <main>{children}</main>
+      <main className="flex-1">{children}</main>
+
+<footer className="border-t border-gray-200 bg-white">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    
+    <a
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center justify-center gap-3 group transition-all duration-300"
+    >
+      <img
+        src="/assets/footer-logo.png"
+        alt="Abordaje Digital"
+        className="h-8 w-8 object-contain transition-all duration-300 group-hover:scale-110"
+      />
+
+      <span className="text-sm text-gray-600 font-medium transition-all duration-300 group-hover:text-black">
+        Abordaje Digital
+      </span>
+    </a>
+
+  </div>
+</footer>
     </div>
   );
 }

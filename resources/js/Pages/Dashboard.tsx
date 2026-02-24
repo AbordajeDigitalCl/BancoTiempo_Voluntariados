@@ -14,7 +14,6 @@ type DashboardStats = {
   };
   badges?: {
     unreadMessages?: number;
-    unreadNotifications?: number;
   };
 };
 
@@ -101,7 +100,6 @@ export default function Dashboard({ auth, stats }: { auth: any; stats?: Dashboar
   const adsActiveTotal = Number(counts.adsActiveTotal ?? 0);
 
   const unreadMessages = Number(badges.unreadMessages ?? 0);
-  const unreadNotifications = Number(badges.unreadNotifications ?? 0);
 
   return (
     <AuthenticatedLayout user={auth.user}>
@@ -138,7 +136,7 @@ export default function Dashboard({ auth, stats }: { auth: any; stats?: Dashboar
                 </li>
                 <li className="flex gap-2">
                   <span className="mt-2 h-1.5 w-1.5 rounded-full bg-gray-300" />
-                  Filtros por tipo, modo y orden
+                  Filtros por tipo y modo (Oferta/Demanda)
                 </li>
               </ul>
 
@@ -206,22 +204,6 @@ export default function Dashboard({ auth, stats }: { auth: any; stats?: Dashboar
                     {unreadMessages > 0 && (
                       <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
                         {unreadMessages}
-                      </span>
-                    )}
-                  </span>
-                </Link>
-              </div>
-
-              <div className="mt-3">
-                <Link
-                  href={route('notifications')}
-                  className="inline-flex w-full items-center justify-center rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
-                >
-                  <span className="inline-flex items-center gap-2">
-                    Notificaciones
-                    {unreadNotifications > 0 && (
-                      <span className="inline-flex min-w-6 justify-center rounded-full bg-black px-2 py-0.5 text-xs text-white tabular-nums">
-                        {unreadNotifications}
                       </span>
                     )}
                   </span>

@@ -13,9 +13,8 @@ export default function Authenticated({
 
   const page: any = usePage();
   const unreadMessageCount: number = Number(page?.props?.unreadMessageCount ?? 0);
-  const unreadNotificationCount: number = Number(page?.props?.unreadNotificationCount ?? 0);
 
-  const totalBadge = unreadMessageCount + unreadNotificationCount;
+  const totalBadge = unreadMessageCount;
 
   const hasRoute = (name: string) => {
     try {
@@ -37,7 +36,6 @@ export default function Authenticated({
   const hrefMyAds = safeRoute('myadvertisements', '/MyAdvertisements');
   const hrefChat = safeRoute('chat', '/chat');
   const hrefProfile = safeRoute('verperfil', '/verperfil');
-  const hrefNotifications = safeRoute('notifications', '/Notificaciones');
 
   const CountBadge = ({ value }: { value: number }) => {
     if (!value || value <= 0) return null;
@@ -133,13 +131,6 @@ export default function Authenticated({
                         </span>
                       </Dropdown.Link>
 
-                      <Dropdown.Link href={hrefNotifications}>
-                        <span className="flex items-center justify-between">
-                          <span>Notificaciones</span>
-                          <CountBadge value={unreadNotificationCount} />
-                        </span>
-                      </Dropdown.Link>
-
                       <Dropdown.Link href={hrefProfile}>Ver perfil</Dropdown.Link>
 
                       <div className="h-px bg-gray-100 my-1" />
@@ -206,12 +197,6 @@ export default function Authenticated({
             </ResponsiveNavLink>
             <ResponsiveNavLink href={hrefMyAds}>Mis publicaciones</ResponsiveNavLink>
             <ResponsiveNavLink href={hrefProfile}>Ver Perfil</ResponsiveNavLink>
-            <ResponsiveNavLink href={hrefNotifications}>
-              <span className="flex items-center justify-between w-full">
-                <span>Notificaciones</span>
-                <CountBadge value={unreadNotificationCount} />
-              </span>
-            </ResponsiveNavLink>
           </div>
         </div>
       </nav>

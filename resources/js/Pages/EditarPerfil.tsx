@@ -3,7 +3,7 @@ import { PageProps } from '@/types';
 import FormEditarPerfil from '@/Components/DerivedComponents/FormEditarPerfil';
 import { mockPerfilEditableData } from '@/mockData/datosMockEditarPerfil';
 
-export default function EditarPerfil({ auth, datosUsuario }: PageProps & { datosUsuario?: any }) {
+export default function EditarPerfil({ auth, datosUsuario, returnTo = 'verperfil' }: PageProps & { datosUsuario?: any; returnTo?: string }) {
     const datos = datosUsuario || mockPerfilEditableData;
 
     return (
@@ -12,7 +12,7 @@ export default function EditarPerfil({ auth, datosUsuario }: PageProps & { datos
         >
             <div className="w-full flex flex-col items-center space-y-8 mt-8 mb-8">
                 <div className="w-full max-w-2xl">
-                    <FormEditarPerfil datosIniciales={datos} />
+                    <FormEditarPerfil datosIniciales={datos} usuarioId={datos?.id} returnTo={returnTo} />
                 </div>
             </div>
         </AuthenticatedLayout>

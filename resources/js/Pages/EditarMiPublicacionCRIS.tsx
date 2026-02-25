@@ -2,6 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import FormEditarMiPublicacionCRIS from '@/Components/DerivedComponents/FormEditarMiPublicacionCRIS';
+import { obtenerImagenPublicacion } from '@/services/imagenesAsignaciones';
 
 interface EditarPublicacionProps extends PageProps {
     datosPublicacion: {
@@ -25,7 +26,7 @@ export default function EditarMiPublicacionCRIS({ auth, datosPublicacion }: Edit
         costo: datosPublicacion.costo.toString(),
         tipo: datosPublicacion.tipo as 'Servicio' | 'Producto',
         ofertaDemanda: datosPublicacion.ofertaDemanda as 'Oferta' | 'Demanda',
-        imagen: datosPublicacion.imagen,
+        imagen: obtenerImagenPublicacion(datosPublicacion.id) || datosPublicacion.imagen,
         estado: datosPublicacion.estado as 'Activo' | 'Desactivado' | 'Agotado',
         fecha: new Date().toISOString().split('T')[0],
     };

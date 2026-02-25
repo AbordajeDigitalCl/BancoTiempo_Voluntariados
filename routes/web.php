@@ -43,10 +43,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [TestControllerMarcelo::class, 'dashboard'])->name('dashboard');
 
 
-    Route::get('/EditarPerfil', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil'])
+    Route::get('/EditarPerfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil'])
         ->middleware(['auth', 'verified'])->name('editarperfil');
 
-    Route::post('/EditarPerfil', [\App\Http\Controllers\TestControllerCris::class, 'guardarPerfil'])
+    Route::post('/EditarPerfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'guardarPerfil'])
         ->middleware(['auth', 'verified']);
 
     Route::get('/Advertisement', [TestControllerMarcelo::class, 'advertisementIndex'])->name('advertisement');
@@ -57,9 +57,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('MenuHeader');
     })->middleware(['auth', 'verified'])->name('menuheader');
 
-    Route::get('/Administrar-Usuarios', function () {
-        return Inertia::render('AdministrarUsuarios');
-    })->middleware(['auth', 'verified'])->name('administrar-usuarios');
+    Route::get('/Administrar-Usuarios', [\App\Http\Controllers\TestControllerCris::class, 'administrarUsuarios'])
+        ->middleware(['auth', 'verified'])->name('administrar-usuarios');
+
+    Route::post('/administrar-usuarios/crear-conversacion', [\App\Http\Controllers\TestControllerCris::class, 'crearOBuscarConversacion'])
+        ->middleware(['auth', 'verified']);
+
+    Route::delete('/administrar-usuarios/eliminar-usuario', [\App\Http\Controllers\TestControllerCris::class, 'eliminarUsuario'])
+        ->middleware(['auth', 'verified']);
 
     Route::get('/Editar-Publicacion', function () {
         return Inertia::render('SeleccionarPublicacionEditarCRIS');

@@ -68,7 +68,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = async (event) => {
+        reader.onload = (event) => {
             const imagenData = event.target?.result as string;
             const fechaHoy = new Date();
             const fecha = `${String(fechaHoy.getDate()).padStart(2, '0')}/${String(
@@ -88,21 +88,8 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
                 imagenUrl: imagenData,
             };
 
+            // Solo se agrega al estado local, sin enviar al backend
             setMensajes([...mensajes, nuevoMensajeConImagen]);
-            setEnviando(true);
-
-            try {
-                await enviarMensaje({
-                    conversacion_id: conversacion.id,
-                    contenido: file.name,
-                    es_imagen: true,
-                    nombre_archivo: file.name,
-                });
-            } catch (error) {
-                console.error('Error al enviar imagen:', error);
-            } finally {
-                setEnviando(false);
-            }
         };
         reader.readAsDataURL(file);
     };
@@ -189,10 +176,10 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
 
                   
                     <button
-                        onClick={() => {}}
-                        disabled={true}
-                        className="flex flex-col items-center gap-1 text-gray-400 cursor-not-allowed opacity-50"
-                        title="Próximamente"
+                        onClick={() => document.getElementById('inputImagen')?.click()}
+                        disabled={enviando}
+                        className="flex flex-col items-center gap-1 text-blue-500 hover:text-blue-600 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                        title="Compartir imagen"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -208,7 +195,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
                                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                             />
                         </svg>
-                        <span className="text-xs">Próximamente</span>
+                        <span className="text-xs">Imagen</span>
                     </button>
 
                   

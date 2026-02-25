@@ -11,6 +11,7 @@ import MenuHamburguesa from '@/Components/DerivedComponents/MenuHamburguesa';
 import { mockProfileData, mockServiciosData } from '@/mockData/datosMockPerfil';
 import { mockUsuarioHeader, mockOpcionesMenu } from '@/mockData/datosMockEncabezadoMenu';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { obtenerImagenPublicacion } from '@/services/imagenesAsignaciones';
 
 const ITEMS_PER_PAGE = 5;
 
@@ -29,15 +30,23 @@ interface VerPerfilProps extends PageProps {
         foto: string;
     };
     publicaciones?: any[];
+    isAdmin?: boolean;
 }
 
-export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: VerPerfilProps) {
+export default function VerPerfil({ auth, datosUsuario, publicaciones = [], isAdmin = false }: VerPerfilProps) {
     const [filtroTipo, setFiltroTipo] = useState<'Servicio' | 'Producto' | null>(null);
     const [filtroOfertaDemanda, setFiltroOfertaDemanda] = useState<'Oferta' | 'Demanda' | null>(null);
     const [filtroOrden, setFiltroOrden] = useState<'precio' | 'popular' | 'reciente' | null>(null);
-    const [serviciosPaginados, setServiciosPaginados] = useState(publicaciones.slice(0, ITEMS_PER_PAGE));
+    
+    // Aplicar mapeo de imágenes desde imagenesAsignaciones.ts
+    const publicacionesConImagenes = publicaciones.map(pub => ({
+        ...pub,
+        imagen: obtenerImagenPublicacion(pub.id) || pub.imagen
+    }));
+    
+    const [serviciosPaginados, setServiciosPaginados] = useState(publicacionesConImagenes.slice(0, ITEMS_PER_PAGE));
 
-    const serviciosFiltrados = publicaciones.filter(s => {
+    const serviciosFiltrados = publicacionesConImagenes.filter(s => {
         const cumpleTipo = !filtroTipo || s.tipo === filtroTipo;
         const cumpleOferta = !filtroOfertaDemanda || s.ofertaDemanda === filtroOfertaDemanda;
         return cumpleTipo && cumpleOferta;
@@ -110,6 +119,7 @@ export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: Ve
                     <PerfilInfo perfil={perfilData} />
 
                     
+                    {!isAdmin && (
                     <div className="barra-controles flex md:flex-row flex-row md:justify-between md:items-center px-4 py-2 gap-2 md:gap-4">
                        
                         <div className="flex items-center space-x-2 text-sm md:text-base">
@@ -142,6 +152,7 @@ export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: Ve
                             </div>
                         )}
                     </div>
+                    )}
 
                     {publicaciones.length > 0 && (
                         <>
@@ -165,7 +176,7 @@ export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: Ve
                             </div>
                         </>
                     )}
-                    {publicaciones.length === 0 && (
+                    {publicaciones.length === 0 && !isAdmin && (
                         <div className="py-8 text-center">
                             <p className="text-gray-500">No hay publicaciones recientes</p>
                         </div>

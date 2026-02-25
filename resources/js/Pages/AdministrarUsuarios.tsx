@@ -2,50 +2,56 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { Link } from '@inertiajs/react';
 import FilaUsuario from '@/Components/DerivedComponents/FilaUsuario';
-import { mockUsuariosAdmin } from '@/mockData/datosMockUsuarios';
 import { useState, useEffect, useMemo } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 const ITEMS_PER_PAGE = 8;
 
-export default function AdministrarUsuarios({ auth }: PageProps) {
+interface Usuario {
+  id: number;
+  nombre: string;
+  apellidoPaterno: string;
+  apellidoMaterno: string;
+  ciudad: string;
+  direccion: string;
+  email: string;
+  foto: string;
+}
+
+interface AdministrarUsuariosProps extends PageProps {
+  usuarios: Usuario[];
+  isAdmin: boolean;
+}
+
+export default function AdministrarUsuarios({ auth, usuarios, isAdmin }: AdministrarUsuariosProps) {
   const [busquedaNombre, setBusquedaNombre] = useState('');
   const [busquedaCiudad, setBusquedaCiudad] = useState('');
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'usuarios' | 'admin'>('todos');
   const [usuariosEliminados, setUsuariosEliminados] = useState<number[]>([]);
-  const [usuariosPaginados, setUsuariosPaginados] = useState<typeof mockUsuariosAdmin>([]);
-
-  const handleEliminarUsuario = (usuarioId: number) => {
-    setUsuariosEliminados((prev) => [...prev, usuarioId]);
-  };
+  const [usuariosPaginados, setUsuariosPaginados] = useState<Usuario[]>([]);
 
   const usuariosFiltrados = useMemo(() => {
     const n = busquedaNombre.trim().toLowerCase();
     const c = busquedaCiudad.trim().toLowerCase();
 
-    return mockUsuariosAdmin
+    return usuarios
       .filter((usuario) => !usuariosEliminados.includes(usuario.id))
       .filter((usuario) => {
-        if (filtroTipo === 'todos') return true;
-        const rol = (usuario as any).rol ? String((usuario as any).rol).toLowerCase() : '';
-        if (filtroTipo === 'admin') return rol.includes('admin');
-        return !rol.includes('admin');
-      })
-      .filter((usuario) => {
-        const nombre = String(usuario.nombre ?? '').toLowerCase();
-        const apellido = String((usuario as any).apellido ?? '').toLowerCase();
-        const full = `${nombre} ${apellido}`.trim();
-
-        const ciudad = String((usuario as any).ciudad ?? '').toLowerCase();
-        const direccion = String((usuario as any).direccion ?? '').toLowerCase();
-        const lugar = ciudad || direccion;
-
-        const cumpleNombre = n ? full.includes(n) : true;
-        const cumpleCiudad = c ? lugar.includes(c) : true;
-
-        return cumpleNombre && cumpleCiudad;
+        const nombreCompleto = `${usuario.nombre} ${usuario.apellidoPaterno} ${usuario.apellidoMaterno}`.toLowerCase();
+        const cumpleNombre = n ? nombreCompleto.includes(n) : true;
+        const cumpleCiudad = c ? usuario.ciudad.toLowerCase().includes(c) : true;
+        
+        let cumpleTipo = true;
+        if (filtroTipo === 'admin') {
+          // Mostrar solo el usuario actual (el admin logueado)
+          cumpleTipo = usuario.id === auth.user.id;
+        } else if (filtroTipo === 'usuarios') {
+          // Mostrar todos excepto el admin logueado
+          cumpleTipo = usuario.id !== auth.user.id;
+        }
+        return cumpleNombre && cumpleCiudad && cumpleTipo;
       });
-  }, [busquedaNombre, busquedaCiudad, filtroTipo, usuariosEliminados]);
+  }, [busquedaNombre, busquedaCiudad, filtroTipo, usuarios, usuariosEliminados, auth.user.id]);
 
   const { isLoading, hasMore, observerTarget, resetPagination } = useInfiniteScroll({
     itemsPerPage: ITEMS_PER_PAGE,
@@ -61,6 +67,24 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
     resetPagination();
     setUsuariosPaginados(usuariosFiltrados.slice(0, ITEMS_PER_PAGE));
   }, [busquedaNombre, busquedaCiudad, filtroTipo, usuariosFiltrados.length]);
+
+  if (!isAdmin) {
+    return (
+      <AuthenticatedLayout user={auth.user}>
+        <div className="py-12">
+          <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+              <div className="p-6 text-center">
+                <p className="text-gray-600 font-medium">
+                  No tienes permiso para acceder a esta página. Solo los administradores pueden usar Administrar Usuarios.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </AuthenticatedLayout>
+    );
+  }
 
   return (
     <AuthenticatedLayout user={auth.user}>
@@ -96,7 +120,7 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
                   placeholder="Buscar por nombre"
                   value={busquedaNombre}
                   onChange={(e) => setBusquedaNombre(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -115,14 +139,14 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
                   placeholder="Buscar por ciudad"
                   value={busquedaCiudad}
                   onChange={(e) => setBusquedaCiudad(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <select
                 value={filtroTipo}
                 onChange={(e) => setFiltroTipo(e.target.value as any)}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="todos">Todos</option>
                 <option value="usuarios">Usuarios</option>
@@ -157,12 +181,16 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
 
           <div className="p-4 md:p-6 space-y-3">
             {usuariosPaginados.length > 0 ? (
-              usuariosPaginados.map((usuario: any) => (
-                <FilaUsuario key={usuario.id} usuario={usuario} onEliminar={handleEliminarUsuario} />
+              usuariosPaginados.map((usuario) => (
+                <FilaUsuario key={usuario.id} usuario={usuario} usuarioActualId={auth.user.id} />
               ))
             ) : (
               <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-center">
-                <p className="text-gray-700 font-medium">Ningún usuario coincide con los criterios de búsqueda</p>
+                <p className="text-gray-700 font-medium">
+                  {busquedaNombre || busquedaCiudad
+                    ? 'Ningún usuario coincide con los criterios de búsqueda'
+                    : 'No hay usuarios disponibles'}
+                </p>
               </div>
             )}
           </div>
@@ -170,11 +198,13 @@ export default function AdministrarUsuarios({ auth }: PageProps) {
           <div ref={observerTarget} className="flex justify-center py-8 border-t border-gray-200">
             {isLoading && (
               <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 <p className="text-gray-500 mt-2">Cargando más usuarios...</p>
               </div>
             )}
-            {!hasMore && usuariosPaginados.length > 0 && <p className="text-gray-400 text-sm">No hay más usuarios</p>}
+            {!hasMore && usuariosPaginados.length > 0 && (
+              <p className="text-gray-400 text-sm">No hay más usuarios</p>
+            )}
           </div>
         </div>
       </div>

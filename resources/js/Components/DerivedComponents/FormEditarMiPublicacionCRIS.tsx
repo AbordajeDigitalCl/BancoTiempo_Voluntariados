@@ -9,10 +9,11 @@ interface FormEditarMiPublicacionProps {
 }
 
 export default function FormEditarMiPublicacionCRIS({ publicacion }: FormEditarMiPublicacionProps) {
+    // MODIFICADO: Agregado estado 'tipo' para capturar Servicio/Producto independientemente
     const [titulo, setTitulo] = useState(publicacion.titulo);
     const [descripcion, setDescripcion] = useState(publicacion.descripcion);
     const [costo, setCosto] = useState(String(publicacion.costo).replace(/[^0-9]/g, ''));
-    const [tipo, setTipo] = useState(publicacion.tipo);
+    const [tipo, setTipo] = useState(publicacion.tipo); // NUEVO: Capturar cambios de Servicio/Producto
     const [ofertaDemanda, setOfertaDemanda] = useState(publicacion.ofertaDemanda);
     const [estado, setEstado] = useState(publicacion.estado);
     const [imagen, setImagen] = useState(publicacion.imagen);
@@ -29,11 +30,14 @@ export default function FormEditarMiPublicacionCRIS({ publicacion }: FormEditarM
         reader.readAsDataURL(file);
     };
 
+    // MODIFICADO: Guardar ahora incluye 'tipo' (Servicio/Producto) como parámetro independiente
+    // Este cambio permite que el servidor maneje cambios de Tipo_Publicacion separadamente de Oferta/Demanda
     const handleGuardar = () => {
         guardarPublicacion(publicacion.id, {
             titulo,
             descripcion,
             costo: parseInt(costo) || 0,
+            tipo, // NUEVO: Enviar tipo (Servicio o Producto) independientemente
             ofertaDemanda,
         });
     };

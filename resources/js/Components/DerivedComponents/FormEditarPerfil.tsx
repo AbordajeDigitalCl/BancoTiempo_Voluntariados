@@ -7,9 +7,11 @@ import { guardarDatosPerfil } from '@/services/guardarDatosPerfil';
 interface FormEditarPerfilProps {
     datosIniciales: PerfilEditable;
     fotoInicial?: string;
+    usuarioId?: number | null;
+    returnTo?: string;
 }
 
-export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https://picsum.photos/150?random=1" }: FormEditarPerfilProps) {
+export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https://picsum.photos/150?random=1", usuarioId = null, returnTo = 'verperfil' }: FormEditarPerfilProps) {
     const {
         formData,
         mostrarContrasena,
@@ -69,7 +71,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
             telefono: data.telefono,
             direccion: data.direccion,
             ciudad: data.ciudad,
-        });
+        }, usuarioId, returnTo);
         console.log('Datos a guardar:', data);
         console.log('Foto:', foto);
     });

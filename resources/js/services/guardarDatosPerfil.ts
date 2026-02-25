@@ -13,8 +13,10 @@ interface DatosPerfil {
     ciudad: string;
 }
 
-export function guardarDatosPerfil(datos: DatosPerfil) {
-    router.post('/EditarPerfil', {
+export function guardarDatosPerfil(datos: DatosPerfil, usuarioId: number | null = null, returnTo: string = 'verperfil') {
+    const url = usuarioId ? `/EditarPerfil/${usuarioId}?return_to=${returnTo}` : '/EditarPerfil';
+    
+    router.post(url, {
         nombre: datos.nombre,
         apellidoPaterno: datos.apellidoPaterno,
         apellidoMaterno: datos.apellidoMaterno,

@@ -1,6 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import 'leaflet/dist/leaflet.css';
+import * as L from 'leaflet';
 
 type AdStatus = 'active' | 'paused' | 'finished';
 
@@ -15,6 +17,11 @@ type Ad = {
   author?: string;
   imageUrl?: string | null;
   imageUrls?: string[];
+
+  location_id?: number | null;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  location_address?: string | null;
 };
 
 function StatusPill({ status }: { status: AdStatus }) {
@@ -89,6 +96,88 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open, active, images.length]);
+
+  const mapDivRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+
+  const hasLocation =
+    typeof item?.location_lat === 'number' && typeof item?.location_lng === 'number';
+
+  const pinIcon = useMemo(() => {
+    return L.divIcon({
+      className: '',
+      html: `
+        <div style="
+          position: relative;
+          width: 30px;
+          height: 30px;
+          background: #000;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+        ">
+          <div style="
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 8px;
+            left: 8px;
+          "></div>
+        </div>
+      `,
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!item) return;
+    if (!hasLocation) return;
+    const el = mapDivRef.current;
+    if (!el) return;
+
+    if (mapRef.current) {
+      mapRef.current.off();
+      mapRef.current.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+    }
+
+    const lat = Number(item.location_lat);
+    const lng = Number(item.location_lng);
+
+    const map = L.map(el, {
+      zoomControl: true,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      boxZoom: false,
+      keyboard: false,
+      touchZoom: false,
+    }).setView([lat, lng], 14);
+    (map as any).tap?.disable?.();
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(map);
+
+    const m = L.marker([lat, lng], { icon: pinIcon, draggable: false }).addTo(map);
+
+    mapRef.current = map;
+    markerRef.current = m;
+
+    setTimeout(() => map.invalidateSize(), 60);
+
+    return () => {
+      map.off();
+      map.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+    };
+  }, [item?.id, hasLocation, pinIcon]);
 
   if (!item) {
     return (
@@ -295,6 +384,24 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
 
               <div className="mt-4 text-sm text-gray-500">
                 Ofrecido por <b>{item.author || 'Usuario'}</b>
+              </div>
+
+              <div className="mt-5">
+                <div className="text-sm font-medium text-gray-900">Ubicación</div>
+
+                {hasLocation ? (
+                  <>
+                    <div className="mt-1 text-sm text-gray-700">
+                      {item.location_address ? item.location_address : 'Ubicación seleccionada'}
+                    </div>
+                    <div
+                      ref={mapDivRef}
+                      className="mt-3 w-full h-[220px] rounded-lg border border-gray-200 overflow-hidden"
+                    />
+                  </>
+                ) : (
+                  <div className="mt-1 text-sm text-gray-500">(Sin ubicación)</div>
+                )}
               </div>
 
               <div className="mt-5 flex flex-wrap gap-2 justify-end">

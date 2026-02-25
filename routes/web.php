@@ -81,6 +81,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::get('/MyAdvertisements', [TestControllerMarcelo::class, 'myAdvertisementsIndex'])->name('myadvertisements');
 
+    Route::get('/geo/reverse', function (Request $request) {
+        $data = $request->validate([
+            'lat' => ['required', 'numeric', 'min:-90', 'max:90'],
+            'lng' => ['required', 'numeric', 'min:-180', 'max:180'],
+        ]);
+        $lat = $data['lat'];
+        $lng = $data['lng'];
+        $url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' . urlencode($lat) . '&lon=' . urlencode($lng);
+
+        $ctx = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => "User-Agent: BancoTiempo/1.0\r\nAccept: application/json\r\n",
+                'timeout' => 8,
+            ],
+        ]);
+
+        $raw = @file_get_contents($url, false, $ctx);
+        if ($raw === false) {
+            return response()->json(['display_name' => ''], 200);
+        }
+
+        $json = json_decode($raw, true);
+
+        return response()->json([
+            'display_name' => $json['display_name'] ?? '',
+        ]);
+    })->name('geo.reverse');
+
     Route::post('/Advertisement', function (Request $request) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
 
@@ -92,6 +121,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'mode' => ['required', 'in:Oferta,Demanda'],
             'imageUrls' => ['nullable', 'array'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
+
+            'location_id' => ['nullable', 'integer'],
+            'location_lat' => ['nullable', 'numeric', 'min:-90', 'max:90'],
+            'location_lng' => ['nullable', 'numeric', 'min:-180', 'max:180'],
+            'location_address' => ['nullable', 'string', 'max:500'], 
         ]);
 
         $createdAds = session('created_ads', []);
@@ -123,6 +157,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'user_id' => $targetUserId,
             'imageUrls' => $imgs,
             'imageUrl' => count($imgs) ? $imgs[0] : null,
+
+            'location_id' => array_key_exists('location_id', $data) ? $data['location_id'] : null,
+            'location_lat' => array_key_exists('location_lat', $data) ? $data['location_lat'] : null,
+            'location_lng' => array_key_exists('location_lng', $data) ? $data['location_lng'] : null,
+            'location_address' => array_key_exists('location_address', $data) ? $data['location_address'] : null, 
         ];
 
         $createdAds[] = $new;
@@ -143,6 +182,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'type' => ['required', 'in:Servicio,Producto'],
             'mode' => ['required', 'in:Oferta,Demanda'],
             'imageUrls' => ['nullable', 'array'],
+
+            'location_id' => ['nullable', 'integer'],
+            'location_lat' => ['nullable', 'numeric', 'min:-90', 'max:90'],
+            'location_lng' => ['nullable', 'numeric', 'min:-180', 'max:180'],
+            'location_address' => ['nullable', 'string', 'max:500'],
         ]);
 
         $createdAds = session('created_ads', []);
@@ -164,6 +208,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         $createdAds[$idx]['imageUrls'] = $imgs;
         $createdAds[$idx]['imageUrl'] = count($imgs) ? $imgs[0] : null;
+
+        $createdAds[$idx]['location_id'] = array_key_exists('location_id', $data) ? $data['location_id'] : null;
+        $createdAds[$idx]['location_lat'] = array_key_exists('location_lat', $data) ? $data['location_lat'] : null;
+        $createdAds[$idx]['location_lng'] = array_key_exists('location_lng', $data) ? $data['location_lng'] : null;
+        $createdAds[$idx]['location_address'] = array_key_exists('location_address', $data) ? $data['location_address'] : null; // ✅ NUEVO
 
         session(['created_ads' => $createdAds]);
 
@@ -243,10 +292,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/editarservicio', function () {
         return Inertia::render('EditarServicio');
     })->name('editarservicio');
-
-    Route::get('/Notificaciones', function () {
-        return Inertia::render('Notifications');
-    })->name('notifications');
 });
 
 Route::middleware('guest')->group(function () {

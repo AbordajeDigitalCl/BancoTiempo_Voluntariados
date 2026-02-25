@@ -1,6 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import 'leaflet/dist/leaflet.css';
+import * as L from 'leaflet';
 
 type AdStatus = 'active' | 'paused' | 'finished';
 
@@ -20,6 +22,9 @@ type Ad = {
   imageUrls?: string[];
   image_urls?: string[];
   created_at?: string | null;
+
+  location_lat?: number | null;
+  location_lng?: number | null;
 };
 
 function OwnerStatusPill({ status }: { status: AdStatus }) {
@@ -62,6 +67,49 @@ function buildParams(q: string, type: string, sort: string, distance: string) {
   return params;
 }
 
+function MiniMap({ lat, lng }: { lat: number; lng: number }) {
+  const divRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.CircleMarker | null>(null);
+
+  useEffect(() => {
+    const el = divRef.current;
+    if (!el) return;
+
+    if (!mapRef.current) {
+      const map = L.map(el, {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        touchZoom: false,
+      }).setView([lat, lng], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(map);
+
+      markerRef.current = L.circleMarker([lat, lng], {
+        radius: 6,
+        weight: 2,
+        fillOpacity: 0.85,
+      }).addTo(map);
+
+      mapRef.current = map;
+      setTimeout(() => map.invalidateSize(), 0);
+    } else {
+      mapRef.current.setView([lat, lng], 13);
+      if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
+      setTimeout(() => mapRef.current?.invalidateSize(), 0);
+    }
+  }, [lat, lng]);
+
+  return <div ref={divRef} className="w-full h-28 rounded-lg border border-gray-200 overflow-hidden" />;
+}
+
 export default function Advertisement({ auth, createdAds, filters, isAdmin }: any) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
@@ -101,6 +149,19 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
         created_at: x.created_at ?? null,
         author: x.author ?? x?.user?.name ?? x?.user_name ?? x?.username ?? undefined,
         user_id: x.user_id ?? x?.user?.id ?? null,
+
+        location_lat:
+          typeof x.location_lat === 'number'
+            ? x.location_lat
+            : typeof x.location_lat === 'string'
+            ? Number(x.location_lat)
+            : null,
+        location_lng:
+          typeof x.location_lng === 'number'
+            ? x.location_lng
+            : typeof x.location_lng === 'string'
+            ? Number(x.location_lng)
+            : null,
       } as Ad;
     });
   }, [createdAds]);
@@ -304,6 +365,12 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
                 const cover = getCover(ad);
                 const ownerStatus = (ad.status ?? 'active') as AdStatus;
 
+                const hasLoc =
+                  typeof ad.location_lat === 'number' &&
+                  Number.isFinite(ad.location_lat) &&
+                  typeof ad.location_lng === 'number' &&
+                  Number.isFinite(ad.location_lng);
+
                 return (
                   <div key={ad.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="flex flex-col md:flex-row">
@@ -406,6 +473,13 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
                           <div className="mt-2 text-sm text-gray-500">
                             Ofrecido por <span className="text-gray-700">{ad.author ?? '—'}</span>
                           </div>
+
+                          {hasLoc && (
+                            <div className="mt-3">
+                              <div className="text-xs text-gray-600 mb-2">Ubicación</div>
+                              <MiniMap lat={Number(ad.location_lat)} lng={Number(ad.location_lng)} />
+                            </div>
+                          )}
                         </div>
 
                         <div className="mt-4 flex items-center justify-end gap-2">
@@ -415,10 +489,6 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
                           >
                             Ver detalle
                           </Link>
-
-                          <button type="button" className="rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800">
-                            Acción
-                          </button>
                         </div>
                       </div>
                     </div>

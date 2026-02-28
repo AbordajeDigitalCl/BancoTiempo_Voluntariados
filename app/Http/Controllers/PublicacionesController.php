@@ -33,6 +33,33 @@ class PublicacionesController extends Controller{
         return response()->json($this->findAllPublicacion($orderBy, $direction, $type, $str, $user, $onlyVisible), 200);
     }
 
+    public function getPublicacionImagen($publicacionId){
+        if($publicacionId == null || !is_numeric($publicacionId))
+            return response()->json(["message" => "Unexpected id type"], 400);
+        return response()->json($this->publicationAsignedImages($publicacionId), 200);
+    }
+
+    public function asignImageToPublicacion(Request $request){
+        LOG::info("On assigning image to publicacion");
+        $validator = Validator::make($request->all(),
+            [
+                'id_image' => 'required|integer|present',
+                'id_publicacion' => 'required|integer|present',
+            ]
+        );
+        if($validator->fails()){
+            LOG::info("Validator failed");
+            return response()->json(["message" => $validator->errors()->all()], 400);
+        }
+        LOG::info("Validating elements ownership");
+        if(Gate::allows('user-owns-publicacion', $request) && Gate::allows('user-owns-image', $request)){
+            LOG::info("User owns image");
+            $this->asignImgToPub($request);
+            return response()->noContent(200);
+        }
+        return response()->json(["message" => "Check elements ownership"], 403);
+    }
+
     public function find(Request $request){
         $result = $this->Obtener_publicacions($request, $use_for = 0, $offset = 0, $ammount = 20);
         return response()->json($result, 200);

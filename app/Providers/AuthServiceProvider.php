@@ -59,6 +59,19 @@ class AuthServiceProvider extends ServiceProvider
             return $demanda->id_usuario === $userId;
         });
 
+        Gate::define('user-owns-publicacion', function(User $user, Request $request){
+            LOG::info("Check publicacion ownership");
+            return $this->checkPublicacionOwnership($user->id, $request->id_publicacion) !== null;
+        });
+
+        Gate::define('user-owns-image', function(User $user, Request $request){
+            LOG::info("USER ". $user->id." image ".$request->id_image);
+            LOG::info("Validate image ownership");
+            $ownership = $this->findImageOwnership($user->id, $request->id_image);
+            LOG::info("found image ownership".json_encode($ownership));
+            return $ownership !== null;
+        });
+
         Gate::define('can-user-buy', function(User $user, $costo){
             LOG::info("In can user buy validation");
             $balance = $this->balance($user->id);

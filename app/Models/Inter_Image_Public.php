@@ -10,9 +10,11 @@ class Inter_Image_Public extends Model
 {
     use HasFactory;
 
+    protected $table = 'inter__imagen__public';
+
     protected $fillable = [
         'id_publicacion',
-        'id_imagen'
+        'id_imagen',
     ];
 
     public function publicacion(): BelongsTo{

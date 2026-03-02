@@ -8,6 +8,11 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     * 
+     * Ángel, coloque el parámetro nuevo y le puse un comentario al lado para que sepas cual es
+     * Que tengas un excelente resto del día.
+     * 
+     * Jose Johnen 2026/03/02
      */
     public function up(): void
     {
@@ -18,7 +23,8 @@ return new class extends Migration
             $table->foreign('id_usuario')->references('id')->on('users')->onDelete('cascade');
             $table->string('Nombre');
             $table->string('Descripcion');
-            $table->tinyInteger('Tipo_Publicacion');
+            $table->tinyInteger('Tipo_Publicacion'); //Parámetro que al parecer define Oferta/Demanda
+            $table->tinyInteger('Tipo_Beneficio'); //Parámetro que define Producto/Servicio 0 = servicio 1 = producto
             $table->timestamps();
         });
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Traits\Cruds;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -48,9 +49,14 @@ class FileUploadController extends Controller
         }
     }
 
-    public function delete($filename){
-        if (Storage::disk("uploads")->exists($filename)) {
+    public function delete(Request $request, $filename){
+        $request->merge(['id_image' => $this->findImageByName($filename)->id]);
+        if (Gate::allows('user-owns-image', $request) && Storage::disk("uploads")->exists($filename)) {
             Storage::disk("uploads")->delete($filename);
+            try {
+                LOG::info("Delete all references");
+                $this->deleteImage($filename);
+            } catch (\Throwable $th) { LOG::info("Error deleting image on DB ".$th->getMessage());}
             return response()->json(null, 200);
         } else {
             return response()->json(null, 404);

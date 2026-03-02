@@ -105,6 +105,12 @@ Route::get('/file/{filename}', [
 Route::delete('/file/{filename}', [
     FileUploadController::class, 'delete'
 ])->middleware("auth:sanctum");
+Route::post('/publicaciones/imagen', [
+    PublicacionesController::class, 'asignImageToPublicacion'
+])->middleware("auth:sanctum");
+Route::get('/publicaciones/{publicacionId}/imagen',[
+    PublicacionesController::class, 'getPublicacionImagen'
+]);
 
 
 

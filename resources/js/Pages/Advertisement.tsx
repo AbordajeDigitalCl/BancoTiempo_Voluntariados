@@ -1,6 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import 'leaflet/dist/leaflet.css';
+import * as L from 'leaflet';
 
 type AdStatus = 'active' | 'paused' | 'finished';
 
@@ -13,18 +15,16 @@ type Ad = {
   mode: 'Oferta' | 'Demanda';
   status?: AdStatus;
 
-
   user_id?: number | null;
-
-
   author?: string;
-
 
   imageUrl?: string | null;
   imageUrls?: string[];
-  image_urls?: string[]; 
-
+  image_urls?: string[];
   created_at?: string | null;
+
+  location_lat?: number | null;
+  location_lng?: number | null;
 };
 
 function OwnerStatusPill({ status }: { status: AdStatus }) {
@@ -67,7 +67,50 @@ function buildParams(q: string, type: string, sort: string, distance: string) {
   return params;
 }
 
-export default function Advertisement({ auth, createdAds, filters }: any) {
+function MiniMap({ lat, lng }: { lat: number; lng: number }) {
+  const divRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.CircleMarker | null>(null);
+
+  useEffect(() => {
+    const el = divRef.current;
+    if (!el) return;
+
+    if (!mapRef.current) {
+      const map = L.map(el, {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        touchZoom: false,
+      }).setView([lat, lng], 13);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(map);
+
+      markerRef.current = L.circleMarker([lat, lng], {
+        radius: 6,
+        weight: 2,
+        fillOpacity: 0.85,
+      }).addTo(map);
+
+      mapRef.current = map;
+      setTimeout(() => map.invalidateSize(), 0);
+    } else {
+      mapRef.current.setView([lat, lng], 13);
+      if (markerRef.current) markerRef.current.setLatLng([lat, lng]);
+      setTimeout(() => mapRef.current?.invalidateSize(), 0);
+    }
+  }, [lat, lng]);
+
+  return <div ref={divRef} className="w-full h-28 rounded-lg border border-gray-200 overflow-hidden" />;
+}
+
+export default function Advertisement({ auth, createdAds, filters, isAdmin }: any) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   const initial = useMemo(() => {
@@ -87,7 +130,7 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
     };
   }, [filters]);
 
-  const [q, setQ] = useState(initial.q);
+  const [q, setQ] = useState<string>(typeof initial.q === 'string' ? initial.q : '');
   const [typeFilter, setTypeFilter] = useState(initial.type);
   const [sort, setSort] = useState(initial.sort);
   const [distance, setDistance] = useState(initial.distance);
@@ -95,26 +138,36 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
   const debounceRef = useRef<number | null>(null);
   const firstRunRef = useRef(true);
 
-
   const ads: Ad[] = useMemo(() => {
     return (createdAds ?? []).map((x: any) => {
-      const normalizedImageUrls: string[] =
-        (x.imageUrls ?? x.image_urls ?? x.images ?? []) as string[];
+      const normalizedImageUrls: string[] = (x.imageUrls ?? x.image_urls ?? x.images ?? []) as string[];
 
       return {
         ...x,
         status: (x.status ?? 'active') as AdStatus,
         imageUrls: normalizedImageUrls,
         created_at: x.created_at ?? null,
-
         author: x.author ?? x?.user?.name ?? x?.user_name ?? x?.username ?? undefined,
         user_id: x.user_id ?? x?.user?.id ?? null,
+
+        location_lat:
+          typeof x.location_lat === 'number'
+            ? x.location_lat
+            : typeof x.location_lat === 'string'
+            ? Number(x.location_lat)
+            : null,
+        location_lng:
+          typeof x.location_lng === 'number'
+            ? x.location_lng
+            : typeof x.location_lng === 'string'
+            ? Number(x.location_lng)
+            : null,
       } as Ad;
     });
   }, [createdAds]);
 
   const filteredAds: Ad[] = useMemo(() => {
-    const query = q.trim().toLowerCase();
+    const query = (q ?? '').trim().toLowerCase();
     let list = [...ads];
 
     if (typeFilter !== 'all') list = list.filter((a) => a.type === typeFilter);
@@ -135,15 +188,19 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
     return list;
   }, [ads, q, typeFilter, sort]);
 
-
   function isOwner(ad: Ad) {
+    if (isAdmin) return true;
+
     const myId = auth?.user?.id ?? null;
-    return myId != null && ad.user_id != null && Number(ad.user_id) === Number(myId);
+    if (myId != null && ad.user_id != null) return Number(ad.user_id) === Number(myId);
+    const myName = String(auth?.user?.name ?? '');
+    const author = String(ad.author ?? '');
+    return !!myName && !!author && myName === author;
   }
 
   function getCover(ad: Ad) {
-
-    return ad.imageUrls?.[0] || ad.imageUrl || 'https://picsum.photos/seed/demo/900/600';
+    const first = ad.imageUrls?.[0];
+    return first || ad.imageUrl || 'https://picsum.photos/seed/demo/900/600';
   }
 
   function closeMenu() {
@@ -216,7 +273,7 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
               <input
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 placeholder="Buscar por título, descripción o autor"
-                value={q}
+                value={q ?? ''}
                 onChange={(e) => setQ(e.target.value)}
               />
 
@@ -276,7 +333,7 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
                   Ir a Mis publicaciones
                 </Link>
 
-                {typeFilter !== 'all' || q.trim() || sort !== 'newest' || distance !== 'Cualquiera' ? (
+                {typeFilter !== 'all' || (q ?? '').trim() || sort !== 'newest' || distance !== 'Cualquiera' ? (
                   <button
                     type="button"
                     onClick={() => {
@@ -308,16 +365,17 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
                 const cover = getCover(ad);
                 const ownerStatus = (ad.status ?? 'active') as AdStatus;
 
+                const hasLoc =
+                  typeof ad.location_lat === 'number' &&
+                  Number.isFinite(ad.location_lat) &&
+                  typeof ad.location_lng === 'number' &&
+                  Number.isFinite(ad.location_lng);
+
                 return (
                   <div key={ad.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     <div className="flex flex-col md:flex-row">
                       <Link href={`/Advertisement/${ad.id}`} className="md:w-[320px] w-full shrink-0">
-                        <img
-                          src={cover}
-                          alt={ad.title}
-                          className="w-full h-56 md:h-full object-cover"
-                          loading="lazy"
-                        />
+                        <img src={cover} alt={ad.title} className="w-full h-56 md:h-full object-cover" loading="lazy" />
                       </Link>
 
                       <div className="flex-1 p-4 relative">
@@ -415,6 +473,13 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
                           <div className="mt-2 text-sm text-gray-500">
                             Ofrecido por <span className="text-gray-700">{ad.author ?? '—'}</span>
                           </div>
+
+                          {hasLoc && (
+                            <div className="mt-3">
+                              <div className="text-xs text-gray-600 mb-2">Ubicación</div>
+                              <MiniMap lat={Number(ad.location_lat)} lng={Number(ad.location_lng)} />
+                            </div>
+                          )}
                         </div>
 
                         <div className="mt-4 flex items-center justify-end gap-2">
@@ -424,13 +489,6 @@ export default function Advertisement({ auth, createdAds, filters }: any) {
                           >
                             Ver detalle
                           </Link>
-
-                          <button
-                            type="button"
-                            className="rounded-lg bg-black text-white px-4 py-2 text-sm hover:bg-gray-800"
-                          >
-                            Acción
-                          </button>
                         </div>
                       </div>
                     </div>

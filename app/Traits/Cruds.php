@@ -19,6 +19,7 @@ use App\Models\Oferta;
 use App\Models\Imagen;
 use App\Models\Inter_Calif_Public;
 use App\Models\Calificacion;
+use App\Models\Inter_Image_Public;
 use Exception;
 //use Validator;
 
@@ -2158,6 +2159,92 @@ trait Cruds
         LOG::info("with demandaId ".$demandaId);
         return $demanda;
     }
+
+    /**
+     * Funcion para validar al dueño de una publicacion
+     *
+     * @param int $id_usuario Id del usuario
+     * @param int $id_publicacion Id de la publicacion
+     * @return id
+     */
+    public function checkPublicacionOwnership(int $id_usuario, int $id_publicacion){
+        LOG::info("Check publicacion ".$id_publicacion." usuario ".$id_usuario);
+        $ownership = DB::table("publicacions")
+            ->select("id")
+            ->where([
+                ["id", $id_publicacion],
+                ["id_usuario", $id_usuario]
+            ])
+            ->get()
+            ->first();
+        LOG::info("Found publicacion ownership ".json_encode($ownership) );
+        return $ownership;
+    }
+
+
+    /**
+     * Funcion para encontrar imagen por ID y dueño
+     *
+     * @param int $imageId Id de la imagen
+     * @param int $usuarioId Id del usuario
+     */
+    public function findImageOwnership(int $usuarioId, int $imageId){
+        $ownership = DB::table("imagens")
+            ->select("imagens.id")
+            ->where([
+                ["imagens.id_usuario_origen", $usuarioId],
+                ["imagens.id", $imageId]
+            ])
+            ->get()
+            ->first();
+        LOG::info("with image ".$imageId." and usuario ".$usuarioId." found ");
+        return $ownership;
+    }
+
+    /**
+     * Funcion para asignar una imagen a una publicación
+     *
+     * @param int $imageId Id de la imagen
+     * @param int $publicacionId Id de la publicación
+     */
+    public function asignImgToPub(Request $request){
+        $asignment = new Inter_Image_Public();
+        $asignment->id_publicacion = $request->id_publicacion;
+        $asignment->id_imagen = $request->id_image;
+        $asignment->save();
+    }
+
+    /**
+     * Funcion para obtener las imagenes asignadas a una publicación 
+     *
+     * @param publicacionId int Id de la publicación
+     * @return Imagen[]
+     */
+    public function publicationAsignedImages($publicacionId){
+        $imageList = DB::table("imagens")
+            ->select("imagens.id", "imagens.Direccion")
+            ->join("inter__imagen__public", "inter__imagen__public.id_imagen", "=", "imagens.id")
+            ->where([
+                ["inter__imagen__public.id_publicacion", $publicacionId]
+            ])
+            ->get();
+        return $imageList ?? [];
+    }
+
+    /**
+     * Funcion para borrar todas las referencias y asignaciones de una imagen
+     * TODO: Agregar el resto de referencias que sean agregadas con el tiempo
+     * @param nombreImagen String nombre de la imagen 
+     */
+    public function deleteImage($nombreImagen){
+        Imagen::where('Direccion', $nombreImagen)->delete();
+        LOG::info("Image deleted");
+    }
+
+    public function findImageByName($filename){
+        return Imagen::where('Direccion', $filename)->first();
+    }
+
 
     /**
      * Funcion para crear una oferta

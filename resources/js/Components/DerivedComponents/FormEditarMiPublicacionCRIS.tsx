@@ -2,15 +2,16 @@ import { Servicio } from '@/mockData/datosMockPerfil';
 import { useState } from 'react';
 import { getStateColors } from '@/constants/coloresEstado';
 import ImageZoomModal from './ImageZoomModal';
+import { guardarPublicacion } from '@/services/guardarPublicacion';
 
 interface FormEditarMiPublicacionProps {
-    publicacion: Servicio;
+    publicacion: Servicio & { id: number };
 }
 
 export default function FormEditarMiPublicacionCRIS({ publicacion }: FormEditarMiPublicacionProps) {
     const [titulo, setTitulo] = useState(publicacion.titulo);
     const [descripcion, setDescripcion] = useState(publicacion.descripcion);
-    const [costo, setCosto] = useState(publicacion.costo.replace(/[^0-9]/g, ''));
+    const [costo, setCosto] = useState(String(publicacion.costo).replace(/[^0-9]/g, ''));
     const [tipo, setTipo] = useState(publicacion.tipo);
     const [ofertaDemanda, setOfertaDemanda] = useState(publicacion.ofertaDemanda);
     const [estado, setEstado] = useState(publicacion.estado);
@@ -29,16 +30,12 @@ export default function FormEditarMiPublicacionCRIS({ publicacion }: FormEditarM
     };
 
     const handleGuardar = () => {
-        console.log({
+        guardarPublicacion(publicacion.id, {
             titulo,
             descripcion,
-            costo,
-            tipo,
+            costo: parseInt(costo) || 0,
             ofertaDemanda,
-            estado,
-            imagen,
         });
-        alert('Cambios guardados (temporal - sin backend)');
     };
 
    

@@ -1,6 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import 'leaflet/dist/leaflet.css';
+import * as L from 'leaflet';
 
 type Item = {
   id: number;
@@ -12,6 +14,10 @@ type Item = {
   author?: string;
   imageUrl?: string | null;
   imageUrls?: string[];
+  location_id?: number | null;
+  location_lat?: number | null;
+  location_lng?: number | null;
+  location_address?: string | null;
 };
 
 function fileToDataURL(file: File) {
@@ -39,10 +45,227 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
     mode: (item?.mode ?? 'Oferta') as 'Oferta' | 'Demanda',
     hours: String(item?.hours ?? 1),
     imageUrls: initialImages as string[],
+    location_id: (item?.location_id ?? null) as number | null,
+    location_lat: (item?.location_lat ?? null) as number | null,
+    location_lng: (item?.location_lng ?? null) as number | null,
+    location_address: (item?.location_address ?? '') as string,
   });
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [imgErr, setImgErr] = useState<string>('');
+
+  const [openMap, setOpenMap] = useState(false);
+  const mapRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const mapDivRef = useRef<HTMLDivElement | null>(null);
+
+  const [addrLoading, setAddrLoading] = useState(false);
+  const [addrError, setAddrError] = useState<string>('');
+  const geocodeAbortRef = useRef<AbortController | null>(null);
+  const geocodeReqIdRef = useRef<number>(0);
+
+  const hasLocation = useMemo(() => {
+    return typeof data.location_lat === 'number' && typeof data.location_lng === 'number';
+  }, [data.location_lat, data.location_lng]);
+  const pinIcon = useMemo(() => {
+    return L.divIcon({
+      className: '',
+      html: `
+        <div style="
+          position: relative;
+          width: 30px;
+          height: 30px;
+          background: #000;
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        ">
+          <div style="
+            width: 14px;
+            height: 14px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 8px;
+            left: 8px;
+          "></div>
+        </div>
+      `,
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+    });
+  }, []);
+
+  function closeMapModal() {
+    setOpenMap(false);
+
+    if (geocodeAbortRef.current) {
+      geocodeAbortRef.current.abort();
+      geocodeAbortRef.current = null;
+    }
+
+    if (mapRef.current) {
+      mapRef.current.off();
+      mapRef.current.remove();
+      mapRef.current = null;
+    }
+
+    markerRef.current = null;
+  }
+
+  async function fetchAddress(lat: number, lng: number) {
+    try {
+      setAddrError('');
+      setAddrLoading(true);
+
+      if (geocodeAbortRef.current) geocodeAbortRef.current.abort();
+      const controller = new AbortController();
+      geocodeAbortRef.current = controller;
+
+      const reqId = ++geocodeReqIdRef.current;
+
+      const res = await fetch(`/geo/reverse?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`, {
+        method: 'GET',
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      });
+
+      if (!res.ok) throw new Error('bad response');
+      const json: any = await res.json();
+
+      if (reqId !== geocodeReqIdRef.current) return;
+
+      setData((prev: any) => ({
+        ...prev,
+        location_address: String(json?.display_name ?? ''),
+      }));
+    } catch (e: any) {
+      if (e?.name === 'AbortError') return;
+      setAddrError('No se pudo obtener la dirección (intenta de nuevo).');
+      setData((prev: any) => ({ ...prev, location_address: '' }));
+    } finally {
+      setAddrLoading(false);
+    }
+  }
+
+  function applyLocation(lat: number, lng: number) {
+    const nextId = data.location_id ?? Date.now();
+
+    setData((prev: any) => ({
+      ...prev,
+      location_id: nextId,
+      location_lat: lat,
+      location_lng: lng,
+    }));
+
+    fetchAddress(lat, lng);
+  }
+  useEffect(() => {
+    if (!openMap) return;
+
+    const el = mapDivRef.current;
+    if (!el) return;
+
+    if (mapRef.current) {
+      setTimeout(() => mapRef.current?.invalidateSize(), 50);
+      return;
+    }
+
+    const initialLat = typeof data.location_lat === 'number' ? data.location_lat : 0;
+    const initialLng = typeof data.location_lng === 'number' ? data.location_lng : 0;
+    const initialZoom = hasLocation ? 13 : 2;
+
+    const t = window.setTimeout(() => {
+      const map = L.map(el, ({ zoomControl: true } as any)).setView([initialLat, initialLng], initialZoom);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+      }).addTo(map);
+
+      const ensureMarker = (lat: number, lng: number) => {
+        if (markerRef.current) {
+          markerRef.current.setLatLng([lat, lng]);
+          return markerRef.current;
+        }
+
+        const m = L.marker([lat, lng], { icon: pinIcon, draggable: true }).addTo(map);
+
+        m.on('dragend', () => {
+          const p = m.getLatLng();
+          const nlat = Number(p.lat);
+          const nlng = Number(p.lng);
+          ensureMarker(nlat, nlng);
+          applyLocation(nlat, nlng);
+        });
+
+        markerRef.current = m;
+        return m;
+      };
+
+      const placeAt = (lat: number, lng: number) => {
+        ensureMarker(lat, lng);
+        applyLocation(lat, lng);
+        map.setView([lat, lng], Math.max(map.getZoom(), 13));
+      };
+
+      map.on('click', (e: any) => {
+        if (!e?.latlng) return;
+        placeAt(Number(e.latlng.lat), Number(e.latlng.lng));
+      });
+
+      mapRef.current = map;
+
+      if (!hasLocation && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            map.setView([Number(pos.coords.latitude), Number(pos.coords.longitude)], 12);
+          },
+          () => {},
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      }
+
+      if (hasLocation) {
+        ensureMarker(initialLat, initialLng);
+        if (!data.location_address) fetchAddress(initialLat, initialLng);
+      }
+
+      map.invalidateSize();
+    }, 50);
+
+    return () => window.clearTimeout(t);
+  }, [openMap]);
+  useEffect(() => {
+    if (!openMap) return;
+    if (!mapRef.current) return;
+
+    const latIsNum = typeof data.location_lat === 'number';
+    const lngIsNum = typeof data.location_lng === 'number';
+
+    if (latIsNum && lngIsNum) {
+      const lat = Number(data.location_lat);
+      const lng = Number(data.location_lng);
+
+      if (markerRef.current) {
+        markerRef.current.setLatLng([lat, lng]);
+      } else {
+        const m = L.marker([lat, lng], { icon: pinIcon, draggable: true }).addTo(mapRef.current);
+        m.on('dragend', () => {
+          const p = m.getLatLng();
+          applyLocation(Number(p.lat), Number(p.lng));
+        });
+        markerRef.current = m;
+      }
+      return;
+    }
+
+    if (data.location_lat === null && data.location_lng === null) {
+      if (markerRef.current) {
+        markerRef.current.remove();
+        markerRef.current = null;
+      }
+    }
+  }, [data.location_lat, data.location_lng, openMap, pinIcon]);
 
   function removeImage(idx: number) {
     const next = data.imageUrls.filter((_, i) => i !== idx);
@@ -79,8 +302,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
 
     patch(`/Advertisement/${item.id}`, {
       preserveScroll: true,
-      onSuccess: () => {
-      },
+      onSuccess: () => {},
     });
   }
 
@@ -178,14 +400,58 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
                 />
                 {errors.hours && <p className="text-xs text-red-500">{errors.hours}</p>}
               </div>
+              <div className="rounded-lg border border-gray-200 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Ubicación (opcional)</p>
+                    <p className="text-xs text-gray-600">Click para poner el pin, o arrástralo para ajustar.</p>
+                  </div>
 
-              {/* IMÁGENES */}
+                  <button
+                    type="button"
+                    onClick={() => setOpenMap(true)}
+                    className="rounded-lg bg-black text-white px-3 py-2 text-sm hover:bg-gray-800"
+                  >
+                    Editar ubicación
+                  </button>
+                </div>
+
+                {hasLocation ? (
+                  <div className="mt-3 flex items-start justify-between gap-2">
+                    <div className="text-xs text-gray-700">
+                      <span className="text-gray-500">Ubicación:</span>{' '}
+                      {addrLoading ? 'Buscando...' : data.location_address ? data.location_address : '(No disponible)'}
+                      {addrError ? <div className="text-red-500 mt-1">{addrError}</div> : null}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setData((prev: any) => ({
+                          ...prev,
+                          location_id: null,
+                          location_lat: null,
+                          location_lng: null,
+                          location_address: '',
+                        }));
+                        setAddrError('');
+                      }}
+                      className="text-sm text-gray-600 hover:underline"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs text-gray-500">(No seleccionada)</p>
+                )}
+
+                {(errors as any)?.location_lat && <p className="text-xs text-red-500 mt-2">{String((errors as any).location_lat)}</p>}
+                {(errors as any)?.location_lng && <p className="text-xs text-red-500 mt-2">{String((errors as any).location_lng)}</p>}
+              </div>
               <div className="pt-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs text-gray-600">Imágenes (máx. 5)</label>
-                  <span className="text-xs text-gray-500">
-                    {data.imageUrls.length}/5
-                  </span>
+                  <span className="text-xs text-gray-500">{data.imageUrls.length}/5</span>
                 </div>
 
                 {data.imageUrls.length > 0 && (
@@ -231,6 +497,63 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
           </div>
         </div>
       </div>
+      {openMap && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-black/40" onClick={closeMapModal} />
+
+          <div className="relative w-full max-w-3xl bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+            <div className="p-4 border-b border-gray-200 flex items-center justify-between gap-2">
+              <div>
+                <h2 className="text-sm font-semibold">Seleccionar ubicación</h2>
+                <p className="text-xs text-gray-600">Click para poner el pin. Luego puedes arrastrarlo.</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setData((prev: any) => ({
+                      ...prev,
+                      location_id: null,
+                      location_lat: null,
+                      location_lng: null,
+                      location_address: '',
+                    }));
+                    setAddrError('');
+                  }}
+                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50"
+                >
+                  Limpiar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={closeMapModal}
+                  className="rounded-lg bg-black text-white px-3 py-2 text-sm hover:bg-gray-800"
+                >
+                  Listo
+                </button>
+              </div>
+            </div>
+
+            <div className="p-4">
+              <div ref={mapDivRef} className="w-full h-[420px] rounded-lg border border-gray-200 overflow-hidden" />
+
+              <div className="mt-3 text-xs text-gray-700">
+                {hasLocation ? (
+                  <>
+                    <span className="text-gray-500">Ubicación:</span>{' '}
+                    {addrLoading ? 'Buscando...' : data.location_address ? data.location_address : '(No disponible)'}
+                    {addrError ? <div className="text-red-500 mt-1">{addrError}</div> : null}
+                  </>
+                ) : (
+                  <span className="text-gray-500">Aún no seleccionas una ubicación.</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </AuthenticatedLayout>
   );
 }

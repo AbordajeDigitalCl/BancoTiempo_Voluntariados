@@ -28,7 +28,6 @@ export default function Register() {
             reset('password', 'password_confirmation');
             if (photoPreview) URL.revokeObjectURL(photoPreview);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const hasAnyError = useMemo(() => Object.keys(errors || {}).length > 0, [errors]);
@@ -49,7 +48,7 @@ export default function Register() {
         e.preventDefault();
 
         post(route('register'), {
-            forceFormData: true, // <-- clave para que SIEMPRE mande multipart/form-data (foto)
+            forceFormData: true, 
             preserveScroll: true,
         });
     };
@@ -62,14 +61,12 @@ export default function Register() {
             <Head title="Registro" />
 
             <form onSubmit={submit} className="space-y-4">
-                {/* Banner claro si hay errores */}
                 {hasAnyError && (
                     <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                         Revisa los campos marcados. Hay datos inválidos o faltantes.
                     </div>
                 )}
 
-                {/* Foto con preview real */}
                 <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
                     <div className="flex flex-col items-center text-center gap-3">
                         <div className="w-24 h-24 rounded-full bg-white border border-gray-200 overflow-hidden flex items-center justify-center">

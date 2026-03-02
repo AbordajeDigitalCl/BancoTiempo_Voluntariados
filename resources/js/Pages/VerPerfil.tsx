@@ -14,14 +14,30 @@ import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 const ITEMS_PER_PAGE = 5;
 
+interface VerPerfilProps extends PageProps {
+    datosUsuario: {
+        id: number;
+        nombre: string;
+        apellidoPaterno: string;
+        apellidoMaterno: string;
+        ciudad: string;
+        telefono: string;
+        direccion: string;
+        email: string;
+        fechaNacimiento: string;
+        saldoHoras: number;
+        foto: string;
+    };
+    publicaciones?: any[];
+}
 
-export default function VerPerfil({ auth }: PageProps) {
+export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: VerPerfilProps) {
     const [filtroTipo, setFiltroTipo] = useState<'Servicio' | 'Producto' | null>(null);
     const [filtroOfertaDemanda, setFiltroOfertaDemanda] = useState<'Oferta' | 'Demanda' | null>(null);
     const [filtroOrden, setFiltroOrden] = useState<'precio' | 'popular' | 'reciente' | null>(null);
-    const [serviciosPaginados, setServiciosPaginados] = useState(mockServiciosData.slice(0, ITEMS_PER_PAGE));
+    const [serviciosPaginados, setServiciosPaginados] = useState(publicaciones.slice(0, ITEMS_PER_PAGE));
 
-    const serviciosFiltrados = mockServiciosData.filter(s => {
+    const serviciosFiltrados = publicaciones.filter(s => {
         const cumpleTipo = !filtroTipo || s.tipo === filtroTipo;
         const cumpleOferta = !filtroOfertaDemanda || s.ofertaDemanda === filtroOfertaDemanda;
         return cumpleTipo && cumpleOferta;
@@ -56,6 +72,22 @@ export default function VerPerfil({ auth }: PageProps) {
         setServiciosPaginados(serviciosOrdenados.slice(0, ITEMS_PER_PAGE));
     }, [filtroTipo, filtroOfertaDemanda, filtroOrden, serviciosOrdenados.length]);
 
+    const perfilData = {
+        id: datosUsuario.id,
+        nombre: datosUsuario.nombre,
+        apellidoPaterno: datosUsuario.apellidoPaterno,
+        apellidoMaterno: datosUsuario.apellidoMaterno,
+        titulo: '',
+        foto: datosUsuario.foto,
+        ciudad: datosUsuario.ciudad,
+        telefono: datosUsuario.telefono,
+        direccion: datosUsuario.direccion,
+        email: datosUsuario.email,
+        fechaNacimiento: datosUsuario.fechaNacimiento,
+        saldoHoras: datosUsuario.saldoHoras,
+        fechaExpiracion: '',
+    };
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -72,18 +104,17 @@ export default function VerPerfil({ auth }: PageProps) {
             
             
 
-            
             <div className="w-full flex flex-col items-center space-y-8 mt-1">
                 <div className='shadow-md rounded-xl bg-white'>
                    
-                    <PerfilInfo perfil={mockProfileData} />
+                    <PerfilInfo perfil={perfilData} />
 
                     
                     <div className="barra-controles flex md:flex-row flex-row md:justify-between md:items-center px-4 py-2 gap-2 md:gap-4">
                        
                         <div className="flex items-center space-x-2 text-sm md:text-base">
                             <Link
-                                href="/MyAdvertisements"
+                                href="/EditarPerfil"
                                 className="w-8 h-8 flex items-center justify-center border border-black bg-gray-200 rounded-full font-bold text-lg hover:bg-gray-300 transition"
                                 title="Editar perfil"
                             >
@@ -94,40 +125,51 @@ export default function VerPerfil({ auth }: PageProps) {
                             <span className="font-bold">Historial</span>
                         </div>
 
-                        <div className="filtros flex flex-row space-y-0 space-x-2 md:space-x-4 flex-wrap">
-                            <OrdenarDropDown 
-                                onOrdenChange={setFiltroOrden} 
-                                ordenActual={filtroOrden} 
-                            />
-                            <ServicioDropDown 
-                                onTipoChange={setFiltroTipo} 
-                                tipoActual={filtroTipo} 
-                            />
-                            <OfertaDropDown 
-                                onOfertaDemandaChange={setFiltroOfertaDemanda} 
-                                ofertaDemandaActual={filtroOfertaDemanda} 
-                            />
-                        </div>
-                    </div>
-
-                    <ServiceCardListview 
-                        servicios={serviciosPaginados}
-                        filtroTipo={filtroTipo}
-                        filtroOfertaDemanda={filtroOfertaDemanda}
-                        filtroOrden={filtroOrden}
-                    />
-
-                    <div ref={observerTarget} className="flex justify-center py-8">
-                        {isLoading && (
-                            <div className="text-center">
-                                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                <p className="text-gray-500 mt-2">Cargando más...</p>
+                        {publicaciones.length > 0 && (
+                            <div className="filtros flex flex-row space-y-0 space-x-2 md:space-x-4 flex-wrap">
+                                <OrdenarDropDown 
+                                    onOrdenChange={setFiltroOrden} 
+                                    ordenActual={filtroOrden} 
+                                />
+                                <ServicioDropDown 
+                                    onTipoChange={setFiltroTipo} 
+                                    tipoActual={filtroTipo} 
+                                />
+                                <OfertaDropDown 
+                                    onOfertaDemandaChange={setFiltroOfertaDemanda} 
+                                    ofertaDemandaActual={filtroOfertaDemanda} 
+                                />
                             </div>
                         )}
-                        {!hasMore && serviciosPaginados.length > 0 && (
-                            <p className="text-gray-400 text-sm">No hay más publicaciones</p>
-                        )}
                     </div>
+
+                    {publicaciones.length > 0 && (
+                        <>
+                            <ServiceCardListview 
+                                servicios={serviciosPaginados}
+                                filtroTipo={filtroTipo}
+                                filtroOfertaDemanda={filtroOfertaDemanda}
+                                filtroOrden={filtroOrden}
+                            />
+
+                            <div ref={observerTarget} className="flex justify-center py-8">
+                                {isLoading && (
+                                    <div className="text-center">
+                                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                        <p className="text-gray-500 mt-2">Cargando más...</p>
+                                    </div>
+                                )}
+                                {!hasMore && serviciosPaginados.length > 0 && (
+                                    <p className="text-gray-400 text-sm">No hay más publicaciones</p>
+                                )}
+                            </div>
+                        </>
+                    )}
+                    {publicaciones.length === 0 && (
+                        <div className="py-8 text-center">
+                            <p className="text-gray-500">No hay publicaciones recientes</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

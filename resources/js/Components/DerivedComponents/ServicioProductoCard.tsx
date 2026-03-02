@@ -47,7 +47,7 @@ export default function ServicioProductoCard({ servicio }: ServicioProductoCardP
               </svg>
               <span className="text-xs">Costo</span>
             </div>
-            <span className="text-base font-bold">{servicio.costo}</span>
+            <span className="text-base font-bold">{servicio.costo} horas</span>
           </div>
           <div className="flex gap-4">
             <div className="flex flex-col items-center">

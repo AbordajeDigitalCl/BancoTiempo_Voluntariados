@@ -2,6 +2,7 @@ import { PerfilEditable } from '@/mockData/datosMockEditarPerfil';
 import { useFormState } from '@/hooks/usarEstadoFormulario';
 import PasswordInput from './EntradaContrasena';
 import { useState } from 'react';
+import { guardarDatosPerfil } from '@/services/guardarDatosPerfil';
 
 interface FormEditarPerfilProps {
     datosIniciales: PerfilEditable;
@@ -21,6 +22,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
 
     const [foto, setFoto] = useState(fotoInicial);
     const [previewFoto, setPreviewFoto] = useState(fotoInicial);
+    const [errores, setErrores] = useState<string[]>([]);
 
     const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -36,6 +38,38 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
     };
 
     const onSubmit = handleSubmit((data) => {
+        const nuevosErrores: string[] = [];
+
+        if (data.contrasena || data.confirmarContrasena) {
+            if (!data.contrasena) {
+                nuevosErrores.push('La contraseña es requerida');
+            }
+            if (!data.confirmarContrasena) {
+                nuevosErrores.push('La confirmación de contraseña es requerida');
+            }
+            if (data.contrasena && data.confirmarContrasena && data.contrasena !== data.confirmarContrasena) {
+                nuevosErrores.push('Las contraseñas no coinciden');
+            }
+        }
+
+        if (nuevosErrores.length > 0) {
+            setErrores(nuevosErrores);
+            return;
+        }
+
+        setErrores([]);
+        guardarDatosPerfil({
+            nombre: data.nombre,
+            apellidoPaterno: data.apellidoPaterno,
+            apellidoMaterno: data.apellidoMaterno,
+            email: data.email,
+            contrasena: data.contrasena || '',
+            confirmarContrasena: data.confirmarContrasena || '',
+            fechaNacimiento: data.fechaNacimiento,
+            telefono: data.telefono,
+            direccion: data.direccion,
+            ciudad: data.ciudad,
+        });
         console.log('Datos a guardar:', data);
         console.log('Foto:', foto);
     });
@@ -161,6 +195,14 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                     label="Confirmar Contraseña"
                     placeholder="Confirma tu contraseña"
                 />
+
+                {errores.length > 0 && (
+                    <div className="md:col-span-2 bg-red-50 border border-red-200 rounded-md p-3">
+                        {errores.map((error, idx) => (
+                            <p key={idx} className="text-sm text-red-700">{error}</p>
+                        ))}
+                    </div>
+                )}
 
                 
                 <div>

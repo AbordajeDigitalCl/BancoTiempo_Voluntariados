@@ -57,7 +57,11 @@ export default function Authenticated({
             <div className="flex">
               <div className="shrink-0 flex items-center">
                 <Link href={hrefDashboard}>
-                  <div className="h-10 w-10 rounded-lg border border-gray-200 flex items-center justify-center" />
+                  <div className="h-10 w-10 rounded-lg border border-gray-200 flex items-center justify-center sm:hidden">
+                    <svg className="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </div>
                 </Link>
               </div>
 

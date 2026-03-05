@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
@@ -18,31 +17,65 @@ use Inertia\Response;
 class TestControllerMarcelo extends Controller
 {
     /*
-     register (Usuario) - Vista y Acción
-     vista: resources/js/Pages/Auth/Register.tsx
-    
-     migracion (users):
-      name: string
-      Apellido_Paterno: string
-      Apellido_Materno: string
-      Age: date (fecha nacimiento)
-      Telefono: string
-      Direccion: string
-      Ciudad: string
-      email: string unique
-      password: string + confirmation
+     |--------------------------------------------------------------------------
+     | Funciones TestControllerMarcelo
+     |--------------------------------------------------------------------------
+     | Controlador principal para:
+     | - Auth usuario normal (register/login/logout)
+     | - Auth admin (register/login con bandera is_admin en sesión)
+     | - Publicaciones (listado general / detalle / editar / crear)
+     | - Dashboard (estadísticas calculadas desde session('created_ads'))
+     |
+     | Importante:
+     | - Publicaciones NO salen de BD: salen de session('created_ads', []).
+     | - "Admin" en este flujo es una bandera de sesión (is_admin), no un rol persistido.
+     */
 
-      profile_photo: File|null
-     preguntar a angel sobre la columna de foto de perfil.
-    */
+    /*
+     |--------------------------------------------------------------------------
+     | REGISTRO DE USUARIO (VISTA + ACCIÓN)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/Auth/Register.tsx
+     | - Objetivo: mostrar formulario de registro y crear usuario.
+     |
+     | Campos esperados (users):
+     |  name, Apellido_Paterno, Apellido_Materno, Age (fecha nac.), Telefono,
+     |  Direccion, Ciudad, email (único), password (+ confirmation)
+     |
+     | Nota: profile_photo se valida, pero NO se persiste aún (falta columna/flujo).
+     */
 
+    /**
+     * @summary Vista de registro de usuario.
+     * @description Renderiza el formulario de registro para usuario normal.
+     *
+     * @view resources/js/Pages/Auth/Register.tsx
+     * @param  none
+     * @return \Inertia\Response
+     */
     public function showRegister(): Response
     {
         return Inertia::render('Auth/Register');
     }
 
+    /**
+     * @summary Acción de registro de usuario.
+     * @description
+     * - Valida los datos recibidos desde el formulario.
+     * - Crea el usuario en la tabla users.
+     * - Dispara el evento Registered.
+     * - Loguea automáticamente al usuario y regenera sesión.
+     *
+     * @source Request (formulario Register)
+     * @notes
+     * - profile_photo se valida, pero NO se guarda (pendiente columna + store).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse Redirect a HOME autenticado.
+     */
     public function register(Request $request): RedirectResponse
     {
+        // Validación de formato y reglas mínimas antes de crear el usuario.
         $request->validate([
             'profile_photo' => ['nullable', 'file', 'image', 'max:4096'],
             'name' => ['required', 'string', 'max:255'],
@@ -57,12 +90,12 @@ class TestControllerMarcelo extends Controller
         ]);
 
         /*
-         Cuando se cree una columna (ej: profile_photo_path),
-         Guardar con:
-         $path = $request->file('profile_photo')->store('profiles', 'public');
-         y se guarda en el user.
+         Pendiente (si se agrega profile_photo_path u otra columna):
+         - $path = $request->file('profile_photo')->store('profiles', 'public');
+         - Guardar $path en el usuario.
         */
 
+        // Creación del usuario. Password queda hasheada por seguridad.
         $user = User::create([
             'name' => $request->name,
             'Apellido_Paterno' => $request->Apellido_Paterno,
@@ -75,8 +108,10 @@ class TestControllerMarcelo extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Evento estándar post-registro (Laravel).
         event(new Registered($user));
 
+        // Autologin y hardening de sesión.
         Auth::login($user);
         $request->session()->regenerate();
 
@@ -84,15 +119,21 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     login (Usuario) - vista y accion
-     Vista: resources/js/Pages/Auth/Login.tsx
-    
-     Shape esperado por LoginRequest:
-      email: required|email
-      password: required|string
-      remember: boolean (opcional)
-    */
+     |--------------------------------------------------------------------------
+     | LOGIN DE USUARIO (VISTA + ACCIÓN)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/Auth/Login.tsx
+     | - LoginRequest define el shape esperado:
+     |   email (required|email), password (required|string), remember (opcional)
+     */
 
+    /**
+     * @summary Vista de login de usuario.
+     * @description Renderiza el formulario de login para usuario normal.
+     *
+     * @view resources/js/Pages/Auth/Login.tsx
+     * @return \Inertia\Response
+     */
     public function showLogin(): Response
     {
         return Inertia::render('Auth/Login', [
@@ -101,6 +142,16 @@ class TestControllerMarcelo extends Controller
         ]);
     }
 
+    /**
+     * @summary Acción de login de usuario.
+     * @description
+     * - Autentica usando LoginRequest (valida + authenticate()).
+     * - Regenera la sesión por seguridad.
+     *
+     * @source LoginRequest (credenciales)
+     * @param  \App\Http\Requests\Auth\LoginRequest  $request
+     * @return \Illuminate\Http\RedirectResponse Redirect a HOME autenticado.
+     */
     public function login(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
@@ -110,9 +161,22 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     LOGOUT (Usuario)
-    */
+     |--------------------------------------------------------------------------
+     | LOGOUT
+     |--------------------------------------------------------------------------
+     | - Objetivo: cerrar sesión del usuario actual y limpiar sesión/token.
+     */
 
+    /**
+     * @summary Cierre de sesión.
+     * @description
+     * - Desloguea al usuario.
+     * - Invalida la sesión.
+     * - Regenera token CSRF.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse Redirect a '/'.
+     */
     public function logout(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
@@ -124,9 +188,27 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-    admin register - accion
-     Vista: resources/js/Pages/AdminRegister.tsx
-    */
+     |--------------------------------------------------------------------------
+     | ADMIN REGISTER (ACCIÓN)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/AdminRegister.tsx
+     | - Diferencia clave: guarda bandera is_admin = true en sesión.
+     | - Tener en consideracion: es un rol persistido en BD, es un flag temporal de sesión.
+     */
+
+    /**
+     * @summary Registro de admin (por bandera de sesión).
+     * @description
+     * - Setea is_admin=true en sesión.
+     * - Valida datos.
+     * - Crea usuario.
+     * - Dispara Registered.
+     * - Autentica y regenera sesión.
+     *
+     * @view resources/js/Pages/AdminRegister.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse Redirect a '/Advertisement' autenticado.
+     */
     public function adminRegister(Request $request): RedirectResponse
     {
         $request->session()->put('is_admin', true);
@@ -164,9 +246,26 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     admin login - accion
-     Vista: resources/js/Pages/AdminLogin.tsx
-    */
+     |--------------------------------------------------------------------------
+     | ADMIN LOGIN (ACCIÓN)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/AdminLogin.tsx
+     | - Diferencia clave: setea is_admin=true en sesión y usa Auth::attempt().
+     */
+
+    /**
+     * @summary Login de admin (por bandera de sesión).
+     * @description
+     * - Setea is_admin=true en sesión.
+     * - Valida credenciales.
+     * - Intenta Auth::attempt() (con remember opcional).
+     * - Regenera sesión si autentica.
+     * - Si falla, vuelve atrás con error en email.
+     *
+     * @view resources/js/Pages/AdminLogin.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\RedirectResponse Redirect a '/Advertisement' o back con error.
+     */
     public function adminLogin(Request $request): RedirectResponse
     {
         $request->session()->put('is_admin', true);
@@ -190,16 +289,22 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     publicaciones - vista dinamica
-     vista: resources/js/Pages/Advertisement.tsx
+     |--------------------------------------------------------------------------
+     | PUBLICACIONES (LISTADO GENERAL)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/Advertisement.tsx
+     | - Fuente: session('created_ads', [])
+     | - Envía: createdAds + filters + isAdmin
+     */
 
-     Props que consume Advertisement.tsx:
-      createdAds: array (session)
-      isAdmin: boolean (session is_admin)
-      filters?: { q, type, sort, distance } (opcional)
-
-     Fuente actual:
-      session('created_ads', []) -> se llena en routes/web.php en POST /Advertisement
+    /**
+     * @summary Listado general de publicaciones.
+     * @description Renderiza la vista principal de publicaciones usando datos en sesión.
+     *
+     * @source session('created_ads', [])
+     * @view resources/js/Pages/Advertisement.tsx
+     * @param  \Illuminate\Http\Request  $request (query params opcionales)
+     * @return \Inertia\Response
      */
     public function advertisementIndex(Request $request): Response
     {
@@ -214,10 +319,13 @@ class TestControllerMarcelo extends Controller
         ]);
     }
 
-    /*
-       ajustes pequeños a los filtros desde la url
-       evita valores inválidos
-    */
+    /**
+     * @summary Sanitiza filtros de publicaciones desde la URL.
+     * @description Evita valores inválidos en filtros (type/sort/distance).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array{q:string,type:string,sort:string,distance:string}
+     */
     private function parseAdvertisementFilters(Request $request): array
     {
         $q = (string) $request->query('q', '');
@@ -238,15 +346,22 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     mis publicaciones (LISTADO) - vista dinamica
-     vista: resources/js/Pages/MyAdvertisements.tsx
+     |--------------------------------------------------------------------------
+     | MIS PUBLICACIONES (LISTADO)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/MyAdvertisements.tsx
+     | - Fuente: session('created_ads', [])
+     | - El filtrado por dueño lo hace el Front (auth.user.name).
+     */
 
-     Props MyAdvertisements.tsx:
-      createdAds: array (session)
-      (el front filtra por auth.user.name)
-
-     fuente actual:
-     session('created_ads', []) -> se llena en routes/web.php en POST /Advertisement
+    /**
+     * @summary Listado de "Mis publicaciones".
+     * @description Renderiza la vista que muestra publicaciones del usuario (front filtra).
+     *
+     * @source session('created_ads', [])
+     * @view resources/js/Pages/MyAdvertisements.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Inertia\Response
      */
     public function myAdvertisementsIndex(Request $request): Response
     {
@@ -258,13 +373,22 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     publicacion (DETALLE) - vista dinamica
-     vista: resources/js/Pages/AdvertisementShow.tsx
+     |--------------------------------------------------------------------------
+     | PUBLICACIÓN (DETALLE)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/AdvertisementShow.tsx
+     | - Fuente: session('created_ads', [])
+     */
 
-     Props esperadas:
-      item: object|null (publicacion encontrada por id)
-     Fuente actual:
-      session('created_ads', [])
+    /**
+     * @summary Detalle de publicación.
+     * @description Busca una publicación por id dentro de session('created_ads') y la envía al front.
+     *
+     * @source session('created_ads', [])
+     * @view resources/js/Pages/AdvertisementShow.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Inertia\Response item=null si no existe.
      */
     public function advertisementShow(Request $request, int $id): Response
     {
@@ -277,14 +401,23 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     publicacion (EDITAR FORM) - vista dinamica
-     vista: resources/js/Pages/EditarPublicacion.tsx
+     |--------------------------------------------------------------------------
+     | PUBLICACIÓN (EDITAR FORM)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/EditarPublicacion.tsx
+     | - Fuente: session('created_ads', [])
+     | - Guardado real: PATCH /Advertisement/{id} en routes/web.php
+     */
 
-     Props esperadas:
-      item: object|null (publicacion encontrada por id)
-     Fuente actual:
-      session('created_ads', [])
-      La accion de guardar cambios sigue en web.php (PATCH /Advertisement/{id})
+    /**
+     * @summary Formulario de edición de publicación.
+     * @description Carga una publicación por id desde sesión para editarla en el front.
+     *
+     * @source session('created_ads', [])
+     * @view resources/js/Pages/EditarPublicacion.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Inertia\Response item=null si no existe.
      */
     public function advertisementEdit(Request $request, int $id): Response
     {
@@ -297,25 +430,23 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     crear publicacion (FORM) - vista dinamica
-     vista: resources/js/Pages/CreateAdvertisement.tsx
+     |--------------------------------------------------------------------------
+     | CREAR PUBLICACIÓN (FORM)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/CreateAdvertisement.tsx
+     | - Si is_admin=true -> envía users (id,name) para asignar autor.
+     | - Si is_admin=false -> envía users=[].
+     */
 
-     Props esperadas por CreateAdvertisement.tsx:
-      users: array<{ id:number, name:string }>
-        - solo si el usuario es admin
-        - si no , vacio -> array vacio
-
-     fuente actual:
-      tabla users (App\Models\User)
-      session('is_admin') -> determina si puede crear publicaciones para otros usuarios
-
-     uso:
-      admin:
-        puede crear publicacion para cualquier usuario
-
-      usuario normal:
-        solo puede crear para si mismo (selector users llega vacio)
-    */
+    /**
+     * @summary Formulario de creación de publicación.
+     * @description Si el usuario tiene is_admin en sesión, carga la lista de users para asignación.
+     *
+     * @source session('is_admin') + tabla users (solo id,name)
+     * @view resources/js/Pages/CreateAdvertisement.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Inertia\Response
+     */
     public function advertisementCreate(Request $request): Response
     {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
@@ -336,28 +467,23 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     dashboard - vista dinamica
-     vista: resources/js/Pages/Dashboard.tsx
+     |--------------------------------------------------------------------------
+     | DASHBOARD
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/Dashboard.tsx
+     | - Fuente: session('created_ads', [])
+     | - Construye stats por estado para "mis publicaciones" + total global active.
+     */
 
-     shape esperado por Dashboard.tsx:
-      stats: {
-        counts: {
-          myAdsTotal: number
-          myAdsAvailable: number (status active)
-          myAdsSoldOut: number (status finished)
-          myAdsDisabled: number (status paused)
-          adsActiveTotal: number (total global active)
-        },
-        badges: {
-          unreadMessages: number
-          unreadNotifications: number
-        }
-      }
-
-     fuente actual de publicaciones:
-      session('created_ads', []) creado en routes/web.php (Advertisement.store)
-    */
-
+    /**
+     * @summary Vista de Dashboard.
+     * @description Calcula estadísticas del usuario desde publicaciones almacenadas en sesión.
+     *
+     * @source session('created_ads', []) + auth user
+     * @view resources/js/Pages/Dashboard.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Inertia\Response
+     */
     public function dashboard(Request $request): Response
     {
         $createdAds = $request->session()->get('created_ads', []);
@@ -370,6 +496,21 @@ class TestControllerMarcelo extends Controller
         ]);
     }
 
+    /**
+     * @summary Construye estadísticas del Dashboard.
+     * @description
+     * - Normaliza status (active/paused/finished).
+     * - Filtra publicaciones del usuario actual (por user_id si existe, si no por author).
+     * - Cuenta totales por estado y total global active.
+     *
+     * @notes
+     * - badges quedan como placeholder (0) por ahora.
+     * - Los datos provienen de sesión, no de BD.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  array  $createdAds
+     * @return array<string,mixed>
+     */
     private function buildDashboardStats(Request $request, array $createdAds): array
     {
         $user = $request->user();
@@ -433,4 +574,3 @@ class TestControllerMarcelo extends Controller
         ];
     }
 }
-

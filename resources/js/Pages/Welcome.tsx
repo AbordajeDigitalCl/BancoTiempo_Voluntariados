@@ -61,7 +61,7 @@ export default function Welcome({
     <>
       <Head title="Banco de tiempo" />
 
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gray-100 flex flex-col">
         <header className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200">
           <div className="mx-auto max-w-6xl px-4">
             <div className="h-16 flex items-center justify-between">
@@ -106,7 +106,7 @@ export default function Welcome({
           </div>
         </header>
 
-        <main id="top">
+        <main id="top" className="flex-1">
           <div className="w-full bg-gradient-to-b from-blue-600 to-blue-700">
             <div className="mx-auto max-w-6xl px-4 py-14">
               <div className="max-w-3xl">
@@ -169,12 +169,33 @@ export default function Welcome({
                 </div>
               </Section>
             </div>
-
-            <footer className="text-xs text-gray-500 pt-2">
-              Laravel v{laravelVersion} (PHP v{phpVersion})
-            </footer>
           </div>
         </main>
+        <footer className="border-t border-gray-200 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex flex-col items-center justify-center gap-3">
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-3 group transition-all duration-300"
+              >
+                <img
+                  src="/assets/footer-logo.png"
+                  alt="Abordaje Digital"
+                  className="h-8 w-8 object-contain transition-all duration-300 group-hover:scale-110"
+                />
+
+                <span className="text-sm text-gray-600 font-medium transition-all duration-300 group-hover:text-black">
+                  Abordaje Digital
+                </span>
+              </a>
+
+              <div className="text-xs text-gray-500">
+                Laravel v{laravelVersion} (PHP v{phpVersion})
+              </div>
+            </div>
+          </div>
+        </footer>
       </div>
     </>
   );

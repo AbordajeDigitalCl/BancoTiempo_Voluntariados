@@ -38,7 +38,8 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
     return [];
   }, [item]);
 
-  const { data, setData, patch, processing, errors } = useForm({
+  const { data, setData, post, processing, errors } = useForm({
+    _method: 'patch',
     title: item?.title ?? '',
     description: item?.description ?? '',
     type: (item?.type ?? 'Servicio') as 'Servicio' | 'Producto',
@@ -67,6 +68,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
   const hasLocation = useMemo(() => {
     return typeof data.location_lat === 'number' && typeof data.location_lng === 'number';
   }, [data.location_lat, data.location_lng]);
+
   const pinIcon = useMemo(() => {
     return L.divIcon({
       className: '',
@@ -160,6 +162,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
 
     fetchAddress(lat, lng);
   }
+
   useEffect(() => {
     if (!openMap) return;
 
@@ -235,6 +238,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
 
     return () => window.clearTimeout(t);
   }, [openMap]);
+
   useEffect(() => {
     if (!openMap) return;
     if (!mapRef.current) return;
@@ -286,6 +290,20 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
 
     const take = files.slice(0, remaining);
 
+    for (const f of take) {
+      if (!f.type.startsWith('image/')) {
+        setImgErr('Solo se permiten imágenes.');
+        if (inputRef.current) inputRef.current.value = '';
+        return;
+      }
+      const maxBytes = 2 * 1024 * 1024;
+      if (f.size > maxBytes) {
+        setImgErr('Una imagen supera el tamaño máximo (2MB).');
+        if (inputRef.current) inputRef.current.value = '';
+        return;
+      }
+    }
+
     try {
       const urls = await Promise.all(take.map(fileToDataURL));
       setData('imageUrls', [...data.imageUrls, ...urls].slice(0, 5));
@@ -300,8 +318,18 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
     e.preventDefault();
     if (!item?.id) return;
 
-    patch(`/Advertisement/${item.id}`, {
+    const nextImageUrls = (data.imageUrls ?? [])
+      .filter((x: any) => typeof x === 'string' && x.trim() !== '')
+      .slice(0, 5);
+
+    post(`/Advertisement/${item.id}`, {
       preserveScroll: true,
+      forceFormData: true,
+      data: {
+        ...data,
+        _method: 'patch',
+        imageUrls: nextImageUrls,
+      },
       onSuccess: () => {},
     });
   }
@@ -340,7 +368,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
 
             <p className="mt-2 text-sm text-gray-600">Modifica los datos y guarda los cambios.</p>
 
-            <form onSubmit={submit} className="mt-4 space-y-3">
+            <form onSubmit={submit} className="mt-4 space-y-3" encType="multipart/form-data">
               <div>
                 <label className="block text-xs text-gray-600 mb-1">Título</label>
                 <input
@@ -400,6 +428,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
                 />
                 {errors.hours && <p className="text-xs text-red-500">{errors.hours}</p>}
               </div>
+
               <div className="rounded-lg border border-gray-200 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <div>
@@ -448,6 +477,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
                 {(errors as any)?.location_lat && <p className="text-xs text-red-500 mt-2">{String((errors as any).location_lat)}</p>}
                 {(errors as any)?.location_lng && <p className="text-xs text-red-500 mt-2">{String((errors as any).location_lng)}</p>}
               </div>
+
               <div className="pt-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs text-gray-600">Imágenes (máx. 5)</label>
@@ -497,6 +527,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
           </div>
         </div>
       </div>
+
       {openMap && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/40" onClick={closeMapModal} />

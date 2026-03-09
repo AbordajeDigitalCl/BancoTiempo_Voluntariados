@@ -26,7 +26,6 @@ export default function CreateAdvertisement({ auth, users }: any) {
     hours: '1',
     imageUrls: [] as string[],
     user_id: null as number | null,
-
     location_id: null as number | null,
     location_lat: null as number | null,
     location_lng: null as number | null,
@@ -307,7 +306,17 @@ export default function CreateAdvertisement({ auth, users }: any) {
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    post('/Advertisement', { preserveScroll: true });
+    const nextImageUrls = (data.imageUrls ?? []).filter((x: any) => typeof x === 'string' && x.trim() !== '').slice(0, 5);
+
+    setData((prev: any) => ({
+      ...prev,
+      imageUrls: nextImageUrls,
+    }));
+
+    post('/Advertisement', {
+      preserveScroll: true,
+      forceFormData: true,
+    });
   }
 
   return (
@@ -326,7 +335,7 @@ export default function CreateAdvertisement({ auth, users }: any) {
 
             <p className="mt-2 text-sm text-gray-600">Completa los datos y presiona Crear.</p>
 
-            <form onSubmit={submit} className="mt-4 space-y-3">
+            <form onSubmit={submit} className="mt-4 space-y-3" encType="multipart/form-data">
               {isAdmin && (
                 <div>
                   <select
@@ -428,6 +437,7 @@ export default function CreateAdvertisement({ auth, users }: any) {
                 />
                 {fieldError('hours') && <p className="text-xs text-red-500 mt-1">{fieldError('hours')}</p>}
               </div>
+
               <div className="rounded-lg border border-gray-200 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <div>

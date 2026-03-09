@@ -17,7 +17,6 @@ type Ad = {
   author?: string;
   imageUrl?: string | null;
   imageUrls?: string[];
-
   location_id?: number | null;
   location_lat?: number | null;
   location_lng?: number | null;
@@ -42,9 +41,9 @@ function StatusPill({ status }: { status: AdStatus }) {
 
 export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad | null }) {
   const images = useMemo<string[]>(() => {
-    const arr = (item?.imageUrls ?? []).filter(Boolean);
+    const arr = (item?.imageUrls ?? []).filter((x): x is string => typeof x === 'string' && x.trim() !== '');
     if (arr.length) return arr.slice(0, 5);
-    if (item?.imageUrl) return [item.imageUrl];
+    if (item?.imageUrl && typeof item.imageUrl === 'string' && item.imageUrl.trim() !== '') return [item.imageUrl];
     return ['https://picsum.photos/seed/demo/1200/800'];
   }, [item]);
 

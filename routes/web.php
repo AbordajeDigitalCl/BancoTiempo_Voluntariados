@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Models\User;
+use App\Models\Advertisement;
 use App\Http\Controllers\TestControllerMarcelo;
 
 Route::get('/', function () {
@@ -42,7 +43,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', [TestControllerMarcelo::class, 'dashboard'])->name('dashboard');
 
-
     Route::get('/EditarPerfil', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil'])
         ->middleware(['auth', 'verified'])->name('editarperfil');
 
@@ -50,8 +50,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware(['auth', 'verified']);
 
     Route::get('/Advertisement', [TestControllerMarcelo::class, 'advertisementIndex'])->name('advertisement');
-    
-
 
     Route::get('/MenuHeader', function () {
         return Inertia::render('MenuHeader');
@@ -72,8 +70,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware(['auth', 'verified']);
 
     Route::get('/Advertisement/create', [TestControllerMarcelo::class, 'advertisementCreate'])
-    ->name('advertisement.create');
-    
+        ->name('advertisement.create');
+
     Route::get('/MyAdvertisements', [TestControllerMarcelo::class, 'myAdvertisementsIndex'])->name('myadvertisements');
 
     Route::get('/geo/reverse', function (Request $request) {
@@ -114,19 +112,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'hours' => ['required', 'integer', 'min:1', 'max:999'],
             'type' => ['required', 'in:Servicio,Producto'],
             'mode' => ['required', 'in:Oferta,Demanda'],
-            'imageUrls' => ['nullable', 'array'],
+            'imageUrls' => ['nullable', 'array', 'max:5'],
+            'imageUrls.*' => ['nullable', 'string'],
             'user_id' => ['nullable', 'integer', 'exists:users,id'],
-
             'location_id' => ['nullable', 'integer'],
             'location_lat' => ['nullable', 'numeric', 'min:-90', 'max:90'],
             'location_lng' => ['nullable', 'numeric', 'min:-180', 'max:180'],
-            'location_address' => ['nullable', 'string', 'max:500'], 
+            'location_address' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $createdAds = session('created_ads', []);
-        $id = count($createdAds) > 0 ? (max(array_column($createdAds, 'id')) + 1) : 1;
-
         $imgs = $data['imageUrls'] ?? [];
+        $imgs = array_values(array_filter($imgs, fn ($x) => is_string($x) && trim($x) !== ''));
         $imgs = array_slice($imgs, 0, 5);
 
         $targetUserId = $request->user()->id;
@@ -140,27 +136,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
         }
 
-        $new = [
-            'id' => $id,
+        Advertisement::create([
             'title' => $data['title'],
             'description' => $data['description'],
-            'hours' => (int)$data['hours'],
+            'hours' => (int) $data['hours'],
             'type' => $data['type'],
             'mode' => $data['mode'],
             'status' => 'active',
             'author' => $targetAuthor,
             'user_id' => $targetUserId,
-            'imageUrls' => $imgs,
-            'imageUrl' => count($imgs) ? $imgs[0] : null,
-
-            'location_id' => array_key_exists('location_id', $data) ? $data['location_id'] : null,
-            'location_lat' => array_key_exists('location_lat', $data) ? $data['location_lat'] : null,
-            'location_lng' => array_key_exists('location_lng', $data) ? $data['location_lng'] : null,
-            'location_address' => array_key_exists('location_address', $data) ? $data['location_address'] : null, 
-        ];
-
-        $createdAds[] = $new;
-        session(['created_ads' => $createdAds]);
+            'image_urls' => $imgs,
+            'location_id' => $data['location_id'] ?? null,
+            'location_lat' => $data['location_lat'] ?? null,
+            'location_lng' => $data['location_lng'] ?? null,
+            'location_address' => $data['location_address'] ?? null,
+        ]);
 
         return redirect()->route('myadvertisements');
     })->name('advertisement.store');
@@ -176,40 +166,43 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'hours' => ['required', 'integer', 'min:1', 'max:999'],
             'type' => ['required', 'in:Servicio,Producto'],
             'mode' => ['required', 'in:Oferta,Demanda'],
-            'imageUrls' => ['nullable', 'array'],
-
+            'imageUrls' => ['nullable', 'array', 'max:5'],
+            'imageUrls.*' => ['nullable', 'string'],
             'location_id' => ['nullable', 'integer'],
             'location_lat' => ['nullable', 'numeric', 'min:-90', 'max:90'],
             'location_lng' => ['nullable', 'numeric', 'min:-180', 'max:180'],
             'location_address' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $createdAds = session('created_ads', []);
-        $idx = collect($createdAds)->search(fn ($x) => (int)$x['id'] === (int)$id);
-        if ($idx === false) return redirect()->route('myadvertisements');
-
-        if (!$isAdmin && (($createdAds[$idx]['author'] ?? '') !== $request->user()->name)) {
+        $ad = Advertisement::find($id);
+        if (!$ad) {
             return redirect()->route('myadvertisements');
         }
 
-        $createdAds[$idx]['title'] = $data['title'];
-        $createdAds[$idx]['description'] = $data['description'];
-        $createdAds[$idx]['hours'] = (int)$data['hours'];
-        $createdAds[$idx]['type'] = $data['type'];
-        $createdAds[$idx]['mode'] = $data['mode'];
+        if (
+            !$isAdmin &&
+            (int) ($ad->user_id ?? 0) !== (int) ($request->user()->id ?? 0) &&
+            (string) ($ad->author ?? '') !== (string) ($request->user()->name ?? '')
+        ) {
+            return redirect()->route('myadvertisements');
+        }
 
         $imgs = $data['imageUrls'] ?? [];
+        $imgs = array_values(array_filter($imgs, fn ($x) => is_string($x) && trim($x) !== ''));
         $imgs = array_slice($imgs, 0, 5);
 
-        $createdAds[$idx]['imageUrls'] = $imgs;
-        $createdAds[$idx]['imageUrl'] = count($imgs) ? $imgs[0] : null;
-
-        $createdAds[$idx]['location_id'] = array_key_exists('location_id', $data) ? $data['location_id'] : null;
-        $createdAds[$idx]['location_lat'] = array_key_exists('location_lat', $data) ? $data['location_lat'] : null;
-        $createdAds[$idx]['location_lng'] = array_key_exists('location_lng', $data) ? $data['location_lng'] : null;
-        $createdAds[$idx]['location_address'] = array_key_exists('location_address', $data) ? $data['location_address'] : null; // ✅ NUEVO
-
-        session(['created_ads' => $createdAds]);
+        $ad->update([
+            'title' => $data['title'],
+            'description' => $data['description'],
+            'hours' => (int) $data['hours'],
+            'type' => $data['type'],
+            'mode' => $data['mode'],
+            'image_urls' => $imgs,
+            'location_id' => array_key_exists('location_id', $data) ? $data['location_id'] : null,
+            'location_lat' => array_key_exists('location_lat', $data) ? $data['location_lat'] : null,
+            'location_lng' => array_key_exists('location_lng', $data) ? $data['location_lng'] : null,
+            'location_address' => array_key_exists('location_address', $data) ? $data['location_address'] : null,
+        ]);
 
         return redirect()->route('myadvertisements');
     })->name('advertisement.update');
@@ -221,16 +214,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'status' => ['required', 'in:active,paused,finished'],
         ]);
 
-        $createdAds = session('created_ads', []);
-        $idx = collect($createdAds)->search(fn ($x) => (int)$x['id'] === (int)$id);
-        if ($idx === false) return redirect()->back();
+        $ad = Advertisement::find($id);
+        if (!$ad) return redirect()->back();
 
-        if (!$isAdmin && (($createdAds[$idx]['author'] ?? '') !== $request->user()->name)) {
+        if (
+            !$isAdmin &&
+            (int) ($ad->user_id ?? 0) !== (int) ($request->user()->id ?? 0) &&
+            (string) ($ad->author ?? '') !== (string) ($request->user()->name ?? '')
+        ) {
             return redirect()->back();
         }
 
-        $createdAds[$idx]['status'] = $data['status'];
-        session(['created_ads' => $createdAds]);
+        $ad->update([
+            'status' => $data['status'],
+        ]);
 
         return redirect()->back();
     })->name('advertisement.status');
@@ -238,21 +235,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/Advertisement/{id}', function (Request $request, $id) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
 
-        $createdAds = session('created_ads', []);
-        $createdAds = array_values(array_filter($createdAds, function ($x) use ($id, $request, $isAdmin) {
-            if ((int)$x['id'] !== (int)$id) return true;
-            if ($isAdmin) return false;
-            return ($x['author'] ?? '') !== $request->user()->name;
-        }));
+        $ad = Advertisement::find($id);
+        if (!$ad) return redirect()->back();
 
-        session(['created_ads' => $createdAds]);
+        if (
+            !$isAdmin &&
+            (int) ($ad->user_id ?? 0) !== (int) ($request->user()->id ?? 0) &&
+            (string) ($ad->author ?? '') !== (string) ($request->user()->name ?? '')
+        ) {
+            return redirect()->back();
+        }
+
+        $ad->delete();
+
         return redirect()->back();
     })->name('advertisement.destroy');
 
     Route::post('/Advertisement/{id}/report', function (Request $request, $id) {
+        $ad = Advertisement::find($id);
+        if (!$ad) {
+            return redirect()->back();
+        }
+
         $reports = session('ad_reports', []);
         $reports[] = [
-            'ad_id' => (int)$id,
+            'ad_id' => (int) $id,
             'by' => $request->user()->name,
             'at' => now()->toDateTimeString(),
         ];

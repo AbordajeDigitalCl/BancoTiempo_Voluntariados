@@ -14,6 +14,21 @@ import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 const ITEMS_PER_PAGE = 5;
 
+// Interface para las publicaciones con calificaciones
+interface Publicacion {
+    id: number;
+    titulo: string;
+    descripcion: string;
+    costo: string;
+    tipo: 'Servicio' | 'Producto';
+    ofertaDemanda: 'Oferta' | 'Demanda';
+    imagen: string;
+    estado: 'Activo' | 'Desactivado' | 'Agotado';
+    fecha: string;
+    // Placeholder para popularidad.
+    popularidad?: number | null;
+}
+
 interface VerPerfilProps extends PageProps {
     datosUsuario: {
         id: number;
@@ -29,13 +44,18 @@ interface VerPerfilProps extends PageProps {
         foto: string;
     };
     publicaciones?: any[];
+    isAdmin?: boolean;
+    esAdminUsuarioAVer?: boolean;
+    esPerfilPropio?: boolean;
 }
 
-export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: VerPerfilProps) {
+export default function VerPerfil({ auth, datosUsuario, publicaciones = [], isAdmin = false, esAdminUsuarioAVer = false, esPerfilPropio = true }: VerPerfilProps) {
     const [filtroTipo, setFiltroTipo] = useState<'Servicio' | 'Producto' | null>(null);
     const [filtroOfertaDemanda, setFiltroOfertaDemanda] = useState<'Oferta' | 'Demanda' | null>(null);
-    const [filtroOrden, setFiltroOrden] = useState<'precio' | 'popular' | 'reciente' | null>(null);
-    const [serviciosPaginados, setServiciosPaginados] = useState(publicaciones.slice(0, ITEMS_PER_PAGE));
+    const [filtroOrden, setFiltroOrden] = useState<'precioMayor' | 'precioMenor' | 'popular' | 'reciente' | null>(null);
+    
+    // Las imágenes vienen correctas desde el backend con URLs en formato /imagen/{filename}
+    const [serviciosPaginados, setServiciosPaginados] = useState<Publicacion[]>(publicaciones.slice(0, ITEMS_PER_PAGE));
 
     const serviciosFiltrados = publicaciones.filter(s => {
         const cumpleTipo = !filtroTipo || s.tipo === filtroTipo;
@@ -44,10 +64,25 @@ export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: Ve
     });
 
     const serviciosOrdenados = [...serviciosFiltrados].sort((a, b) => {
-        if (filtroOrden === 'precio') {
-            const costA = parseInt(a.costo.split(' ')[0]);
-            const costB = parseInt(b.costo.split(' ')[0]);
+        if (filtroOrden === 'precioMayor') {
+            // Mayor a Menor: restar b - a para orden descendente
+            const costA = typeof a.costo === 'string' ? parseInt(a.costo.split(' ')[0]) : parseInt(a.costo) || 0;
+            const costB = typeof b.costo === 'string' ? parseInt(b.costo.split(' ')[0]) : parseInt(b.costo) || 0;
+            return costB - costA;
+        } else if (filtroOrden === 'precioMenor') {
+            // Menor a Mayor: restar a - b para orden ascendente
+            const costA = typeof a.costo === 'string' ? parseInt(a.costo.split(' ')[0]) : parseInt(a.costo) || 0;
+            const costB = typeof b.costo === 'string' ? parseInt(b.costo.split(' ')[0]) : parseInt(b.costo) || 0;
             return costA - costB;
+        } else if (filtroOrden === 'popular') {
+            // TODO: POPULARIDAD (Cuando BD esté lista)
+            // Este dropdown está LISTO para funcionar cuando verPerfil() en TestControllerCris
+            // devuelva datos en el campo 'popularidad' basado en calificacions
+            // Por ahora devuelve null, pero la lógica de ordenamiento está implementada
+            // Cuando se agreguen datos de calificaciones, este dropdown funcionará automáticamente
+            const popularidadA = Number(a.popularidad) || 0;
+            const popularidadB = Number(b.popularidad) || 0;
+            return popularidadB - popularidadA; // Mayor popularidad primero
         } else if (filtroOrden === 'reciente') {
             return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
         }
@@ -88,6 +123,11 @@ export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: Ve
         fechaExpiracion: '',
     };
 
+    // Generar el returnTo correcto basado en si es perfil propio o no
+    // Si es perfil propio: /verperfil (sin ID)
+    // Si es perfil de otro usuario (admin): /verperfil/{id}
+    const returnTo = esPerfilPropio ? '/verperfil' : `/verperfil/${datosUsuario.id}`;
+
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -107,16 +147,17 @@ export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: Ve
             <div className="w-full flex flex-col items-center space-y-8 mt-1">
                 <div className='shadow-md rounded-xl bg-white'>
                    
-                    <PerfilInfo perfil={perfilData} />
+                    <PerfilInfo perfil={perfilData} esPerfilPropio={esPerfilPropio} isAdmin={isAdmin} usuarioId={datosUsuario.id} />
 
                     
+                    {esPerfilPropio && (
                     <div className="barra-controles flex md:flex-row flex-row md:justify-between md:items-center px-4 py-2 gap-2 md:gap-4">
                        
                         <div className="flex items-center space-x-2 text-sm md:text-base">
                             <Link
-                                href="/EditarPerfil"
+                                href="/MyAdvertisements"
                                 className="w-8 h-8 flex items-center justify-center border border-black bg-gray-200 rounded-full font-bold text-lg hover:bg-gray-300 transition"
-                                title="Editar perfil"
+                                title="Mis publicaciones"
                             >
                                 ✎
                             </Link>
@@ -142,6 +183,7 @@ export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: Ve
                             </div>
                         )}
                     </div>
+                    )}
 
                     {publicaciones.length > 0 && (
                         <>
@@ -150,6 +192,7 @@ export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: Ve
                                 filtroTipo={filtroTipo}
                                 filtroOfertaDemanda={filtroOfertaDemanda}
                                 filtroOrden={filtroOrden}
+                                returnTo={returnTo}
                             />
 
                             <div ref={observerTarget} className="flex justify-center py-8">
@@ -165,7 +208,7 @@ export default function VerPerfil({ auth, datosUsuario, publicaciones = [] }: Ve
                             </div>
                         </>
                     )}
-                    {publicaciones.length === 0 && (
+                    {publicaciones.length === 0 && !isAdmin && (
                         <div className="py-8 text-center">
                             <p className="text-gray-500">No hay publicaciones recientes</p>
                         </div>

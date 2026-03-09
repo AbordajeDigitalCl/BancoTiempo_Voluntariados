@@ -62,7 +62,7 @@ Route::get('/post', [
 ])->middleware('auth:sanctum');
 
 Route::post('/post', [
-    PublicacionesController::class, 'create'
+    TestControllerCris::class, 'crearPublicacion'
 ])->middleware('auth:sanctum');
 
 Route::get('/oferta/{ofertaId}', [
@@ -93,12 +93,15 @@ Route::post('/pay', [
     TransaccionController::class, "pay"
 ])->middleware("auth:sanctum");
 
-Route::post('/upload', [
-    FileUploadController::class, 'upload'
-])->middleware("auth:sanctum");
+// MODIFICADO: Ruta POST /upload removida - fue movida a routes/web.php porque necesita autenticación por sesión (no Sanctum).
+// La ruta GET /file/{filename} se mantiene sin autenticación para que las etiquetas <img> puedan cargar las imágenes.
+
+//CRISTÓBAL (25-02-2026)
+// Se removió autenticación para permitir que las imágenes de publicaciones se carguen en el frontend
+// sin necesidad de headers de autorización (las etiquetas <img> no pueden enviar auth headers)
 Route::get('/file/{filename}', [
     FileUploadController::class, 'show'
-])->middleware("auth:sanctum");
+]);
 Route::delete('/file/{filename}', [
     FileUploadController::class, 'delete'
 ])->middleware("auth:sanctum");

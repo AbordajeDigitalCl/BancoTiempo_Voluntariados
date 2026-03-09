@@ -2,10 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import FilaConversacion from '@/Components/DerivedComponents/FilaConversacion';
 import AreaChat from '@/Components/DerivedComponents/AreaChat';
-import BellNotificationButton from '@/Components/DerivedComponents/BellNotificationButton';
-import NotificacionesModalCRIS from '@/Components/DerivedComponents/NotificacionesModalCRIS';
-import { mockNotificaciones } from '@/mockData/datosMockNotificacionesCRIS';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { Conversacion } from '@/mockData/datosMockMensajes';
 import type { ConversacionDetalle } from '@/mockData/datosMockChatMensajes';
@@ -22,13 +19,6 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
     const [conversacionSeleccionada, setConversacionSeleccionada] = useState<number | null>(null);
     const [conversacionesConEstado, setConversacionesConEstado] = useState(conversacionesServer || []);
     const [conversacionesPaginadas, setConversacionesPaginadas] = useState((conversacionesServer || []).slice(0, CONVERSACIONES_PER_PAGE));
-    const [modalNotificacionesAbierto, setModalNotificacionesAbierto] = useState(false);
-    const [notificacionesConEstado, setNotificacionesConEstado] = useState(mockNotificaciones);
-
-    const tieneNotificacionesSinLeer = useMemo(
-        () => notificacionesConEstado.some((notif) => notif.mensajesNoLeidos > 0),
-        [notificacionesConEstado]
-    );
 
     const conversacionActual = conversacionesConEstado.find((c) => c.id === conversacionSeleccionada);
     const mensajesActuales = mensajesPorConversacion.find(
@@ -55,7 +45,6 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         });
         setConversacionesPaginadas(conversacionesActualizadas.slice(0, conversacionesPaginadas.length));
     }, [conversacionesConEstado]);
-
     const handleSeleccionarConversacion = (conversacionId: number) => {
         setConversacionSeleccionada(conversacionId);
         setConversacionesConEstado((prevState) =>
@@ -65,28 +54,25 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     : conv
             )
         );
-        setNotificacionesConEstado((prevState) =>
-            prevState.map((notif) =>
-                notif.id === conversacionId
-                    ? { ...notif, mensajesNoLeidos: 0 }
-                    : notif
-            )
-        );
     };
 
-    const handleSeleccionarUsuarioDesdeNotificaciones = (usuarioId: number) => {
-        const conversacion = conversacionesConEstado.find((c) => c.id === usuarioId);
-        if (conversacion) {
-            handleSeleccionarConversacion(usuarioId);
-        }
-    };
+    /**
+     * Actualizar conversación cuando se envía un mensaje o imagen
+     * Actualiza el último mensaje y fecha en la lista de conversaciones
+     */
+    const handleMensajeEnviado = (contenido: string, fecha: string, hora: string) => {
+        if (!conversacionSeleccionada) return;
 
-    const handleMarcadasComoLeidas = (usuarioId: number) => {
-        setNotificacionesConEstado((prevState) =>
-            prevState.map((notif) =>
-                notif.id === usuarioId
-                    ? { ...notif, mensajesNoLeidos: 0 }
-                    : notif
+        setConversacionesConEstado((prevState) =>
+            prevState.map((conv) =>
+                conv.id === conversacionSeleccionada
+                    ? {
+                        ...conv,
+                        ultimoMensaje: contenido.length > 35 ? `${contenido.substring(0, 35)}...` : contenido,
+                        fechaUltimoMensaje: fecha,
+                        esMensajeDelUsuarioPrincipal: true,
+                    }
+                    : conv
             )
         );
     };
@@ -117,25 +103,13 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                 }
             `}</style>
 
-            <div className="w-full flex justify-center px-4 py-6">
-                <div className="w-full max-w-6xl h-[calc(100vh-200px)] flex gap-4">
-                    <div className={`${conversacionSeleccionada ? 'hidden md:flex' : 'flex'} md:w-1/3 w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col`}>
+            <div className="w-full flex justify-center lg:px-0 md:px-4 px-4 py-6">
+                <div className="w-full lg:max-w-full md:max-w-4xl max-w-2xl h-[calc(100vh-200px)] flex gap-4">
+                    <div className={`${conversacionSeleccionada ? 'hidden md:flex' : 'flex'} md:w-1/3 lg:w-1/4 w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col`}>
                         <div className="p-4 md:p-6 border-b border-gray-200 flex items-center justify-between relative">
                             <h1 className="text-lg md:text-xl font-semibold text-gray-800">
                                 Mensajes
                             </h1>
-                            <BellNotificationButton 
-                                hasNotifications={tieneNotificacionesSinLeer}
-                                onClick={() => setModalNotificacionesAbierto(!modalNotificacionesAbierto)}
-                            />
-                    
-                            <NotificacionesModalCRIS
-                                isOpen={modalNotificacionesAbierto}
-                                notificaciones={notificacionesConEstado}
-                                onClose={() => setModalNotificacionesAbierto(false)}
-                                onSeleccionarUsuario={handleSeleccionarUsuarioDesdeNotificaciones}
-                                onMarcadasComoLeidas={handleMarcadasComoLeidas}
-                            />
                         </div>
 
                         <div className="flex-1 overflow-y-auto scrollbar-thin flex flex-col">
@@ -171,7 +145,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                         </div>
                     </div>
 
-                    <div className={`${!conversacionSeleccionada ? 'hidden md:flex' : 'flex'} md:w-2/3 w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col`}>
+                    <div className={`${!conversacionSeleccionada ? 'hidden md:flex' : 'flex'} md:w-2/3 lg:w-3/4 w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col`}>
                         {conversacionSeleccionada && (
                             <div className="md:hidden p-4 border-b border-gray-200 flex items-center gap-3">
                                 <button
@@ -200,6 +174,8 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                             <AreaChat
                                 conversacion={conversacionActual}
                                 mensajes={mensajesActuales}
+                                userId={auth.user?.id}
+                                onMensajeEnviado={handleMensajeEnviado}
                             />
                         ) : conversacionSeleccionada ? (
                             <div className="flex items-center justify-center h-full text-gray-400">

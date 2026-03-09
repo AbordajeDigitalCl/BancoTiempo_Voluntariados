@@ -15,7 +15,7 @@ const ITEMS_PER_PAGE = 5;
 export default function VerPerfilAdmin({ auth, usuarioId }: PageProps & { usuarioId?: number }) {
   const [filtroTipo, setFiltroTipo] = useState<'Servicio' | 'Producto' | null>(null);
   const [filtroOfertaDemanda, setFiltroOfertaDemanda] = useState<'Oferta' | 'Demanda' | null>(null);
-  const [filtroOrden, setFiltroOrden] = useState<'precio' | 'popular' | 'reciente' | null>(null);
+  const [filtroOrden, setFiltroOrden] = useState<'precioMayor' | 'precioMenor' | 'popular' | 'reciente' | null>(null);
   const [serviciosPaginados, setServiciosPaginados] = useState(mockServiciosData.slice(0, ITEMS_PER_PAGE));
 
   const perfilUsuario = mockProfileData;
@@ -27,12 +27,18 @@ export default function VerPerfilAdmin({ auth, usuarioId }: PageProps & { usuari
   });
 
   const serviciosOrdenados = [...serviciosFiltrados].sort((a, b) => {
-    if (filtroOrden === 'precio') {
+    if (filtroOrden === 'precioMenor') {
       const costA = parseInt(a.costo.split(' ')[0]);
       const costB = parseInt(b.costo.split(' ')[0]);
       return costA - costB;
-    }
-    if (filtroOrden === 'reciente') {
+    } else if (filtroOrden === 'precioMayor') {
+      const costA = parseInt(a.costo.split(' ')[0]);
+      const costB = parseInt(b.costo.split(' ')[0]);
+      return costB - costA;
+    } else if (filtroOrden === 'popular') {
+      // TODO: Implementar cuando popularidad esté disponible
+      return 0;
+    } else if (filtroOrden === 'reciente') {
       return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
     }
     return 0;
@@ -118,6 +124,7 @@ export default function VerPerfilAdmin({ auth, usuarioId }: PageProps & { usuari
                 filtroTipo={filtroTipo}
                 filtroOfertaDemanda={filtroOfertaDemanda}
                 filtroOrden={filtroOrden}
+                returnTo={usuarioId ? `/verperfil/${usuarioId}` : '/verperfil'}
               />
 
               <div ref={observerTarget} className="flex justify-center py-8">

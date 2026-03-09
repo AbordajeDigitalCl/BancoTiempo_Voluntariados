@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\User;
 use App\Models\Advertisement;
 use App\Http\Controllers\TestControllerMarcelo;
+use App\Http\Controllers\FileUploadController;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -43,11 +44,50 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/dashboard', [TestControllerMarcelo::class, 'dashboard'])->name('dashboard');
 
+
+    Route::get('/EditarPerfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil'])
     Route::get('/EditarPerfil', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil'])
         ->middleware(['auth', 'verified'])->name('editarperfil');
 
-    Route::post('/EditarPerfil', [\App\Http\Controllers\TestControllerCris::class, 'guardarPerfil'])
+    Route::post('/EditarPerfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'guardarPerfil'])
         ->middleware(['auth', 'verified']);
+
+    // MODIFICADO: Ruta de upload movida de routes/api.php a routes/web.php porque las rutas API no reconocen autenticación por sesión (solo Sanctum tokens).
+    // Este endpoint necesita funcionar con cookies de sesión como el resto del panel de edición de perfil.
+    Route::post('/upload', [\App\Http\Controllers\FileUploadController::class, 'upload'])
+        ->middleware('auth')->name('upload');
+
+    // MODIFICADO: Endpoint adicional en TestControllerCris.php para subir imagen con usuario_id específico.
+    // Permite editar imágenes de otros usuarios como admin, y devuelve CSRF token actualizado para evitar error 419.
+    // Se aplican los mismos middleware que las otras rutas del grupo (auth, verified, csrf automático)
+    Route::post('/subir-imagen/{usuario_id}', [\App\Http\Controllers\TestControllerCris::class, 'subirImagen'])
+        ->name('subir-imagen');
+
+    // NUEVO: Endpoint para subir imagen a una publicación
+    Route::post('/subir-imagen-publicacion/{publicacion_id}', [\App\Http\Controllers\TestControllerCris::class, 'subirImagenPublicacion'])
+        ->name('subir-imagen-publicacion');
+
+    // NUEVO: Endpoint para eliminar una imagen de una publicación
+    // Solo desasocia la imagen
+    Route::delete('/eliminar-imagen-publicacion/{publicacion_id}/{imagen_id}', [\App\Http\Controllers\TestControllerCris::class, 'eliminarImagenPublicacion'])
+        ->name('eliminar-imagen-publicacion');
+
+    // NUEVO: Endpoint alternativo para servir imágenes (backup si /api/file/ no funciona)
+    Route::get('/imagen/{filename}', [\App\Http\Controllers\TestControllerCris::class, 'servirImagen'])
+        ->name('servir-imagen')
+        ->withoutMiddleware(['auth', 'verified']); // Permitir acceso sin autenticación para cargar imágenes
+
+    // SACADO MOMENTÁNEAMENTE: Comentada para la función obtenerImagenesPublicacion() de TesControllerCris.php.
+    /*
+    Route::get('/obtener-imagenes-publicacion/{publicacion_id}', [\App\Http\Controllers\TestControllerCris::class, 'obtenerImagenesPublicacion'])
+        ->name('obtener-imagenes-publicacion')
+        ->withoutMiddleware('verified'); // Solo requiere auth básica
+    */
+
+    // NUEVO: Endpoint para sincronizar el CSRF token después de un upload.
+    Route::get('/refresh-csrf', function () {
+        return response()->json(['csrf_token' => csrf_token()]);
+    })->name('refresh-csrf');
 
     Route::get('/Advertisement', [TestControllerMarcelo::class, 'advertisementIndex'])->name('advertisement');
 
@@ -55,9 +95,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('MenuHeader');
     })->middleware(['auth', 'verified'])->name('menuheader');
 
-    Route::get('/Administrar-Usuarios', function () {
-        return Inertia::render('AdministrarUsuarios');
-    })->middleware(['auth', 'verified'])->name('administrar-usuarios');
+    Route::get('/Administrar-Usuarios', [\App\Http\Controllers\TestControllerCris::class, 'administrarUsuarios'])
+        ->middleware(['auth', 'verified'])->name('administrar-usuarios');
+
+    Route::post('/administrar-usuarios/crear-conversacion', [\App\Http\Controllers\TestControllerCris::class, 'crearOBuscarConversacion'])
+        ->middleware(['auth', 'verified']);
+
+    Route::delete('/administrar-usuarios/eliminar-usuario', [\App\Http\Controllers\TestControllerCris::class, 'eliminarUsuario'])
+        ->middleware(['auth', 'verified']);
 
     Route::get('/Editar-Publicacion', function () {
         return Inertia::render('SeleccionarPublicacionEditarCRIS');
@@ -68,6 +113,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/Editar-Publicacion/{id}', [\App\Http\Controllers\TestControllerCris::class, 'guardarPublicacion'])
         ->middleware(['auth', 'verified']);
+
+    // RUTAS COMENTADAS: Sistema de calificaciones (En desarrollo)
+    // Estas rutas son PLACEHOLDERS y están comentadas porque:
+    // 1. Las funciones calificaciones() y asociarcalificaciones() están desactivadas
+    // 2. El diseño de la BD aún no está terminado
+    // SE DESCOMENTA CUANDO: Las funciones se activen y la BD esté lista
+    
+    // Route::get('/calificaciones/{publicacion_id}', [\App\Http\Controllers\TestControllerCris::class, 'calificaciones'])
+    //     ->middleware(['auth', 'verified'])->name('calificaciones-get');
+    //
+    // Route::post('/asociar-calificaciones/{publicacion_id}', [\App\Http\Controllers\TestControllerCris::class, 'asociarcalificaciones'])
+    //     ->middleware(['auth', 'verified'])->name('calificaciones-post');
 
     Route::get('/Advertisement/create', [TestControllerMarcelo::class, 'advertisementCreate'])
         ->name('advertisement.create');
@@ -276,14 +333,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/chat/enviar-mensaje', [\App\Http\Controllers\TestControllerCris::class, 'enviarMensaje'])
         ->middleware(['auth', 'verified']);
 
-    Route::get('/verperfil', [\App\Http\Controllers\TestControllerCris::class, 'verPerfil'])
-        ->middleware(['auth', 'verified'])->name('verperfil');
+    Route::post('/chat/enviar-mensaje-imagen', [\App\Http\Controllers\TestControllerCris::class, 'enviarMensajeConImagen'])
+        ->middleware(['auth', 'verified']);
 
-    Route::get('/verperfil-Admin/{id?}', function ($id = null) {
-        return Inertia::render('VerPerfilAdmin', [
-            'usuarioId' => $id
-        ]);
-    })->name('verperfil-admin');
+    Route::get('/verperfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'verPerfil'])
+        ->middleware(['auth', 'verified'])->name('verperfil');
 
     Route::get('/perfil-Admin/{id?}', function ($id = null) {
         return Inertia::render('PerfilAdmin', [

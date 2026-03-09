@@ -2,15 +2,48 @@ import { Conversacion } from '@/mockData/datosMockMensajes';
 import { Mensaje } from '@/mockData/datosMockChatMensajes';
 import GloboMensaje from '@/Components/DerivedComponents/GloboMensaje';
 import { enviarMensaje } from '@/services/enviarMensaje';
+import { enviarMensajeConImagen } from '@/services/enviarMensajeConImagen';
+import {
+    guardarMensajeConImagenTemporal,
+    obtenerMensajesTemporales,
+    eliminarMensajemporal,
+    limpiarMensajesTemporales,
+} from '@/services/chatImagenesService';
 import { useState, useRef, useEffect } from 'react';
 import React from 'react';
+
+/**
+ * Convierte fecha en formato dd/mm/yyyy HH:mm:ss (o HH:mm) a timestamp para comparación
+ * Maneja ambos formatos: con y sin segundos
+ */
+const convertirFechaATimestamp = (fecha: string, hora: string): number => {
+    const [dia, mes, año] = fecha.split('/').map(Number);
+    const partes = hora.split(':');
+    const horas = Number(partes[0]);
+    const minutos = Number(partes[1]);
+    const segundos = partes.length > 2 ? Number(partes[2]) : 0; // Si no hay segundos, usar 0
+    return new Date(año, mes - 1, dia, horas, minutos, segundos).getTime();
+};
+
+/**
+ * Ordena mensajes por fecha (más antiguos primero, más recientes últimos)
+ */
+const ordenarMensajesPorFecha = (mensajes: Mensaje[]): Mensaje[] => {
+    return [...mensajes].sort((a, b) => {
+        const timestampA = convertirFechaATimestamp(a.fecha, a.hora);
+        const timestampB = convertirFechaATimestamp(b.fecha, b.hora);
+        return timestampA - timestampB;
+    });
+};
 
 interface AreaChatProps {
     conversacion: Conversacion;
     mensajes: Mensaje[];
+    userId?: number;
+    onMensajeEnviado?: (contenido: string, fecha: string, hora: string) => void;
 }
 
-export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: AreaChatProps) {
+export default function AreaChat({ conversacion, mensajes: mensajesIniciales, userId, onMensajeEnviado }: AreaChatProps) {
     const [nuevoMensaje, setNuevoMensaje] = useState('');
     const [descripcionEditando, setDescripcionEditando] = useState(false);
     const [descripcion, setDescripcion] = useState(
@@ -19,11 +52,30 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
     const [mensajes, setMensajes] = useState<Mensaje[]>(mensajesIniciales);
     const [imagenURL, setImagenURL] = useState('');
     const [enviando, setEnviando] = useState(false);
+    const [procesandoImagen, setProcesandoImagen] = useState(false);
     const mensajesContainerRef = useRef<HTMLDivElement>(null);
+    const inputImagenRef = useRef<HTMLInputElement>(null);
 
     React.useEffect(() => {
-        setMensajes(mensajesIniciales);
-    }, [conversacion.id, mensajesIniciales]);
+        // Al cambiar conversación, cargar mensajes iniciales
+        let todosLosMensajes = [...mensajesIniciales];
+        
+        // Si el servidor tiene mensajes (mensajesIniciales tiene contenido),
+        // limpiar todos los mensajes temporales ya que fueron sincronizados
+        if (mensajesIniciales.length > 0) {
+            limpiarMensajesTemporales(conversacion.id);
+        } else {
+            // Si no hay mensajes del servidor, cargar mensajes temporales pendientes
+            const mensajesTemporales = obtenerMensajesTemporales(conversacion.id, userId);
+            if (mensajesTemporales.length > 0) {
+                todosLosMensajes = [...todosLosMensajes, ...mensajesTemporales];
+            }
+        }
+        
+        // Ordenar todos los mensajes por fecha (más antiguos arriba, más recientes abajo)
+        const mensajesOrdenados = ordenarMensajesPorFecha(todosLosMensajes);
+        setMensajes(mensajesOrdenados);
+    }, [conversacion.id, mensajesIniciales, userId]);
 
     useEffect(() => {
         if (mensajesContainerRef.current) {
@@ -41,34 +93,68 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
         ).padStart(2, '0')}/${fechaHoy.getFullYear()}`;
         const hora = `${String(fechaHoy.getHours()).padStart(2, '0')}:${String(
             fechaHoy.getMinutes()
-        ).padStart(2, '0')}`;
+        ).padStart(2, '0')}:${String(fechaHoy.getSeconds()).padStart(2, '0')}`;
+
+        // Crear ID temporal (negativo)
+        const tempId = -(Math.random() * 10000);
 
         const nuevoMensajeObj: Mensaje = {
-            id: mensajes.length + 1,
+            id: tempId,
             contenido: nuevoMensaje,
             esDelUsuarioPrincipal: true,
             fecha,
             hora,
         };
 
-        setMensajes([...mensajes, nuevoMensajeObj]);
+        // Guardar en estado local inmediatamente (optimistic update)
+        const mensajesActualizados = ordenarMensajesPorFecha([...mensajes, nuevoMensajeObj]);
+        setMensajes(mensajesActualizados);
+        const contenidoOriginal = nuevoMensaje;
         setNuevoMensaje('');
+        setEnviando(true);
 
+        // Guardar en localStorage como temporal
+        guardarMensajeConImagenTemporal(conversacion.id, nuevoMensajeObj, userId);
+
+        // Notificar al padre (para actualizar lista de conversaciones)
+        onMensajeEnviado?.(contenidoOriginal, fecha, hora);
+
+        // Enviar al servidor
         enviarMensaje({
             conversacion_id: conversacion.id,
-            contenido: nuevoMensajeObj.contenido,
+            contenido: contenidoOriginal,
             es_imagen: false,
-        }).catch((error) => {
-            console.error('Error al enviar mensaje:', error);
-        });
+        })
+            .then((response) => {
+                // Reemplazar el mensaje temporal con el mensaje real del servidor
+                const mensajeReal = response.mensaje;
+                setMensajes((prevMensajes) => {
+                    const updated = prevMensajes.map((msg) =>
+                        msg.id === tempId ? { ...mensajeReal } : msg
+                    );
+                    return ordenarMensajesPorFecha(updated);
+                });
+                // Eliminar el mensaje temporal de localStorage ahora que está sincronizado
+                eliminarMensajemporal(conversacion.id, Math.abs(tempId));
+                setEnviando(false);
+            })
+            .catch((error) => {
+                console.error('Error al enviar mensaje:', error);
+                // Remover el mensaje temporal si hay error
+                setMensajes((prevMensajes) => prevMensajes.filter((msg) => msg.id !== tempId));
+                eliminarMensajemporal(conversacion.id, Math.abs(tempId));
+                setEnviando(false);
+            });
     };
 
     const handleSeleccionarImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) return;
+        if (!file || procesandoImagen) return;
+
+        setProcesandoImagen(true);
 
         const reader = new FileReader();
-        reader.onload = async (event) => {
+        reader.onload = (event) => {
             const imagenData = event.target?.result as string;
             const fechaHoy = new Date();
             const fecha = `${String(fechaHoy.getDate()).padStart(2, '0')}/${String(
@@ -76,33 +162,61 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
             ).padStart(2, '0')}/${fechaHoy.getFullYear()}`;
             const hora = `${String(fechaHoy.getHours()).padStart(2, '0')}:${String(
                 fechaHoy.getMinutes()
-            ).padStart(2, '0')}`;
+            ).padStart(2, '0')}:${String(fechaHoy.getSeconds()).padStart(2, '0')}`;
+
+            // ID temporal para la imagen
+            const tempId = -(Math.random() * 10000);
 
             const nuevoMensajeConImagen: Mensaje = {
-                id: mensajes.length + 1,
+                id: tempId, // ID temporal
                 contenido: '[Imagen compartida]',
                 esDelUsuarioPrincipal: true,
                 fecha,
                 hora,
                 esImagen: true,
-                imagenUrl: imagenData,
+                imagenUrl: imagenData, // Base64 local para mostrar inmediatamente
             };
 
-            setMensajes([...mensajes, nuevoMensajeConImagen]);
-            setEnviando(true);
+            // Guardar en localStorage como temporal
+            guardarMensajeConImagenTemporal(conversacion.id, nuevoMensajeConImagen, userId);
 
-            try {
-                await enviarMensaje({
-                    conversacion_id: conversacion.id,
-                    contenido: file.name,
-                    es_imagen: true,
-                    nombre_archivo: file.name,
+            // Agregar mensaje al estado local y ordenar por fecha (optimistic update)
+            const mensajesActualizados = ordenarMensajesPorFecha([...mensajes, nuevoMensajeConImagen]);
+            setMensajes(mensajesActualizados);
+
+            // Notificar al padre que se envió una imagen
+            onMensajeEnviado?.('[Imagen compartida]', fecha, hora);
+
+            // Enviar imagen al servidor en background
+            setEnviando(true);
+            enviarMensajeConImagen(conversacion.id, imagenData)
+                .then((response) => {
+                    // Reemplazar el mensaje temporal con el mensaje real del servidor
+                    const mensajeReal = response.mensaje;
+                    setMensajes((prevMensajes) => {
+                        const updated = prevMensajes.map((msg) =>
+                            msg.id === tempId ? { ...mensajeReal } : msg
+                        );
+                        return ordenarMensajesPorFecha(updated);
+                    });
+                    // Eliminar el mensaje temporal de localStorage ahora que está sincronizado
+                    eliminarMensajemporal(conversacion.id, Math.abs(tempId));
+                    setEnviando(false);
+                })
+                .catch((error) => {
+                    console.error('Error al enviar imagen:', error);
+                    // Remover el mensaje temporal si hay error
+                    setMensajes((prevMensajes) => prevMensajes.filter((msg) => msg.id !== tempId));
+                    eliminarMensajemporal(conversacion.id, Math.abs(tempId));
+                    setEnviando(false);
+                })
+                .finally(() => {
+                    setProcesandoImagen(false);
+                    // Resetear el input file para permitir seleccionar la misma imagen nuevamente
+                    if (inputImagenRef.current) {
+                        inputImagenRef.current.value = '';
+                    }
                 });
-            } catch (error) {
-                console.error('Error al enviar imagen:', error);
-            } finally {
-                setEnviando(false);
-            }
         };
         reader.readAsDataURL(file);
     };
@@ -150,8 +264,8 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
                 ref={mensajesContainerRef}
                 className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"
             >
-                {mensajes.map((mensaje) => (
-                    <GloboMensaje key={mensaje.id} mensaje={mensaje} />
+                {mensajes.map((mensaje, index) => (
+                    <GloboMensaje key={`${conversacion.id}-${index}-${mensaje.id}`} mensaje={mensaje} />
                 ))}
             </div>
 
@@ -180,6 +294,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
                 <div className="flex flex-col items-center gap-1">
                     
                     <input
+                        ref={inputImagenRef}
                         type="file"
                         id="inputImagen"
                         accept="image/*"
@@ -189,10 +304,10 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
 
                   
                     <button
-                        onClick={() => {}}
-                        disabled={true}
-                        className="flex flex-col items-center gap-1 text-gray-400 cursor-not-allowed opacity-50"
-                        title="Próximamente"
+                        onClick={() => document.getElementById('inputImagen')?.click()}
+                        disabled={enviando}
+                        className="flex flex-col items-center gap-1 text-blue-500 hover:text-blue-600 disabled:text-gray-400 disabled:cursor-not-allowed transition"
+                        title="Compartir imagen"
                     >
                         <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -208,7 +323,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales }: 
                                 d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                             />
                         </svg>
-                        <span className="text-xs">Próximamente</span>
+                        <span className="text-xs">Imagen</span>
                     </button>
 
                   

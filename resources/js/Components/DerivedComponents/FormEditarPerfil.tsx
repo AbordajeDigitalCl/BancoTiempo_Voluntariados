@@ -3,15 +3,17 @@ import { useFormState } from '@/hooks/usarEstadoFormulario';
 import PasswordInput from './EntradaContrasena';
 import { useState } from 'react';
 import { guardarDatosPerfil } from '@/services/guardarDatosPerfil';
+import { subirImagen } from '@/services/subirImagen';
 
 interface FormEditarPerfilProps {
     datosIniciales: PerfilEditable;
     fotoInicial?: string;
     usuarioId?: number | null;
     returnTo?: string;
+    usuarioActualId: number; // ID del usuario autenticado actualmente
 }
 
-export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https://picsum.photos/150?random=1", usuarioId = null, returnTo = 'verperfil' }: FormEditarPerfilProps) {
+export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https://picsum.photos/150?random=1", usuarioId = null, returnTo = 'verperfil', usuarioActualId }: FormEditarPerfilProps) {
     const {
         formData,
         mostrarContrasena,
@@ -22,24 +24,28 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
         handleSubmit
     } = useFormState(datosIniciales);
 
-    const [foto, setFoto] = useState(fotoInicial);
     const [previewFoto, setPreviewFoto] = useState(fotoInicial);
     const [errores, setErrores] = useState<string[]>([]);
+    const [archivoSeleccionado, setArchivoSeleccionado] = useState<File | null>(null);
+    const [cargandoImagen, setCargandoImagen] = useState(false);
 
+    // Guarda archivo localmente sin subir aún
     const handleFotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            
+            // Mostrar preview local inmediatamente
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreviewFoto(reader.result as string);
-                setFoto(reader.result as string);
             };
             reader.readAsDataURL(file);
+            
+            // Guardar archivo para subir después
+            setArchivoSeleccionado(file);
         }
     };
 
-    const onSubmit = handleSubmit((data) => {
+    const onSubmit = handleSubmit(async (data) => {
         const nuevosErrores: string[] = [];
 
         if (data.contrasena || data.confirmarContrasena) {
@@ -59,7 +65,35 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
             return;
         }
 
+        // Si hay archivo seleccionado, subir primero
+        let idImagenNueva: number | undefined = undefined;
+        if (archivoSeleccionado) {
+            setCargandoImagen(true);
+            try {
+                // MODIFICADO: Siempre pasar usuarioId (requerido para el endpoint /subir-imagen/{usuario_id})
+                if (!usuarioId) {
+                    console.error('Error: usuarioId no está disponible');
+                    setErrores(['Error: No se puede determinar el usuario']);
+                    setCargandoImagen(false);
+                    return;
+                }
+                const respuesta = await subirImagen(archivoSeleccionado, usuarioId);
+                idImagenNueva = respuesta.id;
+            } catch (error) {
+                setErrores([(error instanceof Error ? error.message : 'Error al subir imagen')]);
+                setCargandoImagen(false);
+                return;
+            }
+        }
+
+        // Guardar perfil ahora con router.post de Inertia
+        setCargandoImagen(true);
         setErrores([]);
+        
+        // MODIFICADO: Solo pasar usuarioId en la URL si es DIFERENTE del usuario actual
+        // Si el usuario está editando su propio perfil, no incluir el ID en la URL
+        const usuarioIdParaGuardado = (usuarioId !== null && usuarioId !== usuarioActualId) ? usuarioId : null;
+        
         guardarDatosPerfil({
             nombre: data.nombre,
             apellidoPaterno: data.apellidoPaterno,
@@ -71,16 +105,14 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
             telefono: data.telefono,
             direccion: data.direccion,
             ciudad: data.ciudad,
-        }, usuarioId, returnTo);
-        console.log('Datos a guardar:', data);
-        console.log('Foto:', foto);
+        }, usuarioIdParaGuardado, returnTo, idImagenNueva);
     });
 
     return (
         <form onSubmit={onSubmit} className="w-full max-w-4xl mx-auto p-4 md:p-6 bg-white rounded-lg shadow-md">
             <h1 className="text-2xl md:text-3xl font-bold mb-6 md:mb-8 text-gray-800">Editar Información de Perfil</h1>
 
-            
+            {/* Sección de foto de perfil */}
             <div className="mb-6 md:mb-8 pb-6 md:pb-8 border-b border-gray-200">
                 <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
                    
@@ -90,7 +122,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                         className="w-24 md:w-32 h-24 md:h-32 rounded-full object-cover border-4 border-gray-300 flex-shrink-0"
                     />
                     
-                    
+                    {/* Input para cambiar foto */}
                     <label className="cursor-pointer flex-shrink-0">
                         <div className="w-32 md:w-40 h-32 md:h-40 bg-gray-300 rounded-lg border-4 border-gray-400 flex flex-col items-center justify-end p-3 md:p-4 hover:bg-gray-400 transition">
                             <input
@@ -108,7 +140,7 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                                 }}
                                 className="bg-white text-gray-800 px-3 md:px-4 py-2 rounded-lg font-semibold hover:bg-gray-100 transition text-sm md:text-base"
                             >
-                                Actualizar foto
+                                Seleccionar foto
                             </button>
                         </div>
                     </label>
@@ -277,9 +309,10 @@ export default function FormEditarPerfil({ datosIniciales, fotoInicial = "https:
                 </button>
                 <button
                     type="submit"
-                    className="w-full md:w-auto px-4 md:px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-bold text-sm md:text-base"
+                    disabled={cargandoImagen}
+                    className="w-full md:w-auto px-4 md:px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-bold text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    Guardar Cambios
+                    {cargandoImagen ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
             </div>
         </form>

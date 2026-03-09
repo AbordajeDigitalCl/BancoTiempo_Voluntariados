@@ -13,10 +13,11 @@ interface DatosPerfil {
     ciudad: string;
 }
 
-export function guardarDatosPerfil(datos: DatosPerfil, usuarioId: number | null = null, returnTo: string = 'verperfil') {
-    const url = usuarioId ? `/EditarPerfil/${usuarioId}?return_to=${returnTo}` : '/EditarPerfil';
+export function guardarDatosPerfil(datos: DatosPerfil, usuarioId: number | null = null, returnTo: string = 'verperfil', idImagen?: number) {
+    const url = usuarioId ? `/EditarPerfil/${usuarioId}?return_to=${returnTo}` : `/EditarPerfil?return_to=${returnTo}`;
     
-    router.post(url, {
+    // Preparar datos del perfil con id_imagen si fue cargada nueva imagen
+    const datosEnvio: any = {
         nombre: datos.nombre,
         apellidoPaterno: datos.apellidoPaterno,
         apellidoMaterno: datos.apellidoMaterno,
@@ -27,5 +28,17 @@ export function guardarDatosPerfil(datos: DatosPerfil, usuarioId: number | null 
         telefono: datos.telefono,
         direccion: datos.direccion,
         ciudad: datos.ciudad,
+    };
+    
+    if (idImagen) {
+        datosEnvio.id_imagen = idImagen;
+    }
+
+    // Usar router.post() de Inertia que maneja sesión, CSRF, y redirects automáticamente.
+    // router.post() es más confiable que fetch() aquí porque Inertia maneja toda la lógica de headers y redirects.
+    router.post(url, datosEnvio, {
+        onError: (errors) => {
+            console.error('Error al guardar perfil:', errors);
+        }
     });
 }

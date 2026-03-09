@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/react';
 import FilaUsuario from '@/Components/DerivedComponents/FilaUsuario';
 import { useState, useEffect, useMemo } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
+import { esAdministrador } from '@/mockData/datosMockAdministradores';
 
 const ITEMS_PER_PAGE = 8;
 
@@ -16,6 +17,7 @@ interface Usuario {
   direccion: string;
   email: string;
   foto: string;
+  esAdmin: number; // 0 o 1
 }
 
 interface AdministrarUsuariosProps extends PageProps {
@@ -42,12 +44,11 @@ export default function AdministrarUsuarios({ auth, usuarios, isAdmin }: Adminis
         const cumpleCiudad = c ? usuario.ciudad.toLowerCase().includes(c) : true;
         
         let cumpleTipo = true;
+        // Usar mock data de administradores para filtrar correctamente
         if (filtroTipo === 'admin') {
-          // Mostrar solo el usuario actual (el admin logueado)
-          cumpleTipo = usuario.id === auth.user.id;
+          cumpleTipo = esAdministrador(usuario.id);
         } else if (filtroTipo === 'usuarios') {
-          // Mostrar todos excepto el admin logueado
-          cumpleTipo = usuario.id !== auth.user.id;
+          cumpleTipo = !esAdministrador(usuario.id);
         }
         return cumpleNombre && cumpleCiudad && cumpleTipo;
       });

@@ -8,6 +8,7 @@ export interface Servicio {
     imagen: string;
     estado: 'Activo' | 'Desactivado' | 'Agotado';
     fecha: string;
+    imagenId?: number; // Optional image ID from server
 }
 
 export interface PerfilData {

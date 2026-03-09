@@ -92,9 +92,8 @@ Route::post('/pay', [
     TransaccionController::class, "pay"
 ])->middleware("auth:sanctum");
 
-Route::post('/upload', [
-    FileUploadController::class, 'upload'
-])->middleware("auth:sanctum");
+// MODIFICADO: Ruta POST /upload removida - fue movida a routes/web.php porque necesita autenticación por sesión (no Sanctum).
+// La ruta GET /file/{filename} se mantiene sin autenticación para que las etiquetas <img> puedan cargar las imágenes.
 
 //CRISTÓBAL (25-02-2026)
 // Se removió autenticación para permitir que las imágenes de publicaciones se carguen en el frontend

@@ -1,10 +1,13 @@
 import { PerfilData } from '@/mockData/datosMockPerfil';
 import {Link} from "@inertiajs/react";
 interface PerfilInfoProps {
-    perfil: PerfilData & { apellidoPaterno?: string; apellidoMaterno?: string };
+    perfil: PerfilData & { apellidoPaterno?: string; apellidoMaterno?: string; id?: number };
+    esPerfilPropio?: boolean;
+    isAdmin?: boolean;
+    usuarioId?: number;
 }
 
-export default function PerfilInfo({ perfil }: PerfilInfoProps) {
+export default function PerfilInfo({ perfil, esPerfilPropio = true, isAdmin = false, usuarioId }: PerfilInfoProps) {
     const getNombreCompleto = () => {
         let nombre = perfil.nombre || '';
         if (perfil.apellidoPaterno) {
@@ -16,31 +19,33 @@ export default function PerfilInfo({ perfil }: PerfilInfoProps) {
         return nombre;
     };
     return (
-        <div className="w-full h-full bg-white">
+        <div className="w-full bg-white relative">
            
             <div className="hidden md:flex items-center justify-center mt-3">
                 <div className="w-full p-4 box-border">
-                    <div className="flex w-full h-max">
+                    <div className="flex w-full h-72 gap-4">
                         
-                        <div className="w-1/3 h-full relative">
+                        <div className="w-1/3 h-72 flex-shrink-0 relative">
                             <img
                                 src={perfil.foto}
                                 alt="Profile"
                                 className="w-full h-full object-cover rounded-lg"
                             />
                             
-                            <Link
-                                href="/EditarPerfil"
-                                className="absolute top-2 right-2 bg-black-200 rounded-full p-2 shadow-lg hover:bg-gray-100 transition flex flex-col items-center"
-                                title="Actualizar foto"
-                            >
-                                <span className="text-lg font-bold">✎</span>
-                                <span className="text-xs font-bold text-gray-700">Actualizar</span>
-                            </Link>
+                            {esPerfilPropio && (
+                                <Link
+                                    href="/EditarPerfil"
+                                    className="absolute top-2 right-2 bg-black-200 rounded-full p-2 shadow-lg hover:bg-gray-100 transition flex flex-col items-center"
+                                    title="Editar Foto"
+                                >
+                                    <span className="text-lg font-bold">✎</span>
+                                    <span className="text-xs font-bold text-gray-700">Editar</span>
+                                </Link>
+                            )}
                         </div>
 
                    
-                        <div className="w-1/3 h-full flex flex-col justify-start pl-4 text-left">
+                        <div className="w-1/3 flex flex-col justify-start pl-4 text-left">
                             <span className="text-2xl font-bold">{getNombreCompleto()}</span>
                             <div className="mt-2 space-y-1">
                                 <div><span className="font-bold">Ciudad:</span> <span>{perfil.ciudad}</span></div>
@@ -52,7 +57,7 @@ export default function PerfilInfo({ perfil }: PerfilInfoProps) {
                         </div>
 
                        
-                        <div className="w-1/3 h-full flex flex-col justify-start items-end pr-4">
+                        <div className="w-1/3 flex flex-col justify-start items-end pr-4">
                             <div className="flex items-center text-right">
                                 <span className="text-xl font-bold mr-2">{perfil.saldoHoras} horas</span>
                                 <div className="flex flex-col items-center">
@@ -115,7 +120,7 @@ export default function PerfilInfo({ perfil }: PerfilInfoProps) {
                     <Link
                         href="/EditarPerfil"
                         className="absolute top-2 right-2 bg-gray-200 rounded-full p-2 shadow-lg hover:bg-gray-300 transition flex flex-col items-center text-xs"
-                        title="Actualizar foto"
+                        title="Editar Foto"
                     >
                         <span className="text-lg font-bold">✎</span>
                     </Link>
@@ -132,6 +137,16 @@ export default function PerfilInfo({ perfil }: PerfilInfoProps) {
                     </div>
                 </div>
             </div>
+
+            {!esPerfilPropio && isAdmin && usuarioId && (
+                <Link
+                    href={`/EditarPerfil/${usuarioId}`}
+                    className="absolute bottom-4 right-4 px-4 py-2 bg-white text-black border-2 border-black rounded-lg hover:bg-gray-50 transition font-bold"
+                    title="Editar este perfil"
+                >
+                    Editar Perfil
+                </Link>
+            )}
         </div>
     );
 }

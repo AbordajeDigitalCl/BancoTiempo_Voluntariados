@@ -1,4 +1,4 @@
-import { PropsWithChildren, ReactNode, useState } from 'react';
+ import { PropsWithChildren, ReactNode, useState, useCallback } from 'react';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
@@ -13,8 +13,14 @@ export default function Authenticated({
 
   const page: any = usePage();
   const unreadMessageCount: number = Number(page?.props?.unreadMessageCount ?? 0);
+  const isAdmin: boolean = page?.props?.isAdmin ?? false;
 
   const totalBadge = unreadMessageCount;
+
+  // Manejar click del botón atrás
+  const handleBackClick = useCallback(() => {
+    window.history.back();
+  }, []);
 
   const hasRoute = (name: string) => {
     try {
@@ -56,13 +62,16 @@ export default function Authenticated({
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="shrink-0 flex items-center">
-                <Link href={hrefDashboard}>
-                  <div className="h-10 w-10 rounded-lg border border-gray-200 flex items-center justify-center sm:hidden">
-                    <svg className="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </div>
-                </Link>
+                {/* Botón atrás ahora usa history.back() en lugar de ir a /dashboard */}
+                <button 
+                  onClick={handleBackClick}
+                  className="h-10 w-10 rounded-lg border border-gray-200 flex items-center justify-center sm:hidden hover:bg-gray-100 transition"
+                  title="Atrás"
+                >
+                  <svg className="h-6 w-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
               </div>
 
               <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
@@ -137,6 +146,12 @@ export default function Authenticated({
 
                       <Dropdown.Link href={hrefProfile}>Ver perfil</Dropdown.Link>
 
+                      {isAdmin && (
+                        <Dropdown.Link href={safeRoute('administrar-usuarios', '/Administrar-Usuarios')}>
+                          Usuarios
+                        </Dropdown.Link>
+                      )}
+
                       <div className="h-px bg-gray-100 my-1" />
 
                       <Dropdown.Link href={safeRoute('logout', '/logout')} method="post" as="button">
@@ -201,6 +216,12 @@ export default function Authenticated({
             </ResponsiveNavLink>
             <ResponsiveNavLink href={hrefMyAds}>Mis publicaciones</ResponsiveNavLink>
             <ResponsiveNavLink href={hrefProfile}>Ver Perfil</ResponsiveNavLink>
+
+            {isAdmin && (
+              <ResponsiveNavLink href={safeRoute('administrar-usuarios', '/Administrar-Usuarios')}>
+                Usuarios
+              </ResponsiveNavLink>
+            )}
           </div>
 
           {hasUser ? (

@@ -1,13 +1,55 @@
 import { Servicio } from '@/mockData/datosMockPerfil';
 import { getStateColors, STATE_COLORS } from '@/constants/coloresEstado';
 import { Link } from '@inertiajs/react';
+import { obtenerTextoEstado } from '@/services/estadosPublicaciones';
+import { obtenerImagenesPublicacion } from '@/services/servicioImagenesPublicacion';
+import { useEffect, useState } from 'react';
+import GaleriaImagenesPublicacion from './GaleriaImagenesPublicacion';
 
 interface ServicioProductoCardProps {
     servicio: Servicio;
+    returnTo?: string;
 }
 
-export default function ServicioProductoCard({ servicio }: ServicioProductoCardProps) {
-    const { hex } = getStateColors(servicio.estado);
+export default function ServicioProductoCard({ servicio, returnTo = '/verperfil' }: ServicioProductoCardProps) {
+    // Obtener el estado desde localStorage en lugar de props
+    const estadoActual = obtenerTextoEstado(servicio.id, servicio.tipo as 'Servicio' | 'Producto');
+    const { hex } = getStateColors(estadoActual);
+    
+    // Estado para la imagen principal (puede cambiar si clickea otra)
+    const [imagenPrincipal, setImagenPrincipal] = useState(servicio.imagen);
+    
+    // Estado para las imágenes de la publicación
+    const [imagenes, setImagenes] = useState<any[]>([]);
+    const [cargandoImagenes, setCargandoImagenes] = useState(true);
+
+    const handleImagenClick = (imagen: any) => {
+        // Mostrar la imagen clickeada en grande
+        setImagenPrincipal(imagen.url);
+    };
+
+    // Cargar imágenes cuando el componente se monta
+    useEffect(() => {
+        const cargarImagenes = async () => {
+            try {
+                const resultado = await obtenerImagenesPublicacion(servicio.id);
+                setImagenes(resultado.imagenes);
+                // Si hay imágenes, usar la primera como principal
+                if (resultado.imagenes.length > 0) {
+                    setImagenPrincipal(resultado.imagenes[0].url);
+                } else {
+                    // Si no hay imágenes, usar placeholder o imagen del servicio
+                    setImagenPrincipal(servicio.imagen || `https://picsum.photos/200?random=${servicio.id}`);
+                }
+            } catch (error) {
+                console.error('Error al cargar imágenes:', error);
+                setImagenPrincipal(servicio.imagen);
+            } finally {
+                setCargandoImagenes(false);
+            }
+        };
+        cargarImagenes();
+    }, [servicio.id, servicio.imagen]);
     
     const cardStyle = {
         border: `2px solid ${hex}`
@@ -19,11 +61,17 @@ export default function ServicioProductoCard({ servicio }: ServicioProductoCardP
 
     return (
       <div className="w-full max-w-4xl mx-auto p-4 bg-white flex flex-col md:flex-row gap-4" style={cardStyle}>
-        <div className="w-full md:w-1/3 md:flex-shrink-0 h-48 md:h-64">
+        <div className="w-full md:w-1/3 md:flex-shrink-0 h-48 md:h-64 relative">
           <img
-            src={servicio.imagen}
+            src={imagenPrincipal}
             alt={servicio.titulo}
             className="w-full h-full object-cover rounded-lg"
+          />
+          {/* Mostrar galería de imágenes pequeñas si hay imágenes */}
+          <GaleriaImagenesPublicacion 
+            imagenes={imagenes} 
+            mostrar={imagenes.length > 0}
+            onImagenClick={handleImagenClick}
           />
         </div>
 
@@ -108,7 +156,7 @@ export default function ServicioProductoCard({ servicio }: ServicioProductoCardP
 
         <div className="flex justify-between items-end">
           <div className="flex items-center gap-4">
-            <Link href={`/Editar-Publicacion/${servicio.id}`} className="flex flex-col items-start hover:opacity-75 transition">
+            <Link href={`/Editar-Publicacion/${servicio.id}?return_to=${encodeURIComponent(returnTo)}`} className="flex flex-col items-start hover:opacity-75 transition">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="w-6 h-6"
@@ -131,7 +179,7 @@ export default function ServicioProductoCard({ servicio }: ServicioProductoCardP
           </div>
           <div className="flex flex-col items-center">
             <div className="w-6 h-6 rounded-full" style={circleStyle}></div>
-            <span className="text-xs" style={{color: hex}}>{servicio.estado}</span>
+            <span className="text-xs" style={{color: hex}}>{estadoActual}</span>
           </div>
         </div>
       </div>

@@ -2,18 +2,19 @@ import React from 'react';
 import Dropdown from '../Dropdown';
 
 interface OrdenarDropDownProps {
-    onOrdenChange: (orden: 'precio' | 'popular' | 'reciente' | null) => void;
-    ordenActual: 'precio' | 'popular' | 'reciente' | null;
+    onOrdenChange: (orden: 'precioMayor' | 'precioMenor' | 'popular' | 'reciente' | null) => void;
+    ordenActual: 'precioMayor' | 'precioMenor' | 'popular' | 'reciente' | null;
 }
 
 export default function OrdenarDropDown({ onOrdenChange, ordenActual }: OrdenarDropDownProps) {
     const labelOrden = 
-        ordenActual === 'precio' ? 'Precio' :
+        ordenActual === 'precioMayor' ? 'Mayor Precio' :
+        ordenActual === 'precioMenor' ? 'Menor Precio' :
         ordenActual === 'popular' ? 'Más Popular' :
         ordenActual === 'reciente' ? 'Más Reciente' :
         'Ordenar';
 
-    const handleOrdenChange = (orden: 'precio' | 'popular' | 'reciente' | null) => {
+    const handleOrdenChange = (orden: 'precioMayor' | 'precioMenor' | 'popular' | 'reciente' | null) => {
         onOrdenChange(orden);
     };
 
@@ -46,10 +47,16 @@ export default function OrdenarDropDown({ onOrdenChange, ordenActual }: OrdenarD
                         Sin ordenar
                     </button>
                     <button 
-                        onClick={() => handleOrdenChange('precio')}
+                        onClick={() => handleOrdenChange('precioMayor')}
                         className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
                     >
-                        Precio
+                        Mayor Precio
+                    </button>
+                    <button 
+                        onClick={() => handleOrdenChange('precioMenor')}
+                        className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                        Menor Precio
                     </button>
                     <button 
                         onClick={() => handleOrdenChange('popular')}

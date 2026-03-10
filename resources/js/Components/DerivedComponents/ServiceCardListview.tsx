@@ -6,7 +6,8 @@ interface ServiceCardListviewProps {
   servicios: Servicio[];
   filtroTipo?: 'Servicio' | 'Producto' | null;
   filtroOfertaDemanda?: 'Oferta' | 'Demanda' | null;
-  filtroOrden?: 'precio' | 'popular' | 'reciente' | null;
+  filtroOrden?: 'precioMayor' | 'precioMenor' | 'popular' | 'reciente' | null;
+  returnTo?: string;
 }
 
 export default function ServiceCardListview({
@@ -14,6 +15,7 @@ export default function ServiceCardListview({
   filtroTipo = null,
   filtroOfertaDemanda = null,
   filtroOrden = null,
+  returnTo = '/verperfil',
 }: ServiceCardListviewProps) {
   const itemsFiltrados = useMemo(() => {
     let resultado = [...servicios];
@@ -28,11 +30,17 @@ export default function ServiceCardListview({
 
     
     if (filtroOrden) {
-      if (filtroOrden === 'precio') {
+      if (filtroOrden === 'precioMenor') {
         resultado.sort((a, b) => {
-          const costA = parseInt(a.costo.split(' ')[0]);
-          const costB = parseInt(b.costo.split(' ')[0]);
+          const costA = typeof a.costo === 'string' ? parseInt(a.costo.split(' ')[0]) : parseInt(a.costo) || 0;
+          const costB = typeof b.costo === 'string' ? parseInt(b.costo.split(' ')[0]) : parseInt(b.costo) || 0;
           return costA - costB;
+        });
+      } else if (filtroOrden === 'precioMayor') {
+        resultado.sort((a, b) => {
+          const costA = typeof a.costo === 'string' ? parseInt(a.costo.split(' ')[0]) : parseInt(a.costo) || 0;
+          const costB = typeof b.costo === 'string' ? parseInt(b.costo.split(' ')[0]) : parseInt(b.costo) || 0;
+          return costB - costA;
         });
       } else if (filtroOrden === 'reciente') {
         resultado.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
@@ -47,7 +55,7 @@ export default function ServiceCardListview({
       <div className="w-full max-w-5xl px-4 space-y-6">
         {itemsFiltrados.length > 0 ? (
           itemsFiltrados.map(servicio => (
-            <ServiceCard key={servicio.id} servicio={servicio} />
+            <ServiceCard key={servicio.id} servicio={servicio} returnTo={returnTo} />
           ))
         ) : (
           <div className="text-center py-8 text-gray-500">

@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
 
@@ -17,7 +18,6 @@ type Ad = {
   author?: string;
   imageUrl?: string | null;
   imageUrls?: string[];
-
   location_id?: number | null;
   location_lat?: number | null;
   location_lng?: number | null;
@@ -42,15 +42,16 @@ function StatusPill({ status }: { status: AdStatus }) {
 
 export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad | null }) {
   const images = useMemo<string[]>(() => {
-    const arr = (item?.imageUrls ?? []).filter(Boolean);
+    const arr = (item?.imageUrls ?? []).filter((x): x is string => typeof x === 'string' && x.trim() !== '');
     if (arr.length) return arr.slice(0, 5);
-    if (item?.imageUrl) return [item.imageUrl];
+    if (item?.imageUrl && typeof item.imageUrl === 'string' && item.imageUrl.trim() !== '') return [item.imageUrl];
     return ['https://picsum.photos/seed/demo/1200/800'];
   }, [item]);
 
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const intervalRef = useRef<number | null>(null);
 
   const isOwner = (item?.author ?? '') === (auth?.user?.name ?? '');
@@ -68,6 +69,10 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
   function prev() {
     goTo(active - 1);
   }
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (intervalRef.current) window.clearInterval(intervalRef.current);
@@ -95,14 +100,24 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, active, images.length]);
+  }, [open, active]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
 
   const mapDivRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
 
-  const hasLocation =
-    typeof item?.location_lat === 'number' && typeof item?.location_lng === 'number';
+  const hasLocation = typeof item?.location_lat === 'number' && typeof item?.location_lng === 'number';
 
   const pinIcon = useMemo(() => {
     return L.divIcon({
@@ -136,6 +151,8 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
   useEffect(() => {
     if (!item) return;
     if (!hasLocation) return;
+    if (open) return;
+
     const el = mapDivRef.current;
     if (!el) return;
 
@@ -177,7 +194,7 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
       mapRef.current = null;
       markerRef.current = null;
     };
-  }, [item?.id, hasLocation, pinIcon]);
+  }, [item?.id, hasLocation, pinIcon, open]);
 
   if (!item) {
     return (
@@ -196,39 +213,32 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
     );
   }
 
-  return (
-    <AuthenticatedLayout user={auth.user}>
-      <Head title={item.title} />
-
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: scale(0.995); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
-
-      {open && (
-        <div
-          className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center px-3"
-          onClick={() => setOpen(false)}
-        >
-          <div className="relative w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="absolute -top-12 right-0 rounded-full bg-white/10 hover:bg-white/20 text-white w-10 h-10 flex items-center justify-center"
-              aria-label="Cerrar"
-              title="Cerrar"
+  const modal =
+    mounted && open
+      ? createPortal(
+          <div
+            className="fixed inset-0 z-[99999] bg-black/95 flex items-center justify-center p-4"
+            onClick={() => setOpen(false)}
+          >
+            <div
+              className="relative max-w-[95vw] max-h-[95vh] flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
             >
-              ✕
-            </button>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="absolute -top-12 right-0 z-20 rounded-full bg-white/10 hover:bg-white/20 text-white w-10 h-10 flex items-center justify-center"
+                aria-label="Cerrar"
+                title="Cerrar"
+              >
+                ✕
+              </button>
 
-            <div className="relative rounded-xl overflow-hidden bg-black">
               <img
                 key={`modal-${images[active]}`}
                 src={images[active]}
                 alt={`Imagen-${active}`}
-                className="w-full max-h-[80vh] object-contain select-none opacity-0 animate-[fadeIn_250ms_ease-out_forwards]"
+                className="block max-w-[95vw] max-h-[85vh] w-auto h-auto object-contain rounded-xl select-none"
                 draggable={false}
               />
 
@@ -237,23 +247,24 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
                   <button
                     type="button"
                     onClick={prev}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 hover:bg-white/25 text-white w-10 h-10 flex items-center justify-center"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 hover:bg-white/25 text-white w-10 h-10 flex items-center justify-center z-20"
                     aria-label="Anterior"
                     title="Anterior"
                   >
                     ‹
                   </button>
+
                   <button
                     type="button"
                     onClick={next}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 hover:bg-white/25 text-white w-10 h-10 flex items-center justify-center"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/15 hover:bg-white/25 text-white w-10 h-10 flex items-center justify-center z-20"
                     aria-label="Siguiente"
                     title="Siguiente"
                   >
                     ›
                   </button>
 
-                  <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-2">
+                  <div className="absolute -bottom-8 left-0 right-0 flex items-center justify-center gap-2 z-20">
                     {images.map((_, i) => (
                       <button
                         key={`modal-dot-${i}`}
@@ -270,9 +281,16 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
                 </>
               )}
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )
+      : null;
+
+  return (
+    <AuthenticatedLayout user={auth.user}>
+      <Head title={item.title} />
+
+      {modal}
 
       <div className="w-full flex justify-center px-4 py-6">
         <div className="w-full max-w-3xl space-y-4">
@@ -304,7 +322,7 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
                   key={images[active]}
                   src={images[active]}
                   alt={`Imagen-${active}`}
-                  className="w-full h-[420px] sm:h-[420px] max-sm:h-[360px] object-cover select-none opacity-0 animate-[fadeIn_250ms_ease-out_forwards]"
+                  className="w-full h-[420px] sm:h-[420px] max-sm:h-[360px] object-cover select-none"
                   draggable={false}
                 />
               </button>
@@ -386,23 +404,25 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
                 Ofrecido por <b>{item.author || 'Usuario'}</b>
               </div>
 
-              <div className="mt-5">
-                <div className="text-sm font-medium text-gray-900">Ubicación</div>
+              {!open && (
+                <div className="mt-5">
+                  <div className="text-sm font-medium text-gray-900">Ubicación</div>
 
-                {hasLocation ? (
-                  <>
-                    <div className="mt-1 text-sm text-gray-700">
-                      {item.location_address ? item.location_address : 'Ubicación seleccionada'}
-                    </div>
-                    <div
-                      ref={mapDivRef}
-                      className="mt-3 w-full h-[220px] rounded-lg border border-gray-200 overflow-hidden"
-                    />
-                  </>
-                ) : (
-                  <div className="mt-1 text-sm text-gray-500">(Sin ubicación)</div>
-                )}
-              </div>
+                  {hasLocation ? (
+                    <>
+                      <div className="mt-1 text-sm text-gray-700">
+                        {item.location_address ? item.location_address : 'Ubicación seleccionada'}
+                      </div>
+                      <div
+                        ref={mapDivRef}
+                        className="mt-3 w-full h-[220px] rounded-lg border border-gray-200 overflow-hidden"
+                      />
+                    </>
+                  ) : (
+                    <div className="mt-1 text-sm text-gray-500">(Sin ubicación)</div>
+                  )}
+                </div>
+              )}
 
               <div className="mt-5 flex flex-wrap gap-2 justify-end">
                 <Link href="/chat" className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50">

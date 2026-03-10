@@ -4,6 +4,15 @@ interface GloboMensajeProps {
     mensaje: Mensaje;
 }
 
+/**
+ * Extraer solo HH:mm de un formato HH:mm:ss
+ * Si ya es HH:mm, devuelve igual
+ */
+const extraerHora = (hora: string): string => {
+    const partes = hora.split(':');
+    return partes.length > 2 ? `${partes[0]}:${partes[1]}` : hora;
+};
+
 export default function GloboMensaje({ mensaje }: GloboMensajeProps) {
     return (
         <div
@@ -40,7 +49,7 @@ export default function GloboMensaje({ mensaje }: GloboMensajeProps) {
                         mensaje.esDelUsuarioPrincipal ? 'text-right' : 'text-left'
                     }`}
                 >
-                    {mensaje.fecha} {mensaje.hora}
+                    {mensaje.fecha} {extraerHora(mensaje.hora)}
                 </p>
             </div>
         </div>

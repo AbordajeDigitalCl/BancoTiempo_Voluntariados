@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
+use App\Models\Advertisement;
 
 class TestControllerMarcelo extends Controller
 {
@@ -24,11 +25,14 @@ class TestControllerMarcelo extends Controller
      | - Auth usuario normal (register/login/logout)
      | - Auth admin (register/login con bandera is_admin en sesión)
      | - Publicaciones (listado general / detalle / editar / crear)
-     | - Dashboard (estadísticas calculadas desde session('created_ads'))
+     | - Dashboard (estadísticas calculadas desde la base de datos)
      |
      | Importante:
-     | - Publicaciones NO salen de BD: salen de session('created_ads', []).
-     | - "Admin" en este flujo es una bandera de sesión (is_admin), no un rol persistido.
+     | - Las publicaciones ahora se almacenan y consultan desde la tabla
+     |   `advertisements` usando el modelo Advertisement.
+     | - Las operaciones CRUD principales de publicaciones trabajan con BD.
+     | - "Admin" en este flujo es una bandera de sesión (is_admin), no un rol
+     |   persistido en base de datos.
      */
 
     /*
@@ -75,7 +79,6 @@ class TestControllerMarcelo extends Controller
      */
     public function register(Request $request): RedirectResponse
     {
-        // Validación de formato y reglas mínimas antes de crear el usuario.
         $request->validate([
             'profile_photo' => ['nullable', 'file', 'image', 'max:4096'],
             'name' => ['required', 'string', 'max:255'],
@@ -95,7 +98,6 @@ class TestControllerMarcelo extends Controller
          - Guardar $path en el usuario.
         */
 
-        // Creación del usuario. Password queda hasheada por seguridad.
         $user = User::create([
             'name' => $request->name,
             'Apellido_Paterno' => $request->Apellido_Paterno,
@@ -108,10 +110,8 @@ class TestControllerMarcelo extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        // Evento estándar post-registro (Laravel).
         event(new Registered($user));
 
-        // Autologin y hardening de sesión.
         Auth::login($user);
         $request->session()->regenerate();
 
@@ -193,7 +193,7 @@ class TestControllerMarcelo extends Controller
      |--------------------------------------------------------------------------
      | - Vista: resources/js/Pages/AdminRegister.tsx
      | - Diferencia clave: guarda bandera is_admin = true en sesión.
-     | - Tener en consideracion: es un rol persistido en BD, es un flag temporal de sesión.
+     | - Tener en consideracion: no es un rol persistido en BD, es un flag temporal de sesión.
      */
 
     /**
@@ -293,22 +293,47 @@ class TestControllerMarcelo extends Controller
      | PUBLICACIONES (LISTADO GENERAL)
      |--------------------------------------------------------------------------
      | - Vista: resources/js/Pages/Advertisement.tsx
-     | - Fuente: session('created_ads', [])
+     | - Fuente: tabla `advertisements` mediante modelo Advertisement
      | - Envía: createdAds + filters + isAdmin
      */
 
     /**
      * @summary Listado general de publicaciones.
-     * @description Renderiza la vista principal de publicaciones usando datos en sesión.
+     * @description Renderiza la vista principal de publicaciones usando datos desde base de datos.
      *
-     * @source session('created_ads', [])
+     * @source tabla `advertisements`
      * @view resources/js/Pages/Advertisement.tsx
      * @param  \Illuminate\Http\Request  $request (query params opcionales)
      * @return \Inertia\Response
      */
     public function advertisementIndex(Request $request): Response
     {
-        $createdAds = $request->session()->get('created_ads', []);
+        $createdAds = Advertisement::query()
+            ->latest()
+            ->get()
+            ->map(function ($ad) {
+                return [
+                    'id' => $ad->id,
+                    'title' => $ad->title,
+                    'description' => $ad->description,
+                    'hours' => $ad->hours,
+                    'type' => $ad->type,
+                    'mode' => $ad->mode,
+                    'status' => $ad->status,
+                    'author' => $ad->author,
+                    'user_id' => $ad->user_id,
+                    'imageUrls' => $ad->image_urls ?? [],
+                    'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+                    'location_id' => $ad->location_id,
+                    'location_lat' => $ad->location_lat,
+                    'location_lng' => $ad->location_lng,
+                    'location_address' => $ad->location_address,
+                    'created_at' => optional($ad->created_at)?->toDateTimeString(),
+                    'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+                ];
+            })
+            ->toArray();
+
         $filters = $this->parseAdvertisementFilters($request);
         $isAdmin = (bool) $request->session()->get('is_admin', false);
 
@@ -350,22 +375,46 @@ class TestControllerMarcelo extends Controller
      | MIS PUBLICACIONES (LISTADO)
      |--------------------------------------------------------------------------
      | - Vista: resources/js/Pages/MyAdvertisements.tsx
-     | - Fuente: session('created_ads', [])
-     | - El filtrado por dueño lo hace el Front (auth.user.name).
+     | - Fuente: tabla `advertisements` mediante modelo Advertisement
+     | - El filtrado por dueño lo realiza el frontend usando user_id/author.
      */
 
     /**
      * @summary Listado de "Mis publicaciones".
-     * @description Renderiza la vista que muestra publicaciones del usuario (front filtra).
+     * @description Renderiza la vista que muestra publicaciones obtenidas desde base de datos.
      *
-     * @source session('created_ads', [])
+     * @source tabla `advertisements`
      * @view resources/js/Pages/MyAdvertisements.tsx
      * @param  \Illuminate\Http\Request  $request
      * @return \Inertia\Response
      */
     public function myAdvertisementsIndex(Request $request): Response
     {
-        $createdAds = $request->session()->get('created_ads', []);
+        $createdAds = Advertisement::query()
+            ->latest()
+            ->get()
+            ->map(function ($ad) {
+                return [
+                    'id' => $ad->id,
+                    'title' => $ad->title,
+                    'description' => $ad->description,
+                    'hours' => $ad->hours,
+                    'type' => $ad->type,
+                    'mode' => $ad->mode,
+                    'status' => $ad->status,
+                    'author' => $ad->author,
+                    'user_id' => $ad->user_id,
+                    'imageUrls' => $ad->image_urls ?? [],
+                    'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+                    'location_id' => $ad->location_id,
+                    'location_lat' => $ad->location_lat,
+                    'location_lng' => $ad->location_lng,
+                    'location_address' => $ad->location_address,
+                    'created_at' => optional($ad->created_at)?->toDateTimeString(),
+                    'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+                ];
+            })
+            ->toArray();
 
         return Inertia::render('MyAdvertisements', [
             'createdAds' => $createdAds,
@@ -377,14 +426,14 @@ class TestControllerMarcelo extends Controller
      | PUBLICACIÓN (DETALLE)
      |--------------------------------------------------------------------------
      | - Vista: resources/js/Pages/AdvertisementShow.tsx
-     | - Fuente: session('created_ads', [])
+     | - Fuente: tabla `advertisements` mediante modelo Advertisement
      */
 
     /**
      * @summary Detalle de publicación.
-     * @description Busca una publicación por id dentro de session('created_ads') y la envía al front.
+     * @description Busca una publicación por id en la tabla `advertisements` y la envía al frontend.
      *
-     * @source session('created_ads', [])
+     * @source tabla `advertisements`
      * @view resources/js/Pages/AdvertisementShow.tsx
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
@@ -392,11 +441,30 @@ class TestControllerMarcelo extends Controller
      */
     public function advertisementShow(Request $request, int $id): Response
     {
-        $createdAds = $request->session()->get('created_ads', []);
-        $item = collect($createdAds)->firstWhere('id', (int) $id);
+        $ad = Advertisement::query()->find($id);
+
+        $item = $ad ? [
+            'id' => $ad->id,
+            'title' => $ad->title,
+            'description' => $ad->description,
+            'hours' => $ad->hours,
+            'type' => $ad->type,
+            'mode' => $ad->mode,
+            'status' => $ad->status,
+            'author' => $ad->author,
+            'user_id' => $ad->user_id,
+            'imageUrls' => $ad->image_urls ?? [],
+            'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+            'location_id' => $ad->location_id,
+            'location_lat' => $ad->location_lat,
+            'location_lng' => $ad->location_lng,
+            'location_address' => $ad->location_address,
+            'created_at' => optional($ad->created_at)?->toDateTimeString(),
+            'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+        ] : null;
 
         return Inertia::render('AdvertisementShow', [
-            'item' => $item ?: null,
+            'item' => $item,
         ]);
     }
 
@@ -405,15 +473,15 @@ class TestControllerMarcelo extends Controller
      | PUBLICACIÓN (EDITAR FORM)
      |--------------------------------------------------------------------------
      | - Vista: resources/js/Pages/EditarPublicacion.tsx
-     | - Fuente: session('created_ads', [])
+     | - Fuente: tabla `advertisements` mediante modelo Advertisement
      | - Guardado real: PATCH /Advertisement/{id} en routes/web.php
      */
 
     /**
      * @summary Formulario de edición de publicación.
-     * @description Carga una publicación por id desde sesión para editarla en el front.
+     * @description Carga una publicación por id desde base de datos para editarla en el frontend.
      *
-     * @source session('created_ads', [])
+     * @source tabla `advertisements`
      * @view resources/js/Pages/EditarPublicacion.tsx
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
@@ -421,11 +489,30 @@ class TestControllerMarcelo extends Controller
      */
     public function advertisementEdit(Request $request, int $id): Response
     {
-        $createdAds = $request->session()->get('created_ads', []);
-        $item = collect($createdAds)->firstWhere('id', (int) $id);
+        $ad = Advertisement::query()->find($id);
+
+        $item = $ad ? [
+            'id' => $ad->id,
+            'title' => $ad->title,
+            'description' => $ad->description,
+            'hours' => $ad->hours,
+            'type' => $ad->type,
+            'mode' => $ad->mode,
+            'status' => $ad->status,
+            'author' => $ad->author,
+            'user_id' => $ad->user_id,
+            'imageUrls' => $ad->image_urls ?? [],
+            'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+            'location_id' => $ad->location_id,
+            'location_lat' => $ad->location_lat,
+            'location_lng' => $ad->location_lng,
+            'location_address' => $ad->location_address,
+            'created_at' => optional($ad->created_at)?->toDateTimeString(),
+            'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+        ] : null;
 
         return Inertia::render('EditarPublicacion', [
-            'item' => $item ?: null,
+            'item' => $item,
         ]);
     }
 
@@ -471,22 +558,43 @@ class TestControllerMarcelo extends Controller
      | DASHBOARD
      |--------------------------------------------------------------------------
      | - Vista: resources/js/Pages/Dashboard.tsx
-     | - Fuente: session('created_ads', [])
-     | - Construye stats por estado para "mis publicaciones" + total global active.
+     | - Fuente: tabla `advertisements` mediante modelo Advertisement
+     | - Construye estadísticas por estado para "mis publicaciones" y total global.
      */
 
     /**
      * @summary Vista de Dashboard.
-     * @description Calcula estadísticas del usuario desde publicaciones almacenadas en sesión.
+     * @description Calcula estadísticas del usuario usando publicaciones obtenidas desde base de datos.
      *
-     * @source session('created_ads', []) + auth user
+     * @source tabla `advertisements` + auth user
      * @view resources/js/Pages/Dashboard.tsx
      * @param  \Illuminate\Http\Request  $request
      * @return \Inertia\Response
      */
     public function dashboard(Request $request): Response
     {
-        $createdAds = $request->session()->get('created_ads', []);
+        $createdAds = Advertisement::query()->get()->map(function ($ad) {
+            return [
+                'id' => $ad->id,
+                'title' => $ad->title,
+                'description' => $ad->description,
+                'hours' => $ad->hours,
+                'type' => $ad->type,
+                'mode' => $ad->mode,
+                'status' => $ad->status,
+                'author' => $ad->author,
+                'user_id' => $ad->user_id,
+                'imageUrls' => $ad->image_urls ?? [],
+                'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+                'location_id' => $ad->location_id,
+                'location_lat' => $ad->location_lat,
+                'location_lng' => $ad->location_lng,
+                'location_address' => $ad->location_address,
+                'created_at' => optional($ad->created_at)?->toDateTimeString(),
+                'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+            ];
+        })->toArray();
+
         $stats = $this->buildDashboardStats($request, $createdAds);
 
         return Inertia::render('Dashboard', [
@@ -505,7 +613,7 @@ class TestControllerMarcelo extends Controller
      *
      * @notes
      * - badges quedan como placeholder (0) por ahora.
-     * - Los datos provienen de sesión, no de BD.
+     * - Los datos usados en el cálculo provienen de base de datos.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  array  $createdAds

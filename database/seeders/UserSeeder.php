@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\User;
@@ -9,12 +10,23 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     * Crea usuarios de prueba
-     */
+
     public function run(): void
     {
+        User::updateOrCreate(
+            ['email' => 'marcelo@test.com'],
+            [
+                'name' => 'Marcelo',
+                'Apellido_Paterno' => 'Urrutia',
+                'Apellido_Materno' => 'Test',
+                'Age' => '2002-05-10',
+                'Telefono' => '912345678',
+                'Direccion' => 'La Florida',
+                'Ciudad' => 'Santiago',
+                'password' => Hash::make('12345678'),
+            ]
+        );
+
 
         User::updateOrCreate(
             ['email' => 'jose@test.com'],
@@ -65,3 +77,6 @@ class UserSeeder extends Seeder
         $this->command->info('Se crearon 3 usuarios de prueba exitosamente.');
     }
 }
+
+            
+

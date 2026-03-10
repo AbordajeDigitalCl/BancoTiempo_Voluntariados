@@ -15,7 +15,7 @@ class ConversationSeeder extends Seeder
      */
     public function run(): void
     {
-        $jose = DB::table('users')->find(1);
+        $jose = DB::table('users')->where('email', 'jose@test.com')->first();
         $juan = DB::table('users')->where('email', 'juan@test.com')->first();
 
         if (!$jose || !$juan) {

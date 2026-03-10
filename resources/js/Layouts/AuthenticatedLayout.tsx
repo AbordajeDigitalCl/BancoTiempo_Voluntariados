@@ -1,4 +1,4 @@
- import { PropsWithChildren, ReactNode, useState, useCallback } from 'react';
+import { PropsWithChildren, ReactNode, useState, useCallback } from 'react';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
@@ -17,7 +17,6 @@ export default function Authenticated({
 
   const totalBadge = unreadMessageCount;
 
-  // Manejar click del botón atrás
   const handleBackClick = useCallback(() => {
     window.history.back();
   }, []);
@@ -62,8 +61,7 @@ export default function Authenticated({
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="shrink-0 flex items-center">
-                {/* Botón atrás ahora usa history.back() en lugar de ir a /dashboard */}
-                <button 
+                <button
                   onClick={handleBackClick}
                   className="h-10 w-10 rounded-lg border border-gray-200 flex items-center justify-center sm:hidden hover:bg-gray-100 transition"
                   title="Atrás"
@@ -256,21 +254,52 @@ export default function Authenticated({
 
       <footer className="border-t border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-3 group transition-all duration-300"
-          >
-            <img
-              src="/assets/footer-logo.png"
-              alt="Abordaje Digital"
-              className="h-8 w-8 object-contain transition-all duration-300 group-hover:scale-110"
-            />
+          <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 group transition-all duration-300"
+            >
+              <img
+                src="/assets/footer-logo.png"
+                alt="Abordaje Digital"
+                className="h-8 w-8 object-contain transition-all duration-300 group-hover:scale-110"
+              />
+              <span className="text-sm text-gray-600 font-medium transition-all duration-300 group-hover:text-black">
+                Abordaje Digital
+              </span>
+            </a>
 
-            <span className="text-sm text-gray-600 font-medium transition-all duration-300 group-hover:text-black">
-              Abordaje Digital
-            </span>
-          </a>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 group transition-all duration-300"
+            >
+              <img
+                src="/assets/footer-logo.png"
+                alt="Abordaje Digital"
+                className="h-8 w-8 object-contain transition-all duration-300 group-hover:scale-110"
+              />
+              <span className="text-sm text-gray-600 font-medium transition-all duration-300 group-hover:text-black">
+                Abordaje Digital
+              </span>
+            </a>
+
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-3 group transition-all duration-300"
+            >
+              <img
+                src="/assets/footer-logo.png"
+                alt="Abordaje Digital"
+                className="h-8 w-8 object-contain transition-all duration-300 group-hover:scale-110"
+              />
+              <span className="text-sm text-gray-600 font-medium transition-all duration-300 group-hover:text-black">
+                Abordaje Digital
+              </span>
+            </a>
+          </div>
         </div>
       </footer>
     </div>

@@ -223,6 +223,26 @@ export default function Authenticated({
               </ResponsiveNavLink>
             )}
           </div>
+
+          {hasUser ? (
+            <div className="border-t border-gray-200 pt-4 pb-1">
+              <div className="px-4">
+                <div className="text-base font-medium text-gray-800">{user?.name}</div>
+                {user?.email && <div className="text-sm font-medium text-gray-500">{user.email}</div>}
+              </div>
+
+              <div className="mt-3 space-y-1">
+                <ResponsiveNavLink href={safeRoute('logout', '/logout')} method="post" as="button">
+                  Cerrar sesión
+                </ResponsiveNavLink>
+              </div>
+            </div>
+          ) : (
+            <div className="border-t border-gray-200 pt-4 pb-1 space-y-1">
+              <ResponsiveNavLink href="/login">Iniciar sesión</ResponsiveNavLink>
+              <ResponsiveNavLink href="/register">Crear cuenta</ResponsiveNavLink>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -234,27 +254,25 @@ export default function Authenticated({
 
       <main className="flex-1">{children}</main>
 
-<footer className="border-t border-gray-200 bg-white">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    
-    <a
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center justify-center gap-3 group transition-all duration-300"
-    >
-      <img
-        src="/assets/footer-logo.png"
-        alt="Abordaje Digital"
-        className="h-8 w-8 object-contain transition-all duration-300 group-hover:scale-110"
-      />
+      <footer className="border-t border-gray-200 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-3 group transition-all duration-300"
+          >
+            <img
+              src="/assets/footer-logo.png"
+              alt="Abordaje Digital"
+              className="h-8 w-8 object-contain transition-all duration-300 group-hover:scale-110"
+            />
 
-      <span className="text-sm text-gray-600 font-medium transition-all duration-300 group-hover:text-black">
-        Abordaje Digital
-      </span>
-    </a>
-
-  </div>
-</footer>
+            <span className="text-sm text-gray-600 font-medium transition-all duration-300 group-hover:text-black">
+              Abordaje Digital
+            </span>
+          </a>
+        </div>
+      </footer>
     </div>
   );
 }

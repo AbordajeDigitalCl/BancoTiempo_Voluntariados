@@ -51,11 +51,7 @@ export default function Welcome({
   laravelVersion,
   phpVersion,
 }: PageProps<{ laravelVersion: string; phpVersion: string }>) {
-  const primaryCta = auth.user ? route('dashboard') : route('login');
-  const secondaryCta = auth.user ? route('advertisement') : route('register');
 
-  const primaryLabel = auth.user ? 'Ir al Dashboard' : 'Iniciar sesión';
-  const secondaryLabel = auth.user ? 'Ver publicaciones' : 'Crear cuenta';
 
   return (
     <>
@@ -120,21 +116,7 @@ export default function Welcome({
                   Conecta ofertas y demandas de servicios/productos usando horas como moneda de intercambio.
                 </p>
 
-                <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                  <Link
-                    href={primaryCta}
-                    className="inline-flex items-center justify-center rounded-lg bg-black px-5 py-3 text-sm font-medium text-white hover:bg-gray-900 transition focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-blue-700"
-                  >
-                    {primaryLabel}
-                  </Link>
-
-                  <Link
-                    href={secondaryCta}
-                    className="inline-flex items-center justify-center rounded-lg border border-white/25 bg-white/10 px-5 py-3 text-sm font-medium text-white hover:bg-white/15 transition focus:outline-none focus:ring-2 focus:ring-blue-300 focus:ring-offset-2 focus:ring-offset-blue-700"
-                  >
-                    {secondaryLabel}
-                  </Link>
-                </div>
+               
               </div>
             </div>
           </div>

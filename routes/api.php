@@ -122,6 +122,10 @@ Route::get('/advertisements', function () {
     );
 });
 
+// Estas rutas usan user_id pero deberian usar id_usuario
+// porque el modelo Advertisement ahora apunta a publicacions
+// que usa id_usuario como llave foranea
+// Actualizar cuando se integren estas rutas al frontend
 Route::get('/advertisements/{id}', function ($id) {
     $advertisement = Advertisement::query()->findOrFail($id);
 

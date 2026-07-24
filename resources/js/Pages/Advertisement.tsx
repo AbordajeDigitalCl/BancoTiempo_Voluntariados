@@ -121,6 +121,7 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
       sort: (filters?.sort ?? fromUrl.sort ?? 'newest') as 'newest' | 'oldest',
       distance: (filters?.distance ?? fromUrl.distance ?? 'Cualquiera') as
         | 'Cualquiera'
+        | '0'
         | '1'
         | '5'
         | '10'
@@ -165,28 +166,12 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
       } as Ad;
     });
   }, [createdAds]);
-
-  const filteredAds: Ad[] = useMemo(() => {
-    const query = (q ?? '').trim().toLowerCase();
-    let list = [...ads];
-
-    if (typeFilter !== 'all') list = list.filter((a) => a.type === typeFilter);
-
-    if (query.length) {
-      list = list.filter((a) => {
-        const hay = `${a.title ?? ''} ${a.description ?? ''} ${a.author ?? ''}`.toLowerCase();
-        return hay.includes(query);
-      });
-    }
-
-    const getTime = (x: Ad) => {
-      const t = x.created_at ? Date.parse(x.created_at) : NaN;
-      return Number.isFinite(t) ? t : x.id;
-    };
-
-    list.sort((a, b) => (sort === 'newest' ? getTime(b) - getTime(a) : getTime(a) - getTime(b)));
-    return list;
-  }, [ads, q, typeFilter, sort]);
+//cambiar useMemo!!
+const filteredAds: Ad[] = useMemo(() => {
+  // El servidor ya aplica todos los filtros (tipo, búsqueda, distancia, orden)
+  // Este componente solo renderiza lo que llega de la BD
+  return ads;
+}, [ads]);
 
   function isOwner(ad: Ad) {
     if (isAdmin) return true;
@@ -276,33 +261,30 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
                 value={q ?? ''}
                 onChange={(e) => setQ(e.target.value)}
               />
-
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setTypeFilter('Servicio')}
-                  className={`rounded-lg border px-3 py-2 text-sm font-medium ${
-                    typeFilter === 'Servicio'
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  Servicio
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTypeFilter('Producto')}
-                  className={`rounded-lg border px-3 py-2 text-sm font-medium ${
-                    typeFilter === 'Producto'
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-gray-200 hover:bg-gray-50'
-                  }`}
-                >
-                  Producto
-                </button>
-              </div>
-
+<div className="grid grid-cols-2 gap-3">
+  <button
+    type="button"
+    onClick={() => setTypeFilter(typeFilter === 'Servicio' ? 'all' : 'Servicio')}
+    className={`w-full px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+      typeFilter === 'Servicio'
+        ? 'bg-indigo-600 text-white border-indigo-600'
+        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+    }`}
+  >
+    Servicio
+  </button>
+  <button
+    type="button"
+    onClick={() => setTypeFilter(typeFilter === 'Producto' ? 'all' : 'Producto')}
+    className={`w-full px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+      typeFilter === 'Producto'
+        ? 'bg-indigo-600 text-white border-indigo-600'
+        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+    }`}
+  >
+    Producto
+  </button>
+</div>
               <div className="grid grid-cols-2 gap-3">
                 <select
                   className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm bg-white"
@@ -310,6 +292,7 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
                   onChange={(e) => setDistance(e.target.value as any)}
                 >
                   <option value="Cualquiera">Distancia</option>
+                  <option value="0">Online</option>
                   <option value="1">1 km</option>
                   <option value="5">5 km</option>
                   <option value="10">10 km</option>
@@ -328,33 +311,37 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
                 </select>
               </div>
 
+         
               <div className="flex items-center justify-between gap-2">
-                <Link href="/MyAdvertisements" className="text-sm text-gray-700 hover:underline">
-                  Ir a Mis publicaciones
-                </Link>
+              <button
+                type="button"
+               onClick={() => {
+               setQ('');
+               setTypeFilter('all');
+               setSort('newest');
+               setDistance('Cualquiera');
+               }}
+            className="text-sm text-gray-600 hover:underline"
+            >
+              Limpiar filtros
+             </button>
 
-                {typeFilter !== 'all' || (q ?? '').trim() || sort !== 'newest' || distance !== 'Cualquiera' ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setQ('');
-                      setTypeFilter('all');
-                      setSort('newest');
-                      setDistance('Cualquiera');
-                    }}
-                    className="text-sm text-gray-600 hover:underline"
-                  >
-                    Limpiar filtros
-                  </button>
-                ) : null}
-              </div>
+             <button
+              type="button"
+              onClick={() => syncToUrlAndServer(q, typeFilter, sort, distance)}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              >
+                Buscar
+              </button>
+            </div>
+
+
 
               <div className="text-xs text-gray-500">
                 Mostrando {filteredAds.length} de {ads.length}
               </div>
             </div>
           </div>
-
           <div className="space-y-4">
             {filteredAds.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-sm text-gray-600">

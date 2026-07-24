@@ -27,6 +27,34 @@ return new class extends Migration
             $table->rememberToken();
             $table->timestamps();
         });
+       DB::unprepared("DROP PROCEDURE IF EXISTS calcular_distancia;");
+        DB::unprepared("
+       CREATE FUNCTION IF NOT EXISTS calcular_distancia(
+    p_lat    DECIMAL(10,8),
+    p_lng    DECIMAL(11,8),
+    loc_lat  DECIMAL(10,8),
+    loc_lng  DECIMAL(11,8)
+)
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+    DECLARE distancia DECIMAL(10,2);
+
+    SET distancia = (
+        6371 * ACOS(
+            LEAST(1.0, GREATEST(-1.0,
+                COS(RADIANS(p_lat))
+                * COS(RADIANS(loc_lat))
+                * COS(RADIANS(loc_lng) - RADIANS(p_lng))
+                + SIN(RADIANS(p_lat))
+                * SIN(RADIANS(loc_lat))
+            ))
+        )
+    );
+
+    RETURN distancia;
+END
+ ");
     }
 
     /**
@@ -34,6 +62,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        DB::unprepared("DROP PROCEDURE IF EXISTS calcular_distancia;");
         Schema::dropIfExists('users');
     }
 };

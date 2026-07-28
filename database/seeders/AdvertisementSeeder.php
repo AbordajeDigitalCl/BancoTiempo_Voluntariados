@@ -17,9 +17,18 @@ class AdvertisementSeeder extends Seeder
             return;
         }
 
+        // Se cambió user_id por id_usuario porque el modelo Advertisement
+        // ahora apunta a la tabla publicacions que usa id_usuario
+        // Se agregaron Nombre, Descripcion, Tipo_Publicacion y Tipo_Beneficio
+        // que son campos obligatorios de publicacions
+
         Advertisement::updateOrCreate(
-            ['title' => 'Reparación básica de computadores', 'user_id' => $marcelo->id],
+            ['title' => 'Reparación básica de computadores', 'id_usuario' => $marcelo->id],
             [
+                'Nombre' => 'Reparación básica de computadores',
+                'Descripcion' => 'Ofrezco limpieza, revisión y ayuda con problemas simples de software.',
+                'Tipo_Publicacion' => 0, // Oferta
+                'Tipo_Beneficio' => 0,   // Servicio
                 'description' => 'Ofrezco limpieza, revisión y ayuda con problemas simples de software.',
                 'hours' => 2,
                 'type' => 'Servicio',
@@ -27,7 +36,6 @@ class AdvertisementSeeder extends Seeder
                 'status' => 'active',
                 'author' => $marcelo->name,
                 'image_urls' => ['https://picsum.photos/405'],
-                'location_id' => null,
                 'location_lat' => -33.5227,
                 'location_lng' => -70.5984,
                 'location_address' => 'La Florida, Santiago, Chile',
@@ -35,16 +43,19 @@ class AdvertisementSeeder extends Seeder
         );
 
         Advertisement::updateOrCreate(
-            ['title' => 'Clases de matemáticas', 'user_id' => $marcelo->id],
+            ['title' => 'Clases de matemáticas', 'id_usuario' => $marcelo->id],
             [
-                'description' => 'Apoyo para estudiantes de enseñanza básica y media. Ayuda con tareas, ejercicios y preparación para pruebas.',
+                'Nombre' => 'Clases de matemáticas',
+                'Descripcion' => 'Apoyo para estudiantes de enseñanza básica y media.',
+                'Tipo_Publicacion' => 0, // Oferta
+                'Tipo_Beneficio' => 0,   // Servicio
+                'description' => 'Apoyo para estudiantes de enseñanza básica y media.',
                 'hours' => 3,
                 'type' => 'Servicio',
                 'mode' => 'Oferta',
                 'status' => 'active',
                 'author' => $marcelo->name,
                 'image_urls' => ['https://picsum.photos/406'],
-                'location_id' => null,
                 'location_lat' => -33.4263,
                 'location_lng' => -70.6112,
                 'location_address' => 'Providencia, Santiago, Chile',
@@ -52,16 +63,19 @@ class AdvertisementSeeder extends Seeder
         );
 
         Advertisement::updateOrCreate(
-            ['title' => 'Busco ayuda para mudanza', 'user_id' => $marcelo->id],
+            ['title' => 'Busco ayuda para mudanza', 'id_usuario' => $marcelo->id],
             [
-                'description' => 'Necesito ayuda para mover cajas y muebles pequeños durante una mudanza dentro de Santiago.',
+                'Nombre' => 'Busco ayuda para mudanza',
+                'Descripcion' => 'Necesito ayuda para mover cajas y muebles pequeños.',
+                'Tipo_Publicacion' => 1, // Demanda
+                'Tipo_Beneficio' => 0,   // Servicio
+                'description' => 'Necesito ayuda para mover cajas y muebles pequeños.',
                 'hours' => 4,
                 'type' => 'Servicio',
                 'mode' => 'Demanda',
                 'status' => 'active',
                 'author' => $marcelo->name,
                 'image_urls' => ['https://picsum.photos/407'],
-                'location_id' => null,
                 'location_lat' => -33.4489,
                 'location_lng' => -70.6693,
                 'location_address' => 'Santiago Centro, Chile',
@@ -69,16 +83,19 @@ class AdvertisementSeeder extends Seeder
         );
 
         Advertisement::updateOrCreate(
-            ['title' => 'Vendo escritorio usado', 'user_id' => $jose->id],
+            ['title' => 'Vendo escritorio usado', 'id_usuario' => $jose->id],
             [
-                'description' => 'Escritorio en buen estado, ideal para estudiar o trabajar desde casa.',
+                'Nombre' => 'Vendo escritorio usado',
+                'Descripcion' => 'Escritorio en buen estado, ideal para estudiar.',
+                'Tipo_Publicacion' => 0, // Oferta
+                'Tipo_Beneficio' => 1,   // Producto
+                'description' => 'Escritorio en buen estado, ideal para estudiar.',
                 'hours' => 1,
                 'type' => 'Producto',
                 'mode' => 'Oferta',
                 'status' => 'active',
                 'author' => $jose->name,
                 'image_urls' => ['https://picsum.photos/408'],
-                'location_id' => null,
                 'location_lat' => -33.4569,
                 'location_lng' => -70.5979,
                 'location_address' => 'Ñuñoa, Santiago, Chile',
@@ -86,16 +103,19 @@ class AdvertisementSeeder extends Seeder
         );
 
         Advertisement::updateOrCreate(
-            ['title' => 'Busco bicicleta usada', 'user_id' => $jose->id],
+            ['title' => 'Busco bicicleta usada', 'id_usuario' => $jose->id],
             [
-                'description' => 'Estoy buscando una bicicleta usada en buen estado para moverme por la ciudad.',
+                'Nombre' => 'Busco bicicleta usada',
+                'Descripcion' => 'Estoy buscando una bicicleta usada en buen estado.',
+                'Tipo_Publicacion' => 1, // Demanda
+                'Tipo_Beneficio' => 1,   // Producto
+                'description' => 'Estoy buscando una bicicleta usada en buen estado.',
                 'hours' => 2,
                 'type' => 'Producto',
                 'mode' => 'Demanda',
                 'status' => 'active',
                 'author' => $jose->name,
                 'image_urls' => ['https://picsum.photos/409'],
-                'location_id' => null,
                 'location_lat' => -33.4372,
                 'location_lng' => -70.6506,
                 'location_address' => 'Recoleta, Santiago, Chile',

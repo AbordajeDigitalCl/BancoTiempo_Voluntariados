@@ -2407,34 +2407,58 @@ trait Cruds
      * @param int $visible filtro para publicaciones visibles, 1: solo visibles
      * @return Publicacion[] Lista de publicaciones
      */
-    public function findAllPublicacion($orderBy, $direction, $type, $str, $user, $visible = 1){
-        $publicaciones = DB::table("publicacions")
-        ->join('users', 'users.id', '=', 'publicacions.id_usuario')
-        ->leftJoin('demandas', 'demandas.id_publicacion', '=', 'publicacions.id')
-        ->leftJoin('ofertas', 'ofertas.id_publicacion', '=', 'publicacions.id')
-        ->select(
-            'publicacions.id as publicacion_id',
-            'publicacions.Nombre',
-            'publicacions.Descripcion',
-            'users.id as user_id',
-            'users.name',
-            'users.Apellido_Paterno',
-            'users.Apellido_Materno',
-            'demandas.Presupuesto',
-            'ofertas.Precio',
-            'publicacions.Tipo_Publicacion',
-            'publicacions.visible'
-        )->orderBy($orderBy, $direction);
-        if($type > -1)
-            $publicaciones->where("publicacions.Tipo_Publicacion", $type);
-        if($str != "")
-            $publicaciones->where("publicacions.Nombre", "like", "%$str%");
-        if($visible == 1)
-            $publicaciones->where("publicacions.visible", true);
-        if($user != null)
-            $publicaciones->where("publicacions.id_usuario", $user);
-        return $publicaciones->paginate(10);
+    public function findAllPublicacion($orderBy, $direction, $type, $str, $user, $visible = 1, $distancia = null){
+    // Se eliminó el parámetro $modalidad ya que la lógica de modalidad online
+    // se maneja directamente con el parámetro $distancia (valor "0" = Online)
+    // Modificado por: [tu nombre] - [fecha]
+
+    $publicaciones = DB::table("publicacions")
+    ->join('users', 'users.id', '=', 'publicacions.id_usuario')
+    ->leftJoin('demandas', 'demandas.id_publicacion', '=', 'publicacions.id')
+    ->leftJoin('ofertas', 'ofertas.id_publicacion', '=', 'publicacions.id')
+    ->select(
+        'publicacions.id as publicacion_id',
+        'publicacions.Nombre',
+        'publicacions.Descripcion',
+        // Se agregaron location_lat y location_lng al select para que el frontend
+        // pueda mostrar el mapa y distinguir publicaciones online (valores nulos)
+        'publicacions.location_lat',
+        'publicacions.location_lng',
+        'users.id as user_id',
+        'users.name',
+        'users.Apellido_Paterno',
+        'users.Apellido_Materno',
+        'demandas.Presupuesto',
+        'ofertas.Precio',
+        'publicacions.Tipo_Publicacion',
+        'publicacions.visible'
+    )->orderBy($orderBy, $direction);
+
+    if($type > -1)
+        $publicaciones->where("publicacions.Tipo_Publicacion", $type);
+    if($str != "")
+        $publicaciones->where("publicacions.Nombre", "like", "%$str%");
+    if($visible == 1)
+        $publicaciones->where("publicacions.visible", true);
+    if($user != null)
+        $publicaciones->where("publicacions.id_usuario", $user);
+
+    // Filtro de distancia/modalidad:
+    // Si distancia es "0", se considera modalidad Online.
+    // Las publicaciones online tienen location_lat y location_lng nulos en la BD.
+    // Si distancia tiene otro valor numérico, se excluyen las publicaciones online
+    // mostrando solo las que tienen ubicación registrada.
+    // TODO: implementar filtro por radio de distancia real usando Haversine
+    // cuando se integre la ubicación del usuario en la sesión.
+    if($distancia === "0" || $distancia == 0){
+        $publicaciones->whereNull("publicacions.location_lat")
+                      ->whereNull("publicacions.location_lng");
+    } elseif($distancia != null){
+        $publicaciones->whereNotNull("publicacions.location_lat");
     }
+
+    return $publicaciones->paginate(10);
+}
 
     /**
      * Consulta para balance, consta en dos consultas, saldo positivo y negativo a partir de los registros de transacciones

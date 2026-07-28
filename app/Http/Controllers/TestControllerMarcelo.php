@@ -14,6 +14,7 @@ use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Advertisement;
+use App\Models\Publicacion;
 
 class TestControllerMarcelo extends Controller
 {
@@ -289,61 +290,80 @@ class TestControllerMarcelo extends Controller
     }
 
     /*
-     |--------------------------------------------------------------------------
-     | PUBLICACIONES (LISTADO GENERAL)
-     |--------------------------------------------------------------------------
-     | - Vista: resources/js/Pages/Advertisement.tsx
-     | - Fuente: tabla `advertisements` mediante modelo Advertisement
-     | - Envía: createdAds + filters + isAdmin
-     */
+ /*
+|--------------------------------------------------------------------------
+| PUBLICACIONES (LISTADO GENERAL)
+|--------------------------------------------------------------------------
+| - Vista: resources/js/Pages/Advertisement.tsx
+| - Fuente: tabla `advertisements` mediante modelo Advertisement
+| - Envía: createdAds + filters + isAdmin
+*/
+ 
+/**
+ * MODIFICADO (2do cambio):
+ * AHORA: Se llama al stored procedure `obtener_publicaciones` (creado en MySQL),
+ *        que recibe los 4 filtros (busqueda, type, distance, sort) como parámetros
+ *        y devuelve directamente el resultado ya filtrado y ordenado desde la BD.
+ *        El resultado crudo (array de stdClass) se hidrata con Advertisement::hydrate()
+ *        para volver a tener Eloquent Models y poder usar sus accessors/casts
+ *        (por ejemplo el cast de image_urls a array).
+ * MOTIVO: Centralizar toda la lógica de filtrado en un único lugar (el SP), en vez de
+ *        tenerla duplicada entre PHP y SQL. Además permite reutilizar el mismo SP desde
+ *        otros lugares (por ejemplo Cruds.php) sin repetir código.
+ *
+ * @source tabla `advertisements`
+ * @view resources/js/Pages/Advertisement.tsx
+ * @param  \Illuminate\Http\Request  $request (query params opcionales)
+ * @return \Inertia\Response
+ */
+public function advertisementIndex(Request $request): Response
+{
+    $filters = $this->parseAdvertisementFilters($request);
+    $isAdmin = (bool) $request->session()->get('is_admin', false);
+ 
+    // Se ejecuta el stored procedure `obtener_publicaciones` pasando los 4 filtros
+    // ya sanitizados por parseAdvertisementFilters(). El SP hace todo el trabajo de
+    // WHERE (búsqueda por texto, tipo, distancia/modalidad) y ORDER BY (newest/oldest)
+    // directamente en MySQL, devolviendo solo las filas que corresponden.
+    $rows = \DB::select('call obtener_publicaciones(?, ?, ?, ?)', [
+        $filters['q'],
+        $filters['type'],
+        $filters['distance'],
+        $filters['sort'],
+    ]);
+ 
 
-    /**
-     * @summary Listado general de publicaciones.
-     * @description Renderiza la vista principal de publicaciones usando datos desde base de datos.
-     *
-     * @source tabla `advertisements`
-     * @view resources/js/Pages/Advertisement.tsx
-     * @param  \Illuminate\Http\Request  $request (query params opcionales)
-     * @return \Inertia\Response
-     */
-    public function advertisementIndex(Request $request): Response
-    {
-        $createdAds = Advertisement::query()
-            ->latest()
-            ->get()
-            ->map(function ($ad) {
-                return [
-                    'id' => $ad->id,
-                    'title' => $ad->title,
-                    'description' => $ad->description,
-                    'hours' => $ad->hours,
-                    'type' => $ad->type,
-                    'mode' => $ad->mode,
-                    'status' => $ad->status,
-                    'author' => $ad->author,
-                    'user_id' => $ad->user_id,
-                    'imageUrls' => $ad->image_urls ?? [],
-                    'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
-                    'location_id' => $ad->location_id,
-                    'location_lat' => $ad->location_lat,
-                    'location_lng' => $ad->location_lng,
-                    'location_address' => $ad->location_address,
-                    'created_at' => optional($ad->created_at)?->toDateTimeString(),
-                    'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
-                ];
-            })
-            ->toArray();
+    $query = Advertisement::hydrate($rows);
+ 
 
-        $filters = $this->parseAdvertisementFilters($request);
-        $isAdmin = (bool) $request->session()->get('is_admin', false);
-
-        return Inertia::render('Advertisement', [
-            'createdAds' => $createdAds,
-            'filters' => $filters,
-            'isAdmin' => $isAdmin,
-        ]);
-    }
-
+    $createdAds = $query->map(function ($ad) {
+        return [
+            'id' => $ad->id,
+            'title' => $ad->title,
+            'description' => $ad->description,
+            'hours' => $ad->hours,
+            'type' => $ad->type,
+            'mode' => $ad->mode,
+            'status' => $ad->status,
+            'author' => $ad->author,
+            'user_id' => $ad->user_id,
+            'imageUrls' => $ad->image_urls ?? [],
+            'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+            'location_id' => $ad->location_id,
+            'location_lat' => $ad->location_lat,
+            'location_lng' => $ad->location_lng,
+            'location_address' => $ad->location_address,
+            'created_at' => optional($ad->created_at)?->toDateTimeString(),
+            'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+        ];
+    })->toArray();
+ 
+    return Inertia::render('Advertisement', [
+        'createdAds' => $createdAds,
+        'filters' => $filters,
+        'isAdmin' => $isAdmin,
+    ]);
+}
     /**
      * @summary Sanitiza filtros de publicaciones desde la URL.
      * @description Evita valores inválidos en filtros (type/sort/distance).
@@ -357,11 +377,10 @@ class TestControllerMarcelo extends Controller
         $type = (string) $request->query('type', 'all');
         $sort = (string) $request->query('sort', 'newest');
         $distance = (string) $request->query('distance', 'Cualquiera');
-
+ 
         if (!in_array($type, ['all', 'Servicio', 'Producto'], true)) $type = 'all';
         if (!in_array($sort, ['newest', 'oldest'], true)) $sort = 'newest';
-        if (!in_array($distance, ['Cualquiera', '1', '5', '10', '20', '30', '50'], true)) $distance = 'Cualquiera';
-
+        if (!in_array($distance, ['Cualquiera', '0', '1', '5', '10', '20', '30', '50'], true)) $distance = 'Cualquiera';
         return [
             'q' => $q,
             'type' => $type,
@@ -369,7 +388,7 @@ class TestControllerMarcelo extends Controller
             'distance' => $distance,
         ];
     }
-
+ 
     /*
      |--------------------------------------------------------------------------
      | MIS PUBLICACIONES (LISTADO)
@@ -378,7 +397,7 @@ class TestControllerMarcelo extends Controller
      | - Fuente: tabla `advertisements` mediante modelo Advertisement
      | - El filtrado por dueño lo realiza el frontend usando user_id/author.
      */
-
+ 
     /**
      * @summary Listado de "Mis publicaciones".
      * @description Renderiza la vista que muestra publicaciones obtenidas desde base de datos.
@@ -415,12 +434,12 @@ class TestControllerMarcelo extends Controller
                 ];
             })
             ->toArray();
-
+ 
         return Inertia::render('MyAdvertisements', [
             'createdAds' => $createdAds,
         ]);
     }
-
+ 
     /*
      |--------------------------------------------------------------------------
      | PUBLICACIÓN (DETALLE)
@@ -428,7 +447,7 @@ class TestControllerMarcelo extends Controller
      | - Vista: resources/js/Pages/AdvertisementShow.tsx
      | - Fuente: tabla `advertisements` mediante modelo Advertisement
      */
-
+ 
     /**
      * @summary Detalle de publicación.
      * @description Busca una publicación por id en la tabla `advertisements` y la envía al frontend.
@@ -442,7 +461,7 @@ class TestControllerMarcelo extends Controller
     public function advertisementShow(Request $request, int $id): Response
     {
         $ad = Advertisement::query()->find($id);
-
+ 
         $item = $ad ? [
             'id' => $ad->id,
             'title' => $ad->title,
@@ -462,12 +481,12 @@ class TestControllerMarcelo extends Controller
             'created_at' => optional($ad->created_at)?->toDateTimeString(),
             'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
         ] : null;
-
+ 
         return Inertia::render('AdvertisementShow', [
             'item' => $item,
         ]);
     }
-
+ 
     /*
      |--------------------------------------------------------------------------
      | PUBLICACIÓN (EDITAR FORM)
@@ -476,7 +495,7 @@ class TestControllerMarcelo extends Controller
      | - Fuente: tabla `advertisements` mediante modelo Advertisement
      | - Guardado real: PATCH /Advertisement/{id} en routes/web.php
      */
-
+ 
     /**
      * @summary Formulario de edición de publicación.
      * @description Carga una publicación por id desde base de datos para editarla en el frontend.
@@ -490,7 +509,7 @@ class TestControllerMarcelo extends Controller
     public function advertisementEdit(Request $request, int $id): Response
     {
         $ad = Advertisement::query()->find($id);
-
+ 
         $item = $ad ? [
             'id' => $ad->id,
             'title' => $ad->title,
@@ -510,12 +529,12 @@ class TestControllerMarcelo extends Controller
             'created_at' => optional($ad->created_at)?->toDateTimeString(),
             'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
         ] : null;
-
+ 
         return Inertia::render('EditarPublicacion', [
             'item' => $item,
         ]);
     }
-
+ 
     /*
      |--------------------------------------------------------------------------
      | CREAR PUBLICACIÓN (FORM)
@@ -524,7 +543,7 @@ class TestControllerMarcelo extends Controller
      | - Si is_admin=true -> envía users (id,name) para asignar autor.
      | - Si is_admin=false -> envía users=[].
      */
-
+ 
     /**
      * @summary Formulario de creación de publicación.
      * @description Si el usuario tiene is_admin en sesión, carga la lista de users para asignación.
@@ -537,9 +556,9 @@ class TestControllerMarcelo extends Controller
     public function advertisementCreate(Request $request): Response
     {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
-
+ 
         $users = [];
-
+ 
         if ($isAdmin) {
             $users = User::query()
                 ->select('id', 'name')
@@ -547,12 +566,12 @@ class TestControllerMarcelo extends Controller
                 ->get()
                 ->toArray();
         }
-
+ 
         return Inertia::render('CreateAdvertisement', [
             'users' => $users,
         ]);
     }
-
+ 
     /*
      |--------------------------------------------------------------------------
      | DASHBOARD
@@ -561,7 +580,7 @@ class TestControllerMarcelo extends Controller
      | - Fuente: tabla `advertisements` mediante modelo Advertisement
      | - Construye estadísticas por estado para "mis publicaciones" y total global.
      */
-
+ 
     /**
      * @summary Vista de Dashboard.
      * @description Calcula estadísticas del usuario usando publicaciones obtenidas desde base de datos.
@@ -594,16 +613,16 @@ class TestControllerMarcelo extends Controller
                 'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
             ];
         })->toArray();
-
+ 
         $stats = $this->buildDashboardStats($request, $createdAds);
-
+ 
         return Inertia::render('Dashboard', [
             'stats' => $stats,
             'unreadMessageCount' => $stats['badges']['unreadMessages'] ?? 0,
             'unreadNotificationCount' => $stats['badges']['unreadNotifications'] ?? 0,
         ]);
     }
-
+ 
     /**
      * @summary Construye estadísticas del Dashboard.
      * @description
@@ -622,33 +641,33 @@ class TestControllerMarcelo extends Controller
     private function buildDashboardStats(Request $request, array $createdAds): array
     {
         $user = $request->user();
-
+ 
         $normalizeStatus = function ($x) {
             $s = $x['status'] ?? 'active';
             return in_array($s, ['active', 'paused', 'finished'], true) ? $s : 'active';
         };
-
+ 
         $ads = array_map(function ($x) use ($normalizeStatus) {
             $x['status'] = $normalizeStatus($x);
             $x['author'] = $x['author'] ?? null;
             $x['user_id'] = $x['user_id'] ?? null;
             return $x;
         }, $createdAds);
-
+ 
         $myAds = array_values(array_filter($ads, function ($x) use ($user) {
             if (!$user) return false;
-
+ 
             if (isset($x['user_id']) && $x['user_id'] !== null) {
                 return (int)$x['user_id'] === (int)$user->id;
             }
-
+ 
             if (isset($x['author']) && $x['author'] !== null) {
                 return (string)$x['author'] === (string)$user->name;
             }
-
+ 
             return false;
         }));
-
+ 
         $countByStatus = function (array $list, string $status) {
             $c = 0;
             foreach ($list as $x) {
@@ -656,14 +675,14 @@ class TestControllerMarcelo extends Controller
             }
             return $c;
         };
-
+ 
         $myTotal = count($myAds);
         $myAvailable = $countByStatus($myAds, 'active');
         $mySoldOut = $countByStatus($myAds, 'finished');
         $myDisabled = $countByStatus($myAds, 'paused');
-
+ 
         $adsActiveTotal = $countByStatus($ads, 'active');
-
+ 
         return [
             'me' => [
                 'name' => $user?->name,

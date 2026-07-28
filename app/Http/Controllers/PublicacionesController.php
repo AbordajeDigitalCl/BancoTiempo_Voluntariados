@@ -28,9 +28,12 @@ class PublicacionesController extends Controller{
             $type = 1;
         if($user != null && ($user == $request->user()->id || Gate::allows('admin-action', $request->user())))
             $onlyVisible = false;
-
-        $str = $request->query("str","");
-        return response()->json($this->findAllPublicacion($orderBy, $direction, $type, $str, $user, $onlyVisible), 200);
+    /**
+     * agregue distancia 
+     */
+       $str = $request->query("str","");
+        $distancia = $request->query("distancia", null);
+return response()->json($this->findAllPublicacion($orderBy, $direction, $type, $str, $user, $onlyVisible, $distancia), 200);
     }
 
     public function getPublicacionImagen($publicacionId){
@@ -192,5 +195,7 @@ class PublicacionesController extends Controller{
         }
         return response()->json($publicacion, 200);
     }
+
+
 
 }

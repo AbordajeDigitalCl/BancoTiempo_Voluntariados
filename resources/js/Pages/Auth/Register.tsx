@@ -98,8 +98,13 @@ export default function Register() {
                     </div>
                 </div>
 
+<p className="text-xs text-gray-500">
+    Los campos marcados con <span className="text-red-500">*</span> son obligatorios.
+</p>
+
+
                 <div>
-                    <InputLabel htmlFor="name" value="Nombre" />
+                    <InputLabel htmlFor="name" value="* Nombre" />
                     <TextInput
                         id="name"
                         name="name"
@@ -114,7 +119,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="Apellido_Paterno" value="Apellido Paterno" />
+                    <InputLabel htmlFor="Apellido_Paterno" value="* Apellido Paterno" />
                     <TextInput
                         id="Apellido_Paterno"
                         type="text"
@@ -129,7 +134,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="Apellido_Materno" value="Apellido Materno" />
+                    <InputLabel htmlFor="Apellido_Materno" value="* Apellido Materno" />
                     <TextInput
                         id="Apellido_Materno"
                         type="text"
@@ -144,7 +149,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="Age" value="Fecha de nacimiento" />
+                    <InputLabel htmlFor="Age" value="* Fecha de nacimiento" />
                     <TextInput
                         id="Age"
                         type="date"
@@ -158,7 +163,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="Telefono" value="Teléfono" />
+                    <InputLabel htmlFor="Telefono" value="* Teléfono" />
                     <TextInput
                         id="Telefono"
                         type="tel"
@@ -173,7 +178,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="Direccion" value="Dirección" />
+                    <InputLabel htmlFor="Direccion" value="* Dirección" />
                     <TextInput
                         id="Direccion"
                         type="text"
@@ -188,7 +193,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="Ciudad" value="Ciudad" />
+                    <InputLabel htmlFor="Ciudad" value="* Ciudad" />
                     <TextInput
                         id="Ciudad"
                         type="text"
@@ -203,7 +208,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="email" value="Correo electrónico" />
+                    <InputLabel htmlFor="email" value="* Correo electrónico" />
                     <TextInput
                         id="email"
                         type="email"
@@ -218,7 +223,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="password" value="Contraseña" />
+                    <InputLabel htmlFor="password" value="* Contraseña" />
                     <TextInput
                         id="password"
                         type="password"
@@ -233,7 +238,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                    <InputLabel htmlFor="password_confirmation" value="Confirmar contraseña" />
+                    <InputLabel htmlFor="password_confirmation" value="* Confirmar contraseña" />
                     <TextInput
                         id="password_confirmation"
                         type="password"

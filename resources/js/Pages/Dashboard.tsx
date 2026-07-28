@@ -101,29 +101,14 @@ export default function Dashboard({ auth, stats }: { auth: any; stats?: Dashboar
 
   const unreadMessages = Number(badges.unreadMessages ?? 0);
 
-  return (
-    <AuthenticatedLayout user={auth.user}>
-      <Head title="Banco de tiempo" />
+  console.log("TEST");
+return (
+  <AuthenticatedLayout user={auth.user}>
+    <Head title="Banco de tiempo" />
 
-      <div className="w-full">
-        <div className="w-full bg-gradient-to-b from-blue-600 to-blue-700">
-          <div className="mx-auto max-w-6xl px-4 py-12">
-            <div className="max-w-3xl">
-              <p className="text-xs font-semibold tracking-wider text-white/80 uppercase">
-                Plataforma de intercambio por horas
-              </p>
-
-              <h1 className="mt-3 text-4xl font-bold text-white">Banco de tiempo</h1>
-
-              <p className="mt-4 text-base text-white/90 leading-relaxed">
-                Conecta ofertas y demandas de servicios/productos usando horas como moneda de intercambio.
-              </p>
-            </div>
-          </div>
-        </div>
-
+    <div className="w-full">
         <div className="mx-auto max-w-6xl px-4 py-10">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <Card title="Publicaciones" subtitle="Explora ofertas y demandas disponibles." icon={<IconGrid />}>
               <div className="space-y-2">
                 <StatPill label="Publicaciones activas" value={adsActiveTotal} />
@@ -180,13 +165,6 @@ export default function Dashboard({ auth, stats }: { auth: any; stats?: Dashboar
                   Crear nueva
                 </Link>
               </div>
-            </Card>
-
-            <Card title="Nosotros" subtitle="Información institucional (pendiente)." icon={<IconInfo />}>
-              <div className="rounded-lg border border-dashed border-gray-300 p-5 text-sm text-gray-500">
-                (Sección “Nosotros” pendiente de contenido)
-              </div>
-
               <div className="mt-6 grid grid-cols-2 gap-2">
                 <Link
                   href={route('verperfil')}

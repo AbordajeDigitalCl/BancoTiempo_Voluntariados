@@ -14,8 +14,7 @@ const ITEMS_PER_PAGE = 5;
 export default function SeleccionarPublicacionEditarCRIS({ auth }: PageProps) {
     const [filtroTipo, setFiltroTipo] = useState<'Servicio' | 'Producto' | null>(null);
     const [filtroOfertaDemanda, setFiltroOfertaDemanda] = useState<'Oferta' | 'Demanda' | null>(null);
-    const [filtroOrden, setFiltroOrden] = useState<'precio' | 'popular' | 'reciente' | null>(null);
-    const [serviciosPaginados, setServiciosPaginados] = useState(mockServiciosData.slice(0, ITEMS_PER_PAGE));
+const [filtroOrden, setFiltroOrden] = useState<'popular' | 'reciente' | 'precioMayor' | 'precioMenor' | null>(null);    const [serviciosPaginados, setServiciosPaginados] = useState(mockServiciosData.slice(0, ITEMS_PER_PAGE));
 
     const serviciosFiltrados = mockServiciosData.filter(s => {
         const cumpleTipo = !filtroTipo || s.tipo === filtroTipo;
@@ -24,14 +23,15 @@ export default function SeleccionarPublicacionEditarCRIS({ auth }: PageProps) {
     });
 
     const serviciosOrdenados = [...serviciosFiltrados].sort((a, b) => {
-        if (filtroOrden === 'precio') {
-            const costA = parseInt(a.costo.split(' ')[0]);
-            const costB = parseInt(b.costo.split(' ')[0]);
-            return costA - costB;
-        } else if (filtroOrden === 'reciente') {
-            return new Date(b.fecha).getTime() - new Date(a.fecha).getTime();
-        }
-        return 0;
+       if (filtroOrden === 'precioMayor') {
+    const costA = parseInt(a.costo.split(' ')[0]);
+    const costB = parseInt(b.costo.split(' ')[0]);
+    return costA - costB;
+} else if (filtroOrden === 'precioMenor') {
+    const costA = parseInt(a.costo.split(' ')[0]);
+    const costB = parseInt(b.costo.split(' ')[0]);
+    return costB - costA;
+}
     });
 
     const { displayedItems, isLoading, hasMore, observerTarget, resetPagination } = useInfiniteScroll({

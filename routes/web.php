@@ -203,13 +203,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'mode' => $data['mode'],
             'status' => 'active',
             'author' => $targetAuthor,
-            'user_id' => $targetUserId,
+// La tabla publicacions usa id_usuario en lugar de user_id, por eso se camabio.
+            'id_usuario' => $targetUserId,
+// publicacions requiere Nombre y Descripcion como campos obligatorios
+// Se mapean desde title y description del formulario
+            'Nombre' => $data['title'],
+            'Descripcion' => $data['description'],
+// publicacions requiere Tipo_Publicacion y Tipo_Beneficio como campos obligatorios
+// Oferta=0, Demanda=1 / Servicio=0, Producto=1
+            'Tipo_Publicacion' => $data['mode'] === 'Oferta' ? 0 : 1,
+            'Tipo_Beneficio' => $data['type'] === 'Servicio' ? 0 : 1,
             'image_urls' => $imgs,
             'location_id' => $data['location_id'] ?? null,
             'location_lat' => $data['location_lat'] ?? null,
             'location_lng' => $data['location_lng'] ?? null,
             'location_address' => $data['location_address'] ?? null,
-        ]);
+]);
 
         return redirect()->route('myadvertisements');
     })->name('advertisement.store');

@@ -59,6 +59,20 @@ class UserSeeder extends Seeder
             ]
         );
 
+User::updateOrCreate(
+            ['email' => 'gloria@test.com'],
+            [
+                'name' => 'Gloria',
+                'Apellido_Paterno' => 'Paz',
+                'Apellido_Materno' => 'Gutierrez',
+                'Age' => '1997-05-10',
+                'Telefono' => '9129876',
+                'Direccion' => 'Quinta Normal',
+                'Ciudad' => 'Santiago',
+                'password' => Hash::make('1234'),
+            ]
+        );
+
         User::updateOrCreate(
             ['email' => 'mariadmin@test.com'],
             [

@@ -719,6 +719,7 @@ class TestControllerCris extends Controller
             'Tipo_Mensaje' => 0, // Solo mensajes de texto
             'created_at' => now(),
             'updated_at' => now(),
+            'read_at'=>null,
         ]);
 
         // Obtener fecha y hora actuales

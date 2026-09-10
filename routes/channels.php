@@ -26,4 +26,4 @@ Broadcast::channel('App.Models.Conversation.{conversationId}', function($user, $
         ->orWhere('user_two_id', $user->id);
     })
     ->exists();
-})
+});

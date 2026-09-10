@@ -65,6 +65,9 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     : conv
             )
         );
+
+        //Persistencia en BD (read_at = now)
+        void marcarConversacionComoLeida(conversacionId);
     };
 
     /**

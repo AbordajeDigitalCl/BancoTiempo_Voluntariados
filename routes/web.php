@@ -347,6 +347,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/chat/enviar-mensaje-imagen', [\App\Http\Controllers\TestControllerCris::class, 'enviarMensajeConImagen'])
         ->middleware(['auth', 'verified']);
 
+    Route::post('/chat/marcar-leidos', [\App\Http\Controllers\TestControllerCris::class, 'marcarLeidos'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.marcar-leidos')
+
     Route::get('/verperfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'verPerfil'])
         ->middleware(['auth', 'verified'])->name('verperfil');
 

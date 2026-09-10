@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { Conversacion } from '@/mockData/datosMockMensajes';
 import type { ConversacionDetalle } from '@/mockData/datosMockChatMensajes';
+import axios from 'axios';
 
 const CONVERSACIONES_PER_PAGE = 10;
 
@@ -37,6 +38,16 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
             ]);
         },
     });
+
+    const marcarConversacionComoLeida = async (conversacionId: number) => {
+        try {
+            await axios.post('/chat/marcar-leidos', {
+                conversacion_id: conversacionId,
+            });
+        } catch (error) {
+            console.error('Error al marcar mensajes como leidos', error);
+        }
+    };
 
     useEffect(() => {
         const conversacionesActualizadas = conversacionesConEstado.map(conv => {

@@ -822,6 +822,7 @@ class TestControllerCris extends Controller
             'Tipo_Mensaje' => 1, // 1 = imagen
             'created_at' => now(),
             'updated_at' => now(),
+            'read_at'=> null,
         ]);
 
         
@@ -1259,6 +1260,61 @@ class TestControllerCris extends Controller
         }
         
         return response()->file($path);
+    }
+
+    //metodo marcar leidos
+    public function marcarLeidos(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'conversacion_id'=>['required', 'integer', 'exists:conversations,id'],
+        ]);
+        
+        $conversacionId = (int) $validated['conversation_id'];
+
+        $conversacion = \DB::table('conversations')
+        ->where('id', $conversacionId)
+        ->first();
+
+        if(!$conversacion) {
+            abort(404, 'Converasacion no encontrada');
+        }
+
+        $esParticipante = 
+        ((int) $conversacion->user_one_id === (int) $user->id || 
+        (int) $conversacion->user_two_id === (int) $user->id);
+
+        if(!$esParticipante) {
+            abort(403, 'No tienes acceso a esta conversacion');
+        }
+
+        //Identificar al otro participante
+        $otroUsuarioId = ((int) $conversacion->user_one_id === (int) $user->id)
+        ? (int) $conversacion->user_two_id : (int) $conversacion->user_one_id;
+
+        $updatedCount = \DB::table('mensajes')
+        ->where('id_usuario_origen', $otroUsuarioId)
+        ->where('id_usuario_destino', (int) $user->id)
+        ->whereNull('read_at')
+        ->update([
+            'read_at'=>now(),
+            'updated_at'=> now(),
+        ]);
+
+
+        //conteo global de no leidos (badge total)
+        $unreadTotal = \DB::table('mensajes')
+        ->where('id_usuario_destino', (int) $user->id)
+        ->whereNull('read_at')
+        ->count();
+
+        return response()->json([
+            'success' => true,
+            'conversation_id' => $conversacionId,
+            'updated_count' => $updatedCount,
+            'unread_total' => $unreadTotal,
+        ]);
     }
 
     // Método para eliminar una imagen de una publicación

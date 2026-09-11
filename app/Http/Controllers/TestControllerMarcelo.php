@@ -703,7 +703,7 @@ public function advertisementIndex(Request $request): Response
                 'adsActiveTotal' => $adsActiveTotal,
             ],
             'badges' => [
-                'unreadMessages' => 0,
+                'unreadMessages' => $unreadMessageCount,
                 'unreadNotifications' => 0,
             ],
         ];

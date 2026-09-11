@@ -626,7 +626,9 @@ class TestControllerCris extends Controller
                 ->where(function ($query) use ($conv) {
                     $query->where('id_usuario_origen', $conv->user_one_id)
                         ->orWhere('id_usuario_origen', $conv->user_two_id);
-                })->count();
+                })
+                ->whereNull('read_at')
+                ->count();
 
             $fechaUltimo = $ultimoMensaje ? \Carbon\Carbon::parse($ultimoMensaje->created_at)->format('d/m/Y') : '';
 

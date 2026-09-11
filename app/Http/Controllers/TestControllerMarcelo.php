@@ -682,6 +682,14 @@ public function advertisementIndex(Request $request): Response
         $myDisabled = $countByStatus($myAds, 'paused');
  
         $adsActiveTotal = $countByStatus($ads, 'active');
+
+        $unreadMessageCount = 0;
+        if($user) {
+            $unreadMessageCount = \DB::table('mensajes')
+            ->where('id_usuario_destino', (int) $user->id)
+            ->whereNull('read_at')
+            ->count();
+        }
  
         return [
             'me' => [

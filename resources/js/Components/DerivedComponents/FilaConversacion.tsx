@@ -43,6 +43,11 @@ export default function FilaConversacion({
                     <span className="text-gray-500 text-xs flex-shrink-0">
                         {conversacion.fechaUltimoMensaje}
                     </span>
+                    {conversacion.mensajesNoLeidos > 0 && (
+                        <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-semibold text-white">
+                            {conversacion.mensajesNoLeidos}
+                        </span>
+                    )}
                 </div>
 
                

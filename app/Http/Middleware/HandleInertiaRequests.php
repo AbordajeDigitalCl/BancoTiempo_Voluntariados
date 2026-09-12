@@ -56,6 +56,12 @@ class HandleInertiaRequests extends Middleware
             // });
 
             // $unreadMessageCount = $onlyMessages->whereNull('read_at')->count();
+        
+            $unreadMessageCount = \DB::table('mensajes')
+            ->where('id_usuario_destino', (int) $user->id)
+            ->whereNull('read_at')
+            ->count();
+        
         }
 
         return [

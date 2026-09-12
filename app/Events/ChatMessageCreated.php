@@ -6,7 +6,7 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illumiante\Queue\SerializesModels;
+use Illuminate\Queue\SerializesModels;
 
 class ChatMessageCreated implements ShouldBroadcastNow
 {
@@ -17,7 +17,7 @@ class ChatMessageCreated implements ShouldBroadcastNow
         public int $conversationId,
         public int $senderId,
         public int $receiverId,
-        public int $preview,
+        public string $preview,
         public bool $isImage,
         public string $createdAt
     ) {
@@ -28,7 +28,7 @@ class ChatMessageCreated implements ShouldBroadcastNow
     {
         return [
             //Canal personal del receptor
-            new PrivateChannel("App.Model.User.${$this->receiverId}"),
+            new PrivateChannel("App.Model.User.{$this->receiverId}"),
 
             //Canal de conversación
             new PrivateChannel("App.Model.Conversation.{$this->conversationId}")
@@ -44,7 +44,7 @@ class ChatMessageCreated implements ShouldBroadcastNow
     {
         return [
             'message_id'=> $this->messageId,
-            'conversation_id'=> $this->conversationid,
+            'conversation_id'=> $this->conversationId,
             'sender_id'=> $this->senderId,
             'receiver_id'=> $this->receiverId,
             'preview'=> $this->preview,

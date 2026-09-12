@@ -1,4 +1,4 @@
-import { PropsWithChildren, ReactNode, useState, useCallback } from 'react';
+import { PropsWithChildren, ReactNode, useState, useCallback, useEffect } from 'react';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
@@ -12,10 +12,45 @@ export default function Authenticated({
   const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
   const page: any = usePage();
-  const unreadMessageCount: number = Number(page?.props?.unreadMessageCount ?? 0);
+  //const unreadMessageCount: number = Number(page?.props?.unreadMessageCount ?? 0);
+  
+  //Para mostrar mensajes no leídos en tiempo real
+  const initialUnread = Number(page?.props?.unreadMesageCount ?? 0);
+  const [liveUnread, setLiveUnread] = useState<number>(initialUnread);
+
   const isAdmin: boolean = page?.props?.isAdmin ?? false;
 
   const totalBadge = unreadMessageCount;
+
+  type ChatMessageEvent = {
+    message_id: number;
+    conversation_id:number;
+    sender_id:number;
+    receiver_id:number;
+    prewview:string;
+    is_image:boolean;
+    created_at:string;
+  };
+
+  useEffect(() => {
+    setLiveUnread(Number(page?.props?.unreadMessageCount ?? 0));
+  }, [page?.props.unreadMessageCount]);
+
+  useEffect(() => {
+    if(!user?.id || !window.Echo) return;
+
+    const channelName = `users.${user.id}`;
+
+    window.Echo.private(channelName).listen('.chat.message.created', (e:ChatMessageEvent) => {
+      if(Number(e.sender_id) !== Number(user.id)) {
+        setLiveUnread((prev) => prev + 1);
+      }
+    });
+
+    return () => {
+      window.Echo.leave(channelName);
+    };
+  }, [user?.id]);
 
   const handleBackClick = useCallback(() => {
     window.history.back();
@@ -83,7 +118,7 @@ export default function Authenticated({
 
                 <NavLink href={hrefChat} active={hasRoute('chat') ? route().current('chat') : false}>
                   Mensajes
-                  <CountBadge value={unreadMessageCount} />
+                  <CountBadge value={liveUnread} />
                 </NavLink>
 
                 <NavLink
@@ -138,7 +173,7 @@ export default function Authenticated({
                       <Dropdown.Link href={hrefChat}>
                         <span className="flex items-center justify-between">
                           <span>Mensajes</span>
-                          <CountBadge value={unreadMessageCount} />
+                          <CountBadge value={liveUnread} />
                         </span>
                       </Dropdown.Link>
 
@@ -209,7 +244,7 @@ export default function Authenticated({
             <ResponsiveNavLink href={hrefChat}>
               <span className="flex items-center justify-between w-full">
                 <span>Mensajes</span>
-                <CountBadge value={unreadMessageCount} />
+                <CountBadge value={liveUnread} />
               </span>
             </ResponsiveNavLink>
             <ResponsiveNavLink href={hrefMyAds}>Mis publicaciones</ResponsiveNavLink>

@@ -349,7 +349,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/chat/marcar-leidos', [\App\Http\Controllers\TestControllerCris::class, 'marcarLeidos'])
     ->middleware(['auth', 'verified'])
-    ->name('chat.marcar-leidos')
+    ->name('chat.marcar-leidos');
 
     Route::get('/verperfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'verPerfil'])
         ->middleware(['auth', 'verified'])->name('verperfil');

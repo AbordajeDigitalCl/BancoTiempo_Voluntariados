@@ -1273,7 +1273,7 @@ class TestControllerCris extends Controller
             'conversacion_id'=>['required', 'integer', 'exists:conversations,id'],
         ]);
         
-        $conversacionId = (int) $validated['conversation_id'];
+        $conversacionId = (int) $validated['conversacion_id'];
 
         $conversacion = \DB::table('conversations')
         ->where('id', $conversacionId)

@@ -123,7 +123,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
     useEffect(() => {
         if(!auth?.user?.id || !window.Echo) return;
 
-        const channelName = `users.${auth.user.id}`;
+        const channelName = `App.Models.User.${auth.user.id}`;
 
         window.Echo.private(channelName).listen('.chat.message.created', (e: ChatMessageEvent) => {
             const convId = Number(e.conversation_id);

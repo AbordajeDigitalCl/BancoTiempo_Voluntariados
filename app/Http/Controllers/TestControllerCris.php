@@ -724,6 +724,17 @@ class TestControllerCris extends Controller
             'read_at'=>null,
         ]);
 
+        //evento de notificacion de mensajes no leídos
+        event(new \App\Events\ChatMessageCreated(
+            messageId: (int) $mensajeId,
+            conversationId: (int) $conversacion->id,
+            senderId: (int) $user->id,
+            receiverId: (int) $otroUsuarioId,
+            preview: (string) $validated['contenido'],
+            isImage: false,
+            createdAt: now()->toISOString(),
+        ));
+
         // Obtener fecha y hora actuales
         $ahora = now();
         $fecha = $ahora->format('d/m/Y');
@@ -826,6 +837,17 @@ class TestControllerCris extends Controller
             'updated_at' => now(),
             'read_at'=> null,
         ]);
+
+        //evento de notificacion de mensajes no leídos
+        event(new \App\Events\ChatMessageCreated(
+            messageId: (int) $mensajeId,
+            conversationId: (int) $conversacion->id,
+            senderId: (int) $user->id,
+            receiverId: (int) $otroUsuarioId,
+            preview: (string) $validated['contenido'],
+            isImage: false,
+            createdAt: now()->toISOString(),
+        ));
 
         
         $ahora = now();

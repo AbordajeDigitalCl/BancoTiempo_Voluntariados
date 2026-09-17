@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { Conversacion } from '@/mockData/datosMockMensajes';
 import type { ConversacionDetalle } from '@/mockData/datosMockChatMensajes';
-import router from '@inertiajs/react';
+import {router} from '@inertiajs/react';
 import axios from 'axios';
 
 const CONVERSACIONES_PER_PAGE = 10;
@@ -117,7 +117,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         const dd = String(d.getDate()).padStart(2, '0');
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const yyy = d.getFullYear();
-        return ``${dd}/${mm}/${yyyy};
+        return `${dd}/${mm}/${yyyy}`;
     };
 
     useEffect(() => {

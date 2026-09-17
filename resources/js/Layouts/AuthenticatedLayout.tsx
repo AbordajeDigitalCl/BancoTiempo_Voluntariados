@@ -12,10 +12,10 @@ export default function Authenticated({
   const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
   const page: any = usePage();
-  //const unreadMessageCount: number = Number(page?.props?.unreadMessageCount ?? 0);
+  const unreadMessageCount: number = Number(page?.props?.unreadMessageCount ?? 0);
   
   //Para mostrar mensajes no leídos en tiempo real
-  const initialUnread = Number(page?.props?.unreadMesageCount ?? 0);
+  const initialUnread = Number(page?.props?.unreadMessageCount ?? 0);
   const [liveUnread, setLiveUnread] = useState<number>(initialUnread);
 
   const isAdmin: boolean = page?.props?.isAdmin ?? false;

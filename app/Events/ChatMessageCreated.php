@@ -28,10 +28,10 @@ class ChatMessageCreated implements ShouldBroadcastNow
     {
         return [
             //Canal personal del receptor
-            new PrivateChannel("App.Model.User.{$this->receiverId}"),
+            new PrivateChannel("users.{$this->receiverId}"),
 
             //Canal de conversación
-            new PrivateChannel("App.Model.Conversation.{$this->conversationId}")
+            new PrivateChannel("conversation.{$this->conversationId}")
         ];
     }
 

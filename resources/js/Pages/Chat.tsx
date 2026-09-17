@@ -27,6 +27,8 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         (m) => m.conversacionId === conversacionSeleccionada
     )?.mensajes || [];
 
+
+
     const { isLoading, hasMore, observerTarget, resetPagination } = useInfiniteScroll({
         itemsPerPage: CONVERSACIONES_PER_PAGE,
         totalItems: conversacionesConEstado.length,
@@ -99,6 +101,58 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
     };
 
     const mostrarListaVacia = conversacionesPaginadas.length === 0;
+
+    type ChatMessageEvent = {
+        message_id: number;
+        conversation_id: number;
+        sender_id: number;
+        receiver_id: number;
+        preview: string;
+        is_image:boolean;
+        created_at: string;
+    };
+
+    const formatearFecha = (iso: string) => {
+        const d = new Date(iso);
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyy = d.getFullYear();
+        return ``${dd}/${mm}/${yyyy};
+    };
+
+    useEffect(() => {
+        if(!auth?.user?.id || !window.Echo) return;
+
+        const channelName = `users.${auth.user.id}`;
+
+        window.Echo.private(channelName).listen('.chat.message.created', (e: ChatMessageEvent) => {
+            const convId = Number(e.conversation_id);
+
+            setConversacionesConEstado((prev) =>
+                prev.map((conv) => {
+                    if(conv.id !== convId) return conv;
+
+                    const isActive = convId === conversacionSeleccionada;
+
+                    return {
+                        ...conv,
+                        ultimoMensaje: String(e.preview ?? ''),
+                        fechaUltimoMensaje: formatearFecha(e.created_at),
+                        esMensajeDelUsuarioPrincipal:false,
+                        mensajesNoLeidos: isActive ? 0 : (conv.mensajesNoLeidos ?? 0) + 1,
+                    };
+                })
+            );
+
+            if(convId === conversacionSeleccionada) {
+                void marcarConversacionComoLeida(convId);
+            }
+        });
+
+        return () => {
+            window.Echo.leave(channelName);
+        };
+    }, [auth?.user?.id, conversacionSeleccionada]);
 
     return (
         <AuthenticatedLayout user={auth.user}>

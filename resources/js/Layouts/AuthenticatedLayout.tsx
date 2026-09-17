@@ -39,7 +39,7 @@ export default function Authenticated({
   useEffect(() => {
     if(!user?.id || !window.Echo) return;
 
-    const channelName = `users.${user.id}`;
+    const channelName = `App.Models.User.${user.id}`;
 
     window.Echo.private(channelName).listen('.chat.message.created', (e:ChatMessageEvent) => {
       if(Number(e.sender_id) !== Number(user.id)) {

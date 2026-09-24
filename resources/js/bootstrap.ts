@@ -19,7 +19,7 @@ import Echo from 'laravel-echo';
 
 import Pusher from 'pusher-js';
 window.Pusher = Pusher;
-
+/*
 window.Echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_PUSHER_APP_KEY,
@@ -28,6 +28,22 @@ window.Echo = new Echo({
     wsPort: import.meta.env.VITE_PUSHER_PORT ?? 80,
     wssPort: import.meta.env.VITE_PUSHER_PORT ?? 443,
     forceTLS: (import.meta.env.VITE_PUSHER_SCHEME ?? 'https') === 'https',
+    enabledTransports: ['ws', 'wss'],
+});
+*/
+
+
+const reverbHost = import.meta.env.VITE_REVERB_HOST || window.location.hostname;
+const reverbPort = Number(import.meta.env.VITE_REVERB_PORT || 8080);
+const reverbScheme = import.meta.env.VITE_REVERB_SCHEME || 'http';
+
+window.Echo = new Echo({
+    broadcaster: 'reverb',
+    key: import.meta.env.VITE_REVERB_APP_KEY,
+    wsHost: reverbHost,
+    wsPort: Number(reverbPort ?? 80),
+    wssPort: Number(reverbPort ?? 443),
+    forceTLS: reverbScheme === 'https',
     enabledTransports: ['ws', 'wss'],
 });
 

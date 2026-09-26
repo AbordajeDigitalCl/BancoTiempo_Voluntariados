@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import FilaConversacion from '@/Components/DerivedComponents/FilaConversacion';
 import AreaChat from '@/Components/DerivedComponents/AreaChat';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { Conversacion } from '@/mockData/datosMockMensajes';
 import type { ConversacionDetalle, Mensaje} from '@/mockData/datosMockChatMensajes';
@@ -27,7 +27,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
 
     const conversacionActual = conversacionesConEstado.find((c) => c.id === conversacionSeleccionada);
 
-    //Se modificó para que lea el estado mensajcesPorConversacionState en lugar de mensajesPorConversacion
+    //Se modificó para que lea el estado mensajesPorConversacionState en lugar de mensajesPorConversacion
     const mensajesActuales = mensajesPorConversacionState.find(
         (m) => m.conversacionId === conversacionSeleccionada
     )?.mensajes || [];
@@ -107,9 +107,13 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
 
     const mostrarListaVacia = conversacionesPaginadas.length === 0;
 
+
+    const hydratedRef = useRef(false);
     //Para actualizar estado local de las conversaciones
     useEffect(()=> {
+        if(hydratedRef.current) return;
         setMensajesPorConversacionState(mensajesPorConversacion || []);
+        hydratedRef.current = true;
     }, [mensajesPorConversacion]);
 
     type ChatMessageEvent = {

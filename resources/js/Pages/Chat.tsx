@@ -5,7 +5,7 @@ import AreaChat from '@/Components/DerivedComponents/AreaChat';
 import { useState, useEffect } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { Conversacion } from '@/mockData/datosMockMensajes';
-import type { ConversacionDetalle } from '@/mockData/datosMockChatMensajes';
+import type { ConversacionDetalle, Mensaje} from '@/mockData/datosMockChatMensajes';
 import {router} from '@inertiajs/react';
 import axios from 'axios';
 
@@ -22,8 +22,13 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
     const [conversacionesConEstado, setConversacionesConEstado] = useState(conversacionesServer || []);
     const [conversacionesPaginadas, setConversacionesPaginadas] = useState((conversacionesServer || []).slice(0, CONVERSACIONES_PER_PAGE));
 
+    //estado local para mensajes en tiempo real
+    const [mensajesPorConversacionState, setMensajesPorConversacionState] = useState<ConversacionDetalle[]>(mensajesPorConversacion || []);
+
     const conversacionActual = conversacionesConEstado.find((c) => c.id === conversacionSeleccionada);
-    const mensajesActuales = mensajesPorConversacion.find(
+
+    //Se modificó para que lea el estado mensajcesPorConversacionState en lugar de mensajesPorConversacion
+    const mensajesActuales = mensajesPorConversacionState.find(
         (m) => m.conversacionId === conversacionSeleccionada
     )?.mensajes || [];
 
@@ -102,6 +107,11 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
 
     const mostrarListaVacia = conversacionesPaginadas.length === 0;
 
+    //Para actualizar estado local de las conversaciones
+    useEffect(()=> {
+        setMensajesPorConversacionState(mensajesPorConversacion || []);
+    }, [mensajesPorConversacion]);
+
     type ChatMessageEvent = {
         message_id: number;
         conversation_id: number;
@@ -117,7 +127,15 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         const dd = String(d.getDate()).padStart(2, '0');
         const mm = String(d.getMonth() + 1).padStart(2, '0');
         const yyyy = d.getFullYear();
-        return `${dd}/${mm}/${yyyy}`;
+
+        const hh = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+
+        return {
+            fecha: `${dd}/${mm}/${yyyy}`,
+            hora: `${hh}:${min}`
+        };
+        
     };
 
     useEffect(() => {
@@ -127,22 +145,66 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
 
         window.Echo.private(channelName).listen('.chat.message.created', (e: ChatMessageEvent) => {
             const convId = Number(e.conversation_id);
+            const isOwnMessage = Number(e.sender_id) === Number(auth.user.id);
+            const isActive = convId === conversacionSeleccionada;
 
             setConversacionesConEstado((prev) =>
                 prev.map((conv) => {
                     if(conv.id !== convId) return conv;
 
-                    const isActive = convId === conversacionSeleccionada;
+                    const fechaHoraUltimoMensaje = `${formatearFecha(e.created_at).fecha} ${formatearFecha(e.created_at).hora}`; 
 
                     return {
                         ...conv,
                         ultimoMensaje: String(e.preview ?? ''),
-                        fechaUltimoMensaje: formatearFecha(e.created_at),
+                        fechaUltimoMensaje: fechaHoraUltimoMensaje,
                         esMensajeDelUsuarioPrincipal:false,
                         mensajesNoLeidos: isActive ? 0 : (conv.mensajesNoLeidos ?? 0) + 1,
                     };
                 })
             );
+
+            setMensajesPorConversacionState((prev) => {
+
+                const {fecha, hora} = formatearFecha(e.created_at);
+                const nuevoMensaje: Mensaje = {
+                    id: Number(e.message_id),
+                    contenido: e.is_image ? '[Imagen compartida]' : String(e.preview ?? ''),
+                    esDelUsuarioPrincipal: isOwnMessage,
+                    fecha,
+                    hora,
+                    esImagen: Boolean(e.is_image),
+                };
+
+                const idx = prev.findIndex((c) => c.conversacionId === convId);
+
+                if(idx === -1) {
+                    return [...prev, {conversacionId: convId, mensajes: [nuevoMensaje]}];
+                }
+
+                const actual = prev[idx];
+
+
+                if(actual.mensajes.some((m) => Number(m.id) === Number(e.message_id))) {
+                    return prev;
+                }
+
+                const actualizado : ConversacionDetalle = {
+                    ...actual,
+                    mensajes: [...actual.mensajes, nuevoMensaje]
+                };
+
+                const copia = [...prev];
+                copia[idx] = actualizado;
+                return copia;
+
+                
+                if(!isOwnMessage && isActive) {
+                    void marcarConversacionComoLeida(convId);
+                }
+                
+                
+            });
 
             if(convId === conversacionSeleccionada) {
                 void marcarConversacionComoLeida(convId);

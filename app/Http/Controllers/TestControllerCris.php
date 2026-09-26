@@ -845,7 +845,7 @@ class TestControllerCris extends Controller
             senderId: (int) $user->id,
             receiverId: (int) $otroUsuarioId,
             preview: (string) $validated['contenido'],
-            isImage: false,
+            isImage: true,
             createdAt: now()->toISOString(),
         ));
 

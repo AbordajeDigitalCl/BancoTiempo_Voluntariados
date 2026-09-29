@@ -13,14 +13,16 @@ export default function Authenticated({
 
   const page: any = usePage();
   const unreadMessageCount: number = Number(page?.props?.unreadMessageCount ?? 0);
-  
+
+
+
   //Para mostrar mensajes no leídos en tiempo real
   const initialUnread = Number(page?.props?.unreadMessageCount ?? 0);
   const [liveUnread, setLiveUnread] = useState<number>(initialUnread);
 
   const isAdmin: boolean = page?.props?.isAdmin ?? false;
 
-  const totalBadge = unreadMessageCount;
+  const totalBadge = liveUnread;
 
   type ChatMessageEvent = {
     message_id: number;
@@ -51,6 +53,20 @@ export default function Authenticated({
       window.Echo.leave(channelName);
     };
   }, [user?.id]);
+
+  useEffect(() => {
+    const handleUnreadSync = (event: Event) => {
+      const custom = event as CustomEvent<{total?: number}>;
+      const total = Number(custom.detail?.total ?? 0);
+      setLiveUnread(total);
+    };
+
+    window.addEventListener('chat:unread-sync', handleUnreadSync as EventListener);
+
+    return () => {
+      window.removeEventListener('chat:unread-sync', handleUnreadSync as EventListener);
+    }
+  }, []);
 
   const handleBackClick = useCallback(() => {
     window.history.back();

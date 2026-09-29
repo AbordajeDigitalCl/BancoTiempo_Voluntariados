@@ -11,6 +11,75 @@ import axios from 'axios';
 
 const CONVERSACIONES_PER_PAGE = 10;
 
+
+/**
+ * Hacer merge de mensajes
+ */
+
+const mergeMensajesById = (a: Mensaje[], b: Mensaje[]) : Mensaje[] => {
+
+    const map = new Map<number, Mensaje>();
+    [...a, ...b].forEach((m) => {
+        map.set(Number(m.id), m);
+    });
+
+    return Array.from(map.values()).sort((x, y) => {
+        const ax = new Date(`${x.fecha.split('/').reverse().join('-')}T${x.hora}`).getTime();
+        const by = new Date(`${y.fecha.split('/').reverse().join('-')}T${y.hora}`).getTime();
+        return ax - by;
+    });
+}
+
+const upsertMensajeEnConversacion = (
+    prev: ConversacionDetalle[],
+    convId: number,
+     nuevoMensaje: Mensaje
+) : ConversacionDetalle[] => {
+        
+    const idx = prev.findIndex((c) => c.conversacionId === convId);
+
+    if(idx === -1) {
+        return [...prev, {conversacionId: convId, mensajes: [nuevoMensaje]}];
+    }
+
+    const actual = prev[idx];
+    const mensajesMerged = mergeMensajesById(actual.mensajes, [nuevoMensaje]);
+
+    const copia = [...prev];
+    copia[idx] = {...actual, mensajes: mensajesMerged};
+
+    console.log("ESTOS SON LOS MENSAJES QUE ENVIA EL UPSERT");
+    console.log(copia);
+    return copia;
+};
+
+
+type ChatMessageEvent = {
+    message_id: number;
+    conversation_id: number;
+    sender_id: number;
+    receiver_id: number;
+    preview: string;
+    is_image:boolean;
+    created_at: string;
+};
+
+const formatearFecha = (iso: string) => {
+    const d = new Date(iso);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+
+    return {
+        fecha: `${dd}/${mm}/${yyyy}`,
+        hora: `${hh}:${min}`
+    };
+        
+};
+
 interface ChatProps {
     auth: any;
     conversaciones: Conversacion[];
@@ -49,15 +118,24 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
 
     const marcarConversacionComoLeida = async (conversacionId: number) => {
         try {
-            await axios.post('/chat/marcar-leidos', {
+            const response = await axios.post('/chat/marcar-leidos', {
                 conversacion_id: conversacionId,
             });
 
+            const unreadTotal = Number(response?.data?.unread_total ?? 0);
+
+            window.dispatchEvent(
+                new CustomEvent('chat:unread-sync', {
+                    detail: {total: unreadTotal},
+                })
+            );
+            /*
             router.reload({
                 only: ['unreadMessageCount', 'nav'],
                 preserveScroll:true,
                 preserveState: true,
             });
+            */
         } catch (error) {
             console.error('Error al marcar mensajes como leidos', error);
         }
@@ -84,6 +162,9 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         void marcarConversacionComoLeida(conversacionId);
     };
 
+
+
+
     /**
      * Actualizar conversación cuando se envía un mensaje o imagen
      * Actualiza el último mensaje y fecha en la lista de conversaciones
@@ -103,6 +184,22 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     : conv
             )
         );
+        
+        setMensajesPorConversacionState((prev) => {
+
+            const msg: Mensaje = {
+                id: Date.now(),
+                contenido,
+                esDelUsuarioPrincipal: true,
+                fecha,
+                hora,
+            };
+
+            console.log("ESTE ES EL ESTADO DEL PREV EN EL PADRE ANTES DE HACER UPSERT");
+            console.log(prev);
+
+            return upsertMensajeEnConversacion(prev, conversacionSeleccionada, msg);
+        });
     };
 
     const mostrarListaVacia = conversacionesPaginadas.length === 0;
@@ -116,38 +213,19 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         hydratedRef.current = true;
     }, [mensajesPorConversacion]);
 
-    type ChatMessageEvent = {
-        message_id: number;
-        conversation_id: number;
-        sender_id: number;
-        receiver_id: number;
-        preview: string;
-        is_image:boolean;
-        created_at: string;
-    };
 
-    const formatearFecha = (iso: string) => {
-        const d = new Date(iso);
-        const dd = String(d.getDate()).padStart(2, '0');
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const yyyy = d.getFullYear();
 
-        const hh = String(d.getHours()).padStart(2, '0');
-        const min = String(d.getMinutes()).padStart(2, '0');
-
-        return {
-            fecha: `${dd}/${mm}/${yyyy}`,
-            hora: `${hh}:${min}`
-        };
-        
-    };
 
     useEffect(() => {
         if(!auth?.user?.id || !window.Echo) return;
 
         const channelName = `App.Models.User.${auth.user.id}`;
-
+        console.log(`CHANNEL NAME: App.Models.User.${auth.user.id}`);
         window.Echo.private(channelName).listen('.chat.message.created', (e: ChatMessageEvent) => {
+
+            console.log(`ESTE ES EL CANAL DE ${e.conversation_id}`);
+            console.log(`EL QUE ENVÍA ES: ${e.sender_id} y ${e.sender_id === auth.user.id ? "si" : "no"} es el usuario autenticado`);
+
             const convId = Number(e.conversation_id);
             const isOwnMessage = Number(e.sender_id) === Number(auth.user.id);
             const isActive = convId === conversacionSeleccionada;
@@ -180,33 +258,8 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     esImagen: Boolean(e.is_image),
                 };
 
-                const idx = prev.findIndex((c) => c.conversacionId === convId);
 
-                if(idx === -1) {
-                    return [...prev, {conversacionId: convId, mensajes: [nuevoMensaje]}];
-                }
-
-                const actual = prev[idx];
-
-
-                if(actual.mensajes.some((m) => Number(m.id) === Number(e.message_id))) {
-                    return prev;
-                }
-
-                const actualizado : ConversacionDetalle = {
-                    ...actual,
-                    mensajes: [...actual.mensajes, nuevoMensaje]
-                };
-
-                const copia = [...prev];
-                copia[idx] = actualizado;
-                return copia;
-
-                
-                if(!isOwnMessage && isActive) {
-                    void marcarConversacionComoLeida(convId);
-                }
-                
+                return upsertMensajeEnConversacion(prev, convId, nuevoMensaje);
                 
             });
 

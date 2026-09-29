@@ -36,6 +36,35 @@ const ordenarMensajesPorFecha = (mensajes: Mensaje[]): Mensaje[] => {
     });
 };
 
+const mergeMensajesById = (a: Mensaje[], b: Mensaje[]) : Mensaje[] => {
+
+    const map = new Map<number, Mensaje>();
+    [...a, ...b].forEach((m) => {
+        map.set(Number(m.id), m);
+    });
+
+    return(ordenarMensajesPorFecha(Array.from(map.values())));
+}
+
+const upsertMnesajeEnConversacion = (
+    prev: ConversacionDetalle[],
+    convId: number,
+    nuevoMensaje: Mensaje
+): ConversacionDetalle[] => {
+    const idx = prev.findIndex((c) => c.conversacionId === convId);
+
+    if(idx === -1) {
+        return [...prev, {conversacionId: convId, mensajes: [nuevoMensaje]}];
+    }
+
+    const actual = prev[idx];
+    const mensajesMerged = mergeMensajesById(actual.mensajes, [nuevoMensaje]);
+
+    const copia = [...prev];
+    copia[idx] = {...actual, mensajes: mensajesMerged};
+    return copia;
+}
+
 interface AreaChatProps {
     conversacion: Conversacion;
     mensajes: Mensaje[];
@@ -73,8 +102,9 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
         }
         
         // Ordenar todos los mensajes por fecha (más antiguos arriba, más recientes abajo)
-        const mensajesOrdenados = ordenarMensajesPorFecha(todosLosMensajes);
-        setMensajes(mensajesOrdenados);
+        //const mensajesOrdenados = ordenarMensajesPorFecha(todosLosMensajes);
+        //setMensajes(mensajesOrdenados);
+        setMensajes((prev) => mergeMensajesById(prev, todosLosMensajes));
     }, [conversacion.id, mensajesIniciales, userId]);
 
     useEffect(() => {
@@ -88,12 +118,12 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
         if (nuevoMensaje.trim() === '') return;
 
         const fechaHoy = new Date();
-        const fecha = `${String(fechaHoy.getDate()).padStart(2, '0')}/${String(
-            fechaHoy.getMonth() + 1
-        ).padStart(2, '0')}/${fechaHoy.getFullYear()}`;
-        const hora = `${String(fechaHoy.getHours()).padStart(2, '0')}:${String(
-            fechaHoy.getMinutes()
-        ).padStart(2, '0')}:${String(fechaHoy.getSeconds()).padStart(2, '0')}`;
+        const fecha = `${String(fechaHoy.getUTCDate()).padStart(2, '0')}/${String(
+            fechaHoy.getUTCMonth() + 1
+        ).padStart(2, '0')}/${fechaHoy.getUTCFullYear()}`;
+        const hora = `${String(fechaHoy.getUTCHours()).padStart(2, '0')}:${String(
+            fechaHoy.getUTCMinutes()
+        ).padStart(2, '0')}:${String(fechaHoy.getUTCSeconds()).padStart(2, '0')}`;
 
         // Crear ID temporal (negativo)
         const tempId = -(Math.random() * 10000);
@@ -109,6 +139,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
         // Guardar en estado local inmediatamente (optimistic update)
         const mensajesActualizados = ordenarMensajesPorFecha([...mensajes, nuevoMensajeObj]);
         setMensajes(mensajesActualizados);
+
         const contenidoOriginal = nuevoMensaje;
         setNuevoMensaje('');
         setEnviando(true);
@@ -127,6 +158,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
         })
             .then((response) => {
                 // Reemplazar el mensaje temporal con el mensaje real del servidor
+                /*
                 const mensajeReal = response.mensaje;
                 setMensajes((prevMensajes) => {
                     const updated = prevMensajes.map((msg) =>
@@ -136,6 +168,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
                 });
                 // Eliminar el mensaje temporal de localStorage ahora que está sincronizado
                 eliminarMensajemporal(conversacion.id, Math.abs(tempId));
+                */
                 setEnviando(false);
             })
             .catch((error) => {

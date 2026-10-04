@@ -48,8 +48,6 @@ const upsertMensajeEnConversacion = (
     const copia = [...prev];
     copia[idx] = {...actual, mensajes: mensajesMerged};
 
-    console.log("ESTOS SON LOS MENSAJES QUE ENVIA EL UPSERT");
-    console.log(copia);
     return copia;
 };
 
@@ -195,11 +193,14 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                 hora,
             };
 
-            console.log("ESTE ES EL ESTADO DEL PREV EN EL PADRE ANTES DE HACER UPSERT");
-            console.log(prev);
+            console.log("Esta es la lista de mensajes de la persona que envío el mensaje");
+            console.log(upsertMensajeEnConversacion(prev, conversacionSeleccionada, msg));
 
             return upsertMensajeEnConversacion(prev, conversacionSeleccionada, msg);
         });
+        
+        
+        
     };
 
     const mostrarListaVacia = conversacionesPaginadas.length === 0;
@@ -214,7 +215,45 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
     }, [mensajesPorConversacion]);
 
 
+    //Listener del historial del chat
+    useEffect(() => {
 
+        if(!auth.user.id || !window.Echo || !conversacionSeleccionada) return;
+
+        const channelName = `App.Models.Conversation.${conversacionSeleccionada}`;
+        window.Echo.private(channelName).listen('.chat.message.created', (e:ChatMessageEvent) => {
+            
+            setMensajesPorConversacionState((prev) => {
+                console.log(`ID del usuario: ${auth.user.id}`);
+                const convId = Number(e.conversation_id);
+                const isOwnMessage = Number(e.sender_id) === Number(auth.user.id);
+                const isActive = convId === conversacionSeleccionada;
+                const {fecha, hora} = formatearFecha(e.created_at);
+                const nuevoMensaje: Mensaje = {
+                    id: Number(e.message_id),
+                    contenido: e.is_image ? '[Imagen compartida]' : String(e.preview ?? ''),
+                    esDelUsuarioPrincipal: isOwnMessage,
+                    fecha,
+                    hora,
+                    esImagen: Boolean(e.is_image),
+                };
+
+                console.log("Esta es la lista de mensajes de la persona que envió el mensaje");
+                console.log(upsertMensajeEnConversacion(prev, convId, nuevoMensaje));
+                console.log("Este es el mensaje");
+                console.log(nuevoMensaje);
+                return upsertMensajeEnConversacion(prev, convId, nuevoMensaje);
+
+                
+            });
+       
+        });
+
+        return () => {
+            window.Echo.leave(channelName);
+        }; 
+
+    }, [auth?.user?.id, conversacionSeleccionada]);
 
     useEffect(() => {
         if(!auth?.user?.id || !window.Echo) return;
@@ -223,12 +262,13 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         console.log(`CHANNEL NAME: App.Models.User.${auth.user.id}`);
         window.Echo.private(channelName).listen('.chat.message.created', (e: ChatMessageEvent) => {
 
-            console.log(`ESTE ES EL CANAL DE ${e.conversation_id}`);
-            console.log(`EL QUE ENVÍA ES: ${e.sender_id} y ${e.sender_id === auth.user.id ? "si" : "no"} es el usuario autenticado`);
-
+            console.log("El listener está escuchando!");
             const convId = Number(e.conversation_id);
             const isOwnMessage = Number(e.sender_id) === Number(auth.user.id);
             const isActive = convId === conversacionSeleccionada;
+
+            console.log("Esta es la lista de mensajes de la persona que recibe");
+            console.log(mensajesPorConversacionState);
 
             setConversacionesConEstado((prev) =>
                 prev.map((conv) => {
@@ -245,7 +285,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     };
                 })
             );
-
+            /*
             setMensajesPorConversacionState((prev) => {
 
                 const {fecha, hora} = formatearFecha(e.created_at);
@@ -258,11 +298,13 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     esImagen: Boolean(e.is_image),
                 };
 
-
+                console.log("Esta es la lista de mensajes de la persona que recibió el mensaje");
+                console.log(upsertMensajeEnConversacion(prev, convId, nuevoMensaje));
                 return upsertMensajeEnConversacion(prev, convId, nuevoMensaje);
+
                 
             });
-
+            */
             if(convId === conversacionSeleccionada) {
                 void marcarConversacionComoLeida(convId);
             }
@@ -272,6 +314,8 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
             window.Echo.leave(channelName);
         };
     }, [auth?.user?.id, conversacionSeleccionada]);
+
+
 
     return (
         <AuthenticatedLayout user={auth.user}>

@@ -78,13 +78,13 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
     const [descripcion, setDescripcion] = useState(
         'Usuario verificado con excelentes referencias'
     );
-    const [mensajes, setMensajes] = useState<Mensaje[]>(mensajesIniciales);
+    //const [mensajes, setMensajes] = useState<Mensaje[]>(mensajesIniciales);
     const [imagenURL, setImagenURL] = useState('');
     const [enviando, setEnviando] = useState(false);
     const [procesandoImagen, setProcesandoImagen] = useState(false);
     const mensajesContainerRef = useRef<HTMLDivElement>(null);
     const inputImagenRef = useRef<HTMLInputElement>(null);
-
+/*
     React.useEffect(() => {
         // Al cambiar conversación, cargar mensajes iniciales
         let todosLosMensajes = [...mensajesIniciales];
@@ -106,13 +106,15 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
         //setMensajes(mensajesOrdenados);
         setMensajes((prev) => mergeMensajesById(prev, todosLosMensajes));
     }, [conversacion.id, mensajesIniciales, userId]);
+*/
 
+    //SE MODIFICA ESTO POR EL MOEMENTO PARA QUE USE MENSAJESINICIALES EN LUGAR DE MENSAJES
     useEffect(() => {
         if (mensajesContainerRef.current) {
             const scrollContainer = mensajesContainerRef.current;
             scrollContainer.scrollTop = scrollContainer.scrollHeight;
         }
-    }, [mensajes]);
+    }, [mensajesIniciales]);
 
     const handleEnviarMensaje = () => {
         if (nuevoMensaje.trim() === '') return;
@@ -137,8 +139,8 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
         };
 
         // Guardar en estado local inmediatamente (optimistic update)
-        const mensajesActualizados = ordenarMensajesPorFecha([...mensajes, nuevoMensajeObj]);
-        setMensajes(mensajesActualizados);
+        //const mensajesActualizados = ordenarMensajesPorFecha([...mensajes, nuevoMensajeObj]);
+        //setMensajes(mensajesActualizados);
 
         const contenidoOriginal = nuevoMensaje;
         setNuevoMensaje('');
@@ -296,8 +298,8 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
             <div
                 ref={mensajesContainerRef}
                 className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"
-            >
-                {mensajes.map((mensaje, index) => (
+            >   {/*ESTO ESTOY MODIFICANDO PARA TESTEAR LOS MENSAJES EN TIEMPO REAL*/}
+                {mensajesIniciales.map((mensaje, index) => (
                     <GloboMensaje key={`${conversacion.id}-${index}-${mensaje.id}`} mensaje={mensaje} />
                 ))}
             </div>

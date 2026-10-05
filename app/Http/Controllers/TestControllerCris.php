@@ -689,6 +689,68 @@ class TestControllerCris extends Controller
         ]);
     }
 
+    //Mensajes de una conversación en particular
+    public function obtenerMensajesConversacion(Request $request) {
+
+        $user = $request->user():
+
+        $validated = $request->validate([
+            'conversacion_id' => ['required', 'integer', 'exists: conversations,id'],
+        ]);
+
+        $conversacionId = (int) $validated['conversacion_id'];
+
+        $conversacion = \DB::table('conversations');
+        ->where('id', $conversacionId)
+        ->first();
+
+        if(!$conversacion) {
+            abort(404, 'Conversacion no encontrada');
+        }
+
+        $esParticipante = 
+        ((int) $conversacion->user_one_id === (int) $user->id)
+        ||
+        ((int) $conversacion->user_two_id === (int) $user->id);
+
+        if(!$esParticipante) {
+            abort(403, 'No tienes acceso a esta conversacion');
+        }
+
+        $mensajes = \DB::table('mensajes')
+        ->where(function ($query) use ($conversacion) {
+            $query->where('id_usuario_origen', $conversacion->user_one_id)
+            ->where('id_usuario_destino', $conversacion->user_two_id)            
+        })
+        ->orWhere(function ($query) use ($conversacion) {
+            $query->where('id_usuario_origen', $conversacion->user_two_id)
+            ->where('id_usuario_destino', $conversacion->user_one_id);
+        })
+        ->orderBy('created_at', 'asc')
+        ->get()
+        ->map(function($msg) use ($user) {
+            $fecha = \Carbon\Carbon::parse($msg->created_at);
+
+            return [
+                'id' => (int) $msg->id,
+                'contenido' => (int) $msg->Tipo_Mensaje === 1 ? '[Imagen compartida]' : (string) $msg->Mensaje,
+                'esDelUsuarioPrincipal' => (int) $msg->id_usuario_origen === (int) $user->id,
+                'fecha' => $fecha->format('d/m/Y'),
+                'hora' => $fecha->format('H:i:s'),
+                'esImagen' => (int) $msg->Tipo_Mensaje === 1,
+                'imagenUrl' => (int) $msg->Tipo_Mensaje === 1 ? '/imagen/' . $msg->Mensaje : null,
+            ];
+        })
+        ->values();
+
+        return response()->json([
+            'success' => true,
+            'conversacion_id' => $conversacionId,
+            'mensajes' => $mensajes,
+        ]);
+
+    }
+
     // Se envía mensaje y redirige a /chat
     // Guardar mensaje de texto en BD y retornar JSON con datos completos.
     // Archivos vinculados: web.php, enviarMensaje.ts, AreaChat.tsx, Chat.tsx, GloboMensaje.tsx.

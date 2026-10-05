@@ -182,7 +182,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     : conv
             )
         );
-        
+        /*
         setMensajesPorConversacionState((prev) => {
 
             const msg: Mensaje = {
@@ -198,7 +198,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
 
             return upsertMensajeEnConversacion(prev, conversacionSeleccionada, msg);
         });
-        
+        */
         
         
     };
@@ -222,7 +222,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
 
         const channelName = `App.Models.Conversation.${conversacionSeleccionada}`;
         window.Echo.private(channelName).listen('.chat.message.created', (e:ChatMessageEvent) => {
-            
+            /*
             setMensajesPorConversacionState((prev) => {
                 console.log(`ID del usuario: ${auth.user.id}`);
                 const convId = Number(e.conversation_id);
@@ -246,12 +246,14 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
 
                 
             });
-       
-        });
+            */
 
+            
+        });
+        
         return () => {
             window.Echo.leave(channelName);
-        }; 
+        };
 
     }, [auth?.user?.id, conversacionSeleccionada]);
 

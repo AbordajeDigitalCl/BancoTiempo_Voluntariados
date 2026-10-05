@@ -51,6 +51,13 @@ const upsertMensajeEnConversacion = (
     return copia;
 };
 
+const obtenerMensajesConversacion = async (conversacionId: number) => {
+    const response = await axios.get('/chat/mensajes', {
+        params: {conversacion_id: conversacionId},
+    });
+    return response.data;
+};
+
 
 type ChatMessageEvent = {
     message_id: number;
@@ -248,7 +255,33 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
             });
             */
 
-            
+            const cargarMensajes = async () => {
+                try {
+                    const data = await obtenerMensajesConversacion(
+                        conversacionSeleccionada
+                    );
+
+                    setMensajesPorConversacionState((prev) => {
+                        const idx = prev.findIndex((c) => c.conversacionId === conversacionSeleccionada);
+                        if(idx === -1) {
+                            return [...prev, {
+                                conversacionId: conversacionSeleccionada,
+                                mensajes: data.mensajes ?? []
+                            }];
+                        }
+
+                        const copia = [...prev];
+                        copia[idx] = {...copia[idx], mensajes: data.mensajes ?? []};
+                        return copia;
+                    });
+
+
+                } catch (error) {
+                    console.error('Error al obtener mensajes de la conversacion: ', error);
+                }
+            };
+            void cargarMensajes();
+
         });
         
         return () => {

@@ -692,15 +692,16 @@ class TestControllerCris extends Controller
     //Mensajes de una conversación en particular
     public function obtenerMensajesConversacion(Request $request) {
 
-        $user = $request->user():
+        
+        $user = $request->user();
 
         $validated = $request->validate([
-            'conversacion_id' => ['required', 'integer', 'exists: conversations,id'],
+            'conversacion_id' => ['required', 'integer', 'exists:conversations,id'],
         ]);
 
         $conversacionId = (int) $validated['conversacion_id'];
 
-        $conversacion = \DB::table('conversations');
+        $conversacion = \DB::table('conversations')
         ->where('id', $conversacionId)
         ->first();
 
@@ -720,7 +721,7 @@ class TestControllerCris extends Controller
         $mensajes = \DB::table('mensajes')
         ->where(function ($query) use ($conversacion) {
             $query->where('id_usuario_origen', $conversacion->user_one_id)
-            ->where('id_usuario_destino', $conversacion->user_two_id)            
+            ->where('id_usuario_destino', $conversacion->user_two_id);            
         })
         ->orWhere(function ($query) use ($conversacion) {
             $query->where('id_usuario_origen', $conversacion->user_two_id)

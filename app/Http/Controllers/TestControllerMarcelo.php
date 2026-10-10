@@ -319,19 +319,36 @@ class TestControllerMarcelo extends Controller
 public function advertisementIndex(Request $request): Response
 {
     $filters = $this->parseAdvertisementFilters($request);
+    
+    echo 'ESTOS SON LOS FILTERS';
+    dd($filters);
     $isAdmin = (bool) $request->session()->get('is_admin', false);
  
     // Se ejecuta el stored procedure `obtener_publicaciones` pasando los 4 filtros
     // ya sanitizados por parseAdvertisementFilters(). El SP hace todo el trabajo de
     // WHERE (búsqueda por texto, tipo, distancia/modalidad) y ORDER BY (newest/oldest)
     // directamente en MySQL, devolviendo solo las filas que corresponden.
-    $rows = \DB::select('call obtener_publicaciones(?, ?, ?, ?)', [
+    /*
+    $rows = \DB::select('call obtener_publicaciones_cercanas(?, ?, ?, ?)', [
         $filters['q'],
         $filters['type'],
         $filters['distance'],
         $filters['sort'],
     ]);
- 
+    */
+    
+    $latitud = 10.01012;
+    $longitud = 10.01012;
+    
+    $rows = \DB::select('call obtener_publicaciones_cercanas_filtradas(?, ?, ?, ?, ?, ?)', [
+        $filters['q'],
+        $fitlers['type'],
+        $filters['distance'],
+        $filters['sort'],
+        $latitud,
+        $longitud
+    ]);
+    
 
     $query = Advertisement::hydrate($rows);
  

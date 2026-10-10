@@ -320,8 +320,6 @@ public function advertisementIndex(Request $request): Response
 {
     $filters = $this->parseAdvertisementFilters($request);
     
-    echo 'ESTOS SON LOS FILTERS';
-    dd($filters);
     $isAdmin = (bool) $request->session()->get('is_admin', false);
  
     // Se ejecuta el stored procedure `obtener_publicaciones` pasando los 4 filtros
@@ -342,7 +340,7 @@ public function advertisementIndex(Request $request): Response
     
     $rows = \DB::select('call obtener_publicaciones_cercanas_filtradas(?, ?, ?, ?, ?, ?)', [
         $filters['q'],
-        $fitlers['type'],
+        $filters['type'],
         $filters['distance'],
         $filters['sort'],
         $latitud,

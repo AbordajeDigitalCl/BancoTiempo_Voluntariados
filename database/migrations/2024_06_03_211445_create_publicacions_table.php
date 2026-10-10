@@ -15,7 +15,7 @@ return new class extends Migration
      * Jose Johnen 2026/03/02
      */
     public function up(): void
-{
+    {
         //Falta el "CloseAt DateTime"
         Schema::create('publicacions', function (Blueprint $table) {
             $table->id();
@@ -63,7 +63,46 @@ return new class extends Migration
             ORDER BY distancia_km ASC;
             END
             ");
-        }
+
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas;");
+        DB:unprepared("
+            CREATE PROCEDURE if NOT EXISTS obtener_publicaciones_cercanas_filtradas(
+            IN p_q VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_type VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_distance VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_sort VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_lat DECIMAL(10,8),
+            IN p_lng DECIMAL(11,8)
+            )
+            BEGIN
+                SELECT
+                id,
+                Nombre,
+                Descripcion,
+                location_lat,
+                location_lng,
+                calcular_distancia(p_lat, p_lng, location_lat, location_lng) AS distancia_km
+                FROM publicacions
+                WHERE location_lat IS NOT NULL
+                AND location_lng IS NOT NULL
+                AND (
+				    p_q = ''
+                    OR Nombre LIKE CONCAT('%', p_q, '%')
+                    OR Descripcion LIKE CONCAT('%', p_q,'%')
+                )
+                AND (
+				    p_type = 'all'
+                    OR publicacions.type = p_type
+                )
+                HAVING
+                    p_distance = 'Cualquiera'
+                    OR distancia_km <= CAST(p_distance AS DECIMAL(10,2))
+                ORDER BY 
+				CASE WHEN p_sort = 'newest' THEN created_at END DESC,
+                CASE WHEN p_sort = 'oldest' THEN created_at END ASC;
+            END
+        ");
+    }
     
 
     /**

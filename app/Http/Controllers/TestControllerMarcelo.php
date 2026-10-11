@@ -318,7 +318,12 @@ class TestControllerMarcelo extends Controller
  */
 public function advertisementIndex(Request $request): Response
 {
+
+
     $filters = $this->parseAdvertisementFilters($request);
+
+    $latitude = $request->query('userLocation.latiude');
+    $longitude = $request->query('userLocation.longitude');
     
     $isAdmin = (bool) $request->session()->get('is_admin', false);
  
@@ -334,17 +339,15 @@ public function advertisementIndex(Request $request): Response
         $filters['sort'],
     ]);
     */
-    
-    $latitud = 10.01012;
-    $longitud = 10.01012;
+
     
     $rows = \DB::select('call obtener_publicaciones_cercanas_filtradas(?, ?, ?, ?, ?, ?)', [
         $filters['q'],
         $filters['type'],
         $filters['distance'],
         $filters['sort'],
-        $latitud,
-        $longitud
+        $latitude,
+        $longitude
     ]);
     
 

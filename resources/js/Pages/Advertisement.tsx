@@ -27,6 +27,11 @@ type Ad = {
   location_lng?: number | null;
 };
 
+type Coordinates = {
+  latitude: number,
+  longitude: number
+};
+
 function OwnerStatusPill({ status }: { status: AdStatus }) {
   const label = status === 'active' ? 'Disponible' : status === 'finished' ? 'Agotado' : 'Desactivado';
   const cls =
@@ -112,6 +117,22 @@ function MiniMap({ lat, lng }: { lat: number; lng: number }) {
 
 export default function Advertisement({ auth, createdAds, filters, isAdmin }: any) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const getUserLocation = () => {
+    if(navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const {latitude, longitude} = position.coords;
+          setUserLocation({latitude, longitude});
+        },
+        (error) => {
+          console.error('Error getting user location: ', error);
+        }
+      );
+    } else {
+      console.log("Error");
+    }
+  };
 
   const initial = useMemo(() => {
     const fromUrl = safeParseFromUrl();
@@ -205,9 +226,16 @@ const filteredAds: Ad[] = useMemo(() => {
     router.patch(`/Advertisement/${id}/status`, { status }, { preserveScroll: true });
     closeMenu();
   }
-
+  /*
+  * Se modificó este método para que envié también las coordenadas del usuario, obtenidas del navegador.
+  * Anteriormente solo enviaba los datos de los filtros como params
+  */
   function syncToUrlAndServer(nextQ: string, nextType: string, nextSort: string, nextDistance: string) {
-    const params = buildParams(nextQ, nextType, nextSort, nextDistance);
+    const filterParams = buildParams(nextQ, nextType, nextSort, nextDistance);
+    const params = {
+      ...filterParams,
+      userLocation
+    };
 
     router.get('/Advertisement', params, {
       preserveState: true,
@@ -215,6 +243,10 @@ const filteredAds: Ad[] = useMemo(() => {
       replace: true,
     });
   }
+
+  useEffect(() => {
+    getUserLocation()
+  }, []);
 
   useEffect(() => {
     if (firstRunRef.current) {

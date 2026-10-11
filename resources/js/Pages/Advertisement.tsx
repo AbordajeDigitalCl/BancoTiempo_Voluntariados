@@ -118,20 +118,35 @@ function MiniMap({ lat, lng }: { lat: number; lng: number }) {
 export default function Advertisement({ auth, createdAds, filters, isAdmin }: any) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const getUserLocation = () => {
-    if(navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const {latitude, longitude} = position.coords;
-          setUserLocation({latitude, longitude});
-        },
-        (error) => {
-          console.error('Error getting user location: ', error);
-        }
-      );
-    } else {
-      console.log("Error");
+    if(!navigator.geolocation) {
+      setLocationError('Tu navegador no admite la geolocalización');
+      return;
     }
+
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const {latitude, longitude} = position.coords;
+
+        setUserLocation({latitude, longitude});
+        setLocationError(null);
+      },
+      (error) => {
+        if(error.code === error.PERMISSION_DENIED) {
+          setLocationError('El acceso a la ubicación está bloqueado ' + 
+            'Permítelo en la configuracuión del sitio y vuelve a intentarlo.'
+          );
+        } else if(error.code === error.POSITION_UNAVAILABLE) {
+          setLocationError('No se pudo determinar tu ubicación.');
+        } else if(error.code === error.TIMEOUT) {
+          setLocationError('La solicitud tardó demasiado. Inténtalo de nuevo.');
+        }
+      },
+      {timeout: 10000}
+    );
   };
 
   const initial = useMemo(() => {
@@ -237,6 +252,8 @@ const filteredAds: Ad[] = useMemo(() => {
       userLocation
     };
 
+
+
     router.get('/Advertisement', params, {
       preserveState: true,
       preserveScroll: true,
@@ -267,7 +284,18 @@ const filteredAds: Ad[] = useMemo(() => {
   return (
     <AuthenticatedLayout user={auth.user}>
       <Head title="Publicaciones" />
-
+      {userLocation === null && (
+        <>
+          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-yellow-800">
+            <p>
+                En este momento no tienes la geolocalización activada.
+                Para el correcto funcionamiento de la aplicación,
+                te recomendamos activarla desde la configuración
+                de tu navegador.
+            </p>
+        </div>
+      </>
+      )}
       <div className="w-full flex justify-center px-4 py-6" onClick={() => closeMenu()}>
         <div className="w-full max-w-4xl space-y-4" onClick={(e) => e.stopPropagation()}>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">

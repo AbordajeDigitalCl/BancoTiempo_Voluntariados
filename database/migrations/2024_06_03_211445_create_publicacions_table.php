@@ -64,6 +64,10 @@ return new class extends Migration
             END
             ");
 
+        /*
+        * Se agregó este procedimiento a la base de datos para incluir los filtros de la consulta de
+        * publicaciones.
+        */
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas;");
         DB:unprepared("
             CREATE PROCEDURE if NOT EXISTS obtener_publicaciones_cercanas_filtradas(

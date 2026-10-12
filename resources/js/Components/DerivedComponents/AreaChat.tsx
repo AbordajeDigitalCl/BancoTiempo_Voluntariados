@@ -108,7 +108,6 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
     }, [conversacion.id, mensajesIniciales, userId]);
 */
 
-    //SE MODIFICA ESTO POR EL MOEMENTO PARA QUE USE MENSAJESINICIALES EN LUGAR DE MENSAJES
     useEffect(() => {
         if (mensajesContainerRef.current) {
             const scrollContainer = mensajesContainerRef.current;
@@ -150,7 +149,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
         guardarMensajeConImagenTemporal(conversacion.id, nuevoMensajeObj, userId);
 
         // Notificar al padre (para actualizar lista de conversaciones)
-        onMensajeEnviado?.(contenidoOriginal, fecha, hora);
+        //onMensajeEnviado?.(contenidoOriginal, fecha, hora);
 
         // Enviar al servidor
         enviarMensaje({
@@ -176,8 +175,8 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
             .catch((error) => {
                 console.error('Error al enviar mensaje:', error);
                 // Remover el mensaje temporal si hay error
-                setMensajes((prevMensajes) => prevMensajes.filter((msg) => msg.id !== tempId));
-                eliminarMensajemporal(conversacion.id, Math.abs(tempId));
+                //setMensajes((prevMensajes) => prevMensajes.filter((msg) => msg.id !== tempId));
+                //eliminarMensajemporal(conversacion.id, Math.abs(tempId));
                 setEnviando(false);
             });
     };
@@ -191,6 +190,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
         const reader = new FileReader();
         reader.onload = (event) => {
             const imagenData = event.target?.result as string;
+            console.log(`IMAGE DATA: ${imagenData}`);
             const fechaHoy = new Date();
             const fecha = `${String(fechaHoy.getDate()).padStart(2, '0')}/${String(
                 fechaHoy.getMonth() + 1
@@ -213,21 +213,22 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
             };
 
             // Guardar en localStorage como temporal
-            guardarMensajeConImagenTemporal(conversacion.id, nuevoMensajeConImagen, userId);
+            //guardarMensajeConImagenTemporal(conversacion.id, nuevoMensajeConImagen, userId);
 
             // Agregar mensaje al estado local y ordenar por fecha (optimistic update)
-            const mensajesActualizados = ordenarMensajesPorFecha([...mensajes, nuevoMensajeConImagen]);
-            setMensajes(mensajesActualizados);
+            //const mensajesActualizados = ordenarMensajesPorFecha([...mensajes, nuevoMensajeConImagen]);
+            //setMensajes(mensajesActualizados);
 
             // Notificar al padre que se envió una imagen
-            onMensajeEnviado?.('[Imagen compartida]', fecha, hora);
+            //onMensajeEnviado?.('[Imagen compartida]', fecha, hora);
 
             // Enviar imagen al servidor en background
             setEnviando(true);
             enviarMensajeConImagen(conversacion.id, imagenData)
                 .then((response) => {
                     // Reemplazar el mensaje temporal con el mensaje real del servidor
-                    const mensajeReal = response.mensaje;
+                    //const mensajeReal = response.mensaje;
+                    /*
                     setMensajes((prevMensajes) => {
                         const updated = prevMensajes.map((msg) =>
                             msg.id === tempId ? { ...mensajeReal } : msg
@@ -236,13 +237,14 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
                     });
                     // Eliminar el mensaje temporal de localStorage ahora que está sincronizado
                     eliminarMensajemporal(conversacion.id, Math.abs(tempId));
+                    */
                     setEnviando(false);
                 })
                 .catch((error) => {
                     console.error('Error al enviar imagen:', error);
                     // Remover el mensaje temporal si hay error
-                    setMensajes((prevMensajes) => prevMensajes.filter((msg) => msg.id !== tempId));
-                    eliminarMensajemporal(conversacion.id, Math.abs(tempId));
+                    //setMensajes((prevMensajes) => prevMensajes.filter((msg) => msg.id !== tempId));
+                    //eliminarMensajemporal(conversacion.id, Math.abs(tempId));
                     setEnviando(false);
                 })
                 .finally(() => {

@@ -620,7 +620,7 @@ class TestControllerCris extends Controller
                     $query->where('id_usuario_origen', $conv->user_two_id)
                         ->where('id_usuario_destino', $conv->user_one_id);
                 })->orderBy('created_at', 'desc')->first();
-
+            
             $mensajesNoLeidos = \DB::table('mensajes')
                 ->where('id_usuario_destino', $user->id)
                 ->where(function ($query) use ($conv) {
@@ -638,6 +638,7 @@ class TestControllerCris extends Controller
                 'nombre' => $otroUsuario->name . ' ' . $otroUsuario->Apellido_Paterno,
                 'foto' => $fotoUrl,
                 'ultimoMensaje' => $ultimoMensaje ? $ultimoMensaje->Mensaje : '',
+                'tipoUltimoMensaje' => $ultimoMensaje ? $ultimoMensaje->Tipo_Mensaje: 3,
                 'esMensajeDelUsuarioPrincipal' => $ultimoMensaje ? $ultimoMensaje->id_usuario_origen === $user->id : false,
                 'fechaUltimoMensaje' => $fechaUltimo,
                 'mensajesNoLeidos' => $mensajesNoLeidos,
@@ -689,7 +690,7 @@ class TestControllerCris extends Controller
         ]);
     }
 
-    //Mensajes de una conversación en particular
+    // Obtener mensajes de una conversación en particular
     public function obtenerMensajesConversacion(Request $request) {
 
         
@@ -827,10 +828,13 @@ class TestControllerCris extends Controller
     {
         $user = $request->user();
 
+        
         $validated = $request->validate([
             'conversacion_id' => ['required', 'integer'],
             'imagen_base64' => ['required', 'string'], 
         ]);
+
+        
 
         $conversacion = \App\Models\Conversation::find($validated['conversacion_id']);
 
@@ -907,7 +911,8 @@ class TestControllerCris extends Controller
             conversationId: (int) $conversacion->id,
             senderId: (int) $user->id,
             receiverId: (int) $otroUsuarioId,
-            preview: (string) $validated['contenido'],
+            //preview: (string) $validated['contenido'],
+            preview: 'Imagen',
             isImage: true,
             createdAt: now()->toISOString(),
         ));

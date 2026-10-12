@@ -11,12 +11,31 @@ export default function FilaConversacion({
     seleccionada = false,
     onSeleccionar,
 }: FilaConversacionProps) {
-    
+    /*
     const mensajeTruncado =
         conversacion.ultimoMensaje.length > 35
             ? `${conversacion.ultimoMensaje.substring(0, 35)}...`
             : conversacion.ultimoMensaje;
-
+    */
+   // Se agregó esta función para mostrar la palabra 'Imagen' en caso de que
+   // el último mensaje sea una imágen, y una versión truncada del mensaje
+   // en caso de que el mensaje sea solo texto.
+    const mostrarNombreMensaje = () => {
+        console.log(`Tipo de mensaje: ${conversacion.tipoUltimoMensaje}`);
+        switch(conversacion.tipoUltimoMensaje) {
+            case 0:
+                return conversacion.ultimoMensaje.length > 35 ?
+                `${conversacion.ultimoMensaje.substring(0, 35)}...`
+                : conversacion.ultimoMensaje;
+                break;
+            case 1:
+                return 'Imagen';
+                break;
+            default:
+                return '';
+                break;
+        }
+    };
     return (
         <div
             onClick={() =>onSeleccionar?.(conversacion.id)}
@@ -59,7 +78,7 @@ export default function FilaConversacion({
                     }`}
                 >
                     {conversacion.esMensajeDelUsuarioPrincipal && 'Tú: '}
-                    {mensajeTruncado}
+                    {mostrarNombreMensaje()}
                 </p>
             </div>
         </div>

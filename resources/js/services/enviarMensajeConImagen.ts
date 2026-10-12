@@ -35,7 +35,17 @@ export async function enviarMensajeConImagen(
         });
         return response.data;
     } catch (error) {
-        console.error('Error al enviar mensaje con imagen:', error);
-        throw error;
+
+        if(axios.isAxiosError(error)) {
+            console.error('Mensaje: ', error.message);
+            console.error('Estado HTTP: ', error.response?.status);
+            console.error('Respuesta del servidor: ', error.response?.data);
+            console.error('URL', error.config?.url);
+            console.error('Método: ', error.config?.method);
+        } else {
+            console.error('Error inesperado: '. error);
+        }
+        //console.error('Error al enviar mensaje con imagen:', error);
+        //throw error;
     }
 }

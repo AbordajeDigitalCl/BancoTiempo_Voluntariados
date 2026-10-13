@@ -115,6 +115,7 @@ return new class extends Migration
     public function down(): void
     {
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas;");
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas");
         Schema::dropIfExists('publicacions');
     }
 };

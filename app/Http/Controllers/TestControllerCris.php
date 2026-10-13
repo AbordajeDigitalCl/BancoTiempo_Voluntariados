@@ -702,9 +702,18 @@ class TestControllerCris extends Controller
 
         $conversacionId = (int) $validated['conversacion_id'];
 
+        /*
         $conversacion = \DB::table('conversations')
         ->where('id', $conversacionId)
-        ->first();
+        ->first();      
+        */
+
+        $conversacion = collect(
+            \DB::select(
+                'CALL obtener_participantes_de_conversacion(?)',
+                [$conversacionId]
+            )
+        )->first();
 
         if(!$conversacion) {
             abort(404, 'Conversacion no encontrada');
@@ -719,6 +728,8 @@ class TestControllerCris extends Controller
             abort(403, 'No tienes acceso a esta conversacion');
         }
 
+        
+        /*
         $mensajes = \DB::table('mensajes')
         ->where(function ($query) use ($conversacion) {
             $query->where('id_usuario_origen', $conversacion->user_one_id)
@@ -730,6 +741,15 @@ class TestControllerCris extends Controller
         })
         ->orderBy('created_at', 'asc')
         ->get()
+        */
+        $mensajes_raw = \DB::select(
+            'CALL obtener_mensajes_conversacion(?,?)',
+            [$conversacion->user_one_id,
+            $conversacion->user_two_id
+            ]
+        );
+
+        $mensajes = collect($mensajes_raw)
         ->map(function($msg) use ($user) {
             $fecha = \Carbon\Carbon::parse($msg->created_at);
 

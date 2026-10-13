@@ -21,6 +21,27 @@ return new class extends Migration
             $table->tinyInteger('Tipo_Mensaje');
             $table->timestamps();
         });
+
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_mensajes_conversacion;");
+        DB::unprepared("
+            CREATE PROCEDURE if NOT EXISTS obtener_mensajes_conversacion(
+	            IN p_user_one_id BIGINT,
+                IN p_user_two_id BIGINT
+            )
+            BEGIN
+	            SELECT *
+                FROM mensajes
+	            WHERE(
+		            id_usuario_origen = p_user_one_id
+                    AND id_usuario_destino = p_user_two_id
+                )
+                OR (
+		            id_usuario_origen = p_user_two_id
+                    AND id_usuario_destino = p_user_one_id
+                )
+                ORDER BY created_at ASC;
+            END
+            ");
     }
 
     /**
@@ -28,6 +49,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_mensajes_conversacion;");
         Schema::dropIfExists('mensajes');
     }
 };

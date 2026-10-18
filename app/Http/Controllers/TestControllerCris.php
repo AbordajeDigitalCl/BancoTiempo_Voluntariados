@@ -702,18 +702,10 @@ class TestControllerCris extends Controller
 
         $conversacionId = (int) $validated['conversacion_id'];
 
-        /*
+        
         $conversacion = \DB::table('conversations')
         ->where('id', $conversacionId)
         ->first();      
-        */
-
-        $conversacion = collect(
-            \DB::select(
-                'CALL obtener_participantes_de_conversacion(?)',
-                [$conversacionId]
-            )
-        )->first();
 
         if(!$conversacion) {
             abort(404, 'Conversacion no encontrada');
@@ -1028,6 +1020,7 @@ class TestControllerCris extends Controller
         }
 
         // Buscar si ya existe una conversación
+        /*
         $conversacionExistente = \DB::table('conversations')
             ->where(function ($query) use ($user, $otroUsuarioId) {
                 $query->where('user_one_id', $user->id)
@@ -1038,6 +1031,16 @@ class TestControllerCris extends Controller
                     ->where('user_two_id', $user->id);
             })
             ->first();
+        */
+
+        $conversacionExistente = \DB::SELECT(
+            'CALL existe_conversacion_por_participantes_id(?, ?)',
+            [
+                $user->id,
+                $otroUsuarioId
+            ]
+        );
+        
 
         if (!$conversacionExistente) {
             // Crear nueva conversación

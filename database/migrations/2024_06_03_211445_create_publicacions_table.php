@@ -69,7 +69,7 @@ return new class extends Migration
         * publicaciones.
         */
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas;");
-        DB:unprepared("
+        DB::unprepared("
             CREATE PROCEDURE if NOT EXISTS obtener_publicaciones_cercanas_filtradas(
             IN p_q VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
             IN p_type VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
@@ -115,7 +115,7 @@ return new class extends Migration
     public function down(): void
     {
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas;");
-        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas");
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas;");
         Schema::dropIfExists('publicacions');
     }
 };

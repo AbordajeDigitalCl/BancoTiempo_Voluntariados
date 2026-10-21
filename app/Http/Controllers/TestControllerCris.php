@@ -594,6 +594,7 @@ class TestControllerCris extends Controller
             })
             ->get();
 
+        /*
         $conversacionesFormato = $conversaciones->map(function ($conv) use ($user) {
             // Identificar quién es el "otro usuario" en la conversación (no el logueado)
             $otroUsuarioId = $conv->user_one_id === $user->id ? $conv->user_two_id : $conv->user_one_id;
@@ -644,6 +645,12 @@ class TestControllerCris extends Controller
                 'mensajesNoLeidos' => $mensajesNoLeidos,
             ];
         })->values()->toArray();
+        */
+        
+        $conversacionesFormato = \DB::select(
+            'CALL obtener_resumen_conversaciones(?)',
+            [$user->id]
+        );
 
         $mensajesAgrupados = [];
         foreach ($conversaciones as $conv) {
@@ -1276,12 +1283,17 @@ class TestControllerCris extends Controller
             ->update(['Tipo' => 1]);
 
         // Verificar cuántas imágenes ya tiene esta publicación, máximo 5.
+        /*
         $conteoImagenes = \DB::table('inter__imagen__public')
             ->where('id_publicacion', $publicacion_id)
             ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
             ->where('imagens.Tipo', 1)  // Solo buscar imágenes de tipo publicación
             ->count();
-        
+        */
+        $conteoImagenes = \DB::select(
+            'CALL contar_imagenes_publicacion_por_tipo(?)',
+            [$publicacion_id]
+        );
         
         if ($conteoImagenes >= 5) {
            
@@ -1410,13 +1422,15 @@ class TestControllerCris extends Controller
         $otroUsuarioId = ((int) $conversacion->user_one_id === (int) $user->id)
         ? (int) $conversacion->user_two_id : (int) $conversacion->user_one_id;
 
+        $ahora = now();
+
         $updatedCount = \DB::table('mensajes')
         ->where('id_usuario_origen', $otroUsuarioId)
         ->where('id_usuario_destino', (int) $user->id)
         ->whereNull('read_at')
         ->update([
-            'read_at'=>now(),
-            'updated_at'=> now(),
+            'read_at'=>$ahora,
+            'updated_at'=> $ahora,
         ]);
 
 

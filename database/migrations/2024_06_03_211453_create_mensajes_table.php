@@ -44,7 +44,7 @@ return new class extends Migration
             ");
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_mensajes_de_conversaciones_por_usuario_id;");
         DB::unprepared("
-            CREATE PROCEDURE IF NOT EXSITS obtener_mensajes_de_conversaciones_por_usuario_id(
+            CREATE PROCEDURE IF NOT EXISTS obtener_mensajes_de_conversaciones_por_usuario_id(
                 IN p_usuario_id BIGINT
             )
             BEGIN

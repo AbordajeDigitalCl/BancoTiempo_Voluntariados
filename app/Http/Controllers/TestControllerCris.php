@@ -646,13 +646,24 @@ class TestControllerCris extends Controller
             ];
         })->values()->toArray();
         */
-        
+
         $conversacionesFormato = \DB::select(
             'CALL obtener_resumen_conversaciones(?)',
             [$user->id]
         );
 
+        // Se obtienen todos los mensajes con uan sola consulta al SP
+        $mensajesPorConversacion = collect(
+            \DB::select(
+                'CALL obtener_mensajes_de_conversaciones_por_usuario_id(?)',
+                [$user->id]
+            )
+
+        )->groupBy('conversation_id');
+
         $mensajesAgrupados = [];
+
+        /*
         foreach ($conversaciones as $conv) {
             $mensajes = \DB::table('mensajes')
                 ->where(function ($query) use ($conv) {
@@ -688,6 +699,32 @@ class TestControllerCris extends Controller
             $mensajesAgrupados[] = [
                 'conversacionId' => $conv->id,
                 'mensajes' => $mensajesFormato,
+            ];
+        }
+        */
+
+        foreach($conversaciones as $conv) {
+            $mensajes = $mensajesPorConversacion->get($conv->id, collect());
+
+            $mensajesFormato = $mensajes->map(function($msg) use $user {
+                $fechaMensaje = \Carbon\Carbon::parse($msg->created_at);
+
+                $esImagen = (int) $msg->Tipo_Mensaje === 1;
+
+                return [
+                    'id' => $msg->id,
+                    'contenido' => $esImagen ? '[Imagen compartida]' : $msg->Mensaje,
+                    'esDelUsuarioPrincipal' => (int) $msg->id_usuario_origen === (int) $user->id,
+                    'fecha' => $fechaMensaje->format('d/m/Y'),
+                    'hora' => $fechaMensaje->format('H:i:s'),
+                    'esImagen' => $esImagen,
+                    'imagenUrl' => $esImagen ? '/imagen/' . $msg->Mensaje : null,
+                ];
+            })->values()->toArray();
+
+            $mensajesAgrupados[] = [
+                'conversacionId' => $conv->id,
+                'mensajes' => $mensajesFomato,
             ];
         }
 

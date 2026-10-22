@@ -348,7 +348,7 @@ class TestControllerCris extends Controller
                 'CALL obtener_publicaciones_perfil_por_usuario_id',
                 [$usuarioAVer->id]
             );
-            
+
             $publicaciones = collect($publicaciones)
                 //->get()
                 ->map(fn($pub) => [
@@ -1015,6 +1015,8 @@ class TestControllerCris extends Controller
         if (!$isAdmin) {
             abort(403, 'Solo administradores pueden acceder a esta página');
         }
+
+        /*
         $usuarios = \DB::table('users')
             ->orderBy('id', 'asc')
             ->get()
@@ -1048,7 +1050,55 @@ class TestControllerCris extends Controller
                 ];
             })
             ->toArray();
+        */
 
+        $usuarios = \DB::table('users as u')
+        ->select([
+            'u.id',
+            'u.name',
+            'u.Apellido_Paterno',
+            'u.Apellido_Materno',
+            'u.Ciudad',
+            'u.Direccion',
+            'u.email',
+        ])
+        ->selectSub(
+            \DB::table('imagens as i')
+            ->select('i.Direccion')
+            ->where('i.Tipo', 0)
+            ->orderByDesc('i.id')
+            ->limit(1),
+            'fotoDireccion'
+        )
+        ->selectRaw('
+            EXISTS(
+                SELECT 1
+                FROM Tipo_Usuario tu
+                WHERE tu.id_usuario = u.id
+            ) AS esAdmin
+        ')
+        ->orderBy('u.id', 'asc')
+        ->get()
+        ->map(function ($user) {
+            $fotoUrl = $user->fotoDireccion
+                ? '/imagen/' . $user->fotoDireccion
+                : 'https://picsum.photos/200?random=' . $user->id;
+
+            return [
+                'id' => $user->id,
+                'nombre' => $user->name ?? '',
+                'apellidoPaterno' => $user->Apellido_Paterno ?? '',
+                'apellidoMaterno' => $user->Apellido_Materno ?? '',
+                'ciudad' => $user->Ciudad ?? '',
+                'direccion' => $user->Direccion ?? '',
+                'email' => $user->email ?? '',
+                'foto' => $fotoUrl,
+                'esAdmin' => (int) $user->esAdmin,
+            ];
+        })
+        ->toArray();
+
+            
         return Inertia::render('AdministrarUsuarios', [
             'usuarios' => $usuarios,
             'isAdmin' => $isAdmin,

@@ -648,7 +648,7 @@ class TestControllerCris extends Controller
         */
 
         $conversacionesFormato = \DB::select(
-            'CALL obtener_resumen_conversaciones(?)',
+            'CALL obtener_resumen_conversaciones_por_usuario_id(?)',
             [$user->id]
         );
 

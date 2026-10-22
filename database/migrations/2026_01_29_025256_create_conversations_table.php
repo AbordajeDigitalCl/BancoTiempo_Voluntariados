@@ -38,9 +38,9 @@ return new class extends Migration
                 ) AS existe;
             END
         ");
-        DB::unprepared('DROP PROCEDURE IF EXISTS obtener_resumen_conversaciones');
+        DB::unprepared('DROP PROCEDURE IF EXISTS obtener_resumen_conversaciones_por_usuario_id');
         DB::unprepared("
-            CREATE PROCEDURE IF NOT EXISTS obtener_resumen_conversaciones(
+            CREATE PROCEDURE IF NOT EXISTS obtener_resumen_conversaciones_por_usuario_id(
                 IN p_usuario_id BIGINT
             )
             BEGIN
@@ -152,7 +152,7 @@ return new class extends Migration
     public function down(): void
     {
         DB::unprepared("DROP PROCEDURE IF EXISTS existe_conversacion_por_participantes_id;");
-        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_resumen_conversaciones;");
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_resumen_conversaciones_por_usuario_id;");
         Schema::dropIfExists('conversations');
     }
 };

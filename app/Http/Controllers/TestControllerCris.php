@@ -652,7 +652,7 @@ class TestControllerCris extends Controller
             [$user->id]
         );
 
-        // Se obtienen todos los mensajes con uan sola consulta al SP
+        // Se obtienen todos los mensajes con una sola consulta al SP
         $mensajesPorConversacion = collect(
             \DB::select(
                 'CALL obtener_mensajes_de_conversaciones_por_usuario_id(?)',
@@ -706,7 +706,7 @@ class TestControllerCris extends Controller
         foreach($conversaciones as $conv) {
             $mensajes = $mensajesPorConversacion->get($conv->id, collect());
 
-            $mensajesFormato = $mensajes->map(function($msg) use $user {
+            $mensajesFormato = $mensajes->map(function($msg) use ($user) {
                 $fechaMensaje = \Carbon\Carbon::parse($msg->created_at);
 
                 $esImagen = (int) $msg->Tipo_Mensaje === 1;
@@ -724,7 +724,7 @@ class TestControllerCris extends Controller
 
             $mensajesAgrupados[] = [
                 'conversacionId' => $conv->id,
-                'mensajes' => $mensajesFomato,
+                'mensajes' => $mensajesFormato,
             ];
         }
 

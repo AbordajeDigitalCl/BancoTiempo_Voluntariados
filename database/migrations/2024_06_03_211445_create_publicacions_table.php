@@ -142,6 +142,50 @@ return new class extends Migration
                 AND p.visible = 1;
             END
         ");
+
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicacion_para_editar;");
+        DB::unprepared("
+            CREATE PROCEDURE IF NOT EXISTS obtener_publicacion_para_editar(
+                IN p_publicacion_id BIGINT,
+                IN p_usuario_id BIGINT,
+                IN p_es_admin BOOLEAN
+            )
+            BEGIN
+                SELECT
+                    p.id,
+                    p.Nombre,
+                    p.Descripcion,
+                    p.Tipo_Publicacion,
+                    p.Tipo_Beneficio,
+                    o.Precio,
+                    d.Presupuesto,
+                    img.Direccion AS imagenDireccion,
+                    img.id AS imagenId
+                FROM publicacions p
+                LEFT JOIN ofertas AS o 
+                    ON p.id = o.id_publicacion 
+                LEFT JOIN demandas AS d 
+                    ON p.id = d.id_publicacion
+                LEFT JOIN (
+                    SELECT
+                    ip.id_publicacion,
+                    MAX(i.Direccion) AS Direccion,
+                    MAX(i.id) AS id
+                    FROM inter__imagen__public AS ip
+                    INNER JOIN imagens i 
+                        ON ip.id_imagen = i.id
+                    WHERE i.Tipo = 1
+                    GROUP BY ip.id_publicacion
+                ) img
+                    ON p.id = img.id_publicacion
+                WHERE p.id = p_publicacion_id
+                AND (
+                    p_es_admin = TRUE
+                    OR p.id_usuario = p_usuario_id
+                )
+                LIMIT 1;
+            END
+        ");
     }
     
 
@@ -153,6 +197,7 @@ return new class extends Migration
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas;");
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas;");
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_perfil_por_usuario_id;");
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicacion_para_editar;");
         Schema::dropIfExists('publicacions');
     }
 };

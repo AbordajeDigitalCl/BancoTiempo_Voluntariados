@@ -396,6 +396,7 @@ class TestControllerCris extends Controller
         $isAdmin = (bool) $request->session()->get('is_admin', false);
         $returnTo = $request->query('return_to', '/verperfil');
         
+        /*
         // Subquery para obtener la primera imagen de la publicación
         $imagenSubquery = \DB::table('inter__imagen__public')
             ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
@@ -429,6 +430,16 @@ class TestControllerCris extends Controller
                 'imagen_primera.id as imagenId'
             )
             ->first();
+        */
+
+        $publicacion = \DB::select(
+            'CALL obtener_publicacion_para_editar(?,?,?)',
+            [$id,
+            $user->id,
+            $isAdmin ? 1 : 0
+            ]
+        )
+        ->first();
 
         if (!$publicacion) {
             abort(404);

@@ -315,6 +315,8 @@ class TestControllerCris extends Controller
        
         $publicaciones = [];
         if (!$esAdminUsuarioAVer) {
+
+            /*
             // Subquery para obtener la primera imagen de cada publicación
             $imagenSubquery = \DB::table('inter__imagen__public')
                 ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
@@ -340,7 +342,15 @@ class TestControllerCris extends Controller
                     'demandas.Presupuesto',
                     'imagen_primera.Direccion as imagenDireccion'
                 )
-                ->get()
+                */
+
+            $publicaciones = \DB::select(
+                'CALL obtener_publicaciones_perfil_por_usuario_id',
+                [$usuarioAVer->id]
+            );
+            
+            $publicaciones = collect($publicaciones)
+                //->get()
                 ->map(fn($pub) => [
                     'id' => $pub->id,
                     'titulo' => $pub->Nombre,

@@ -106,6 +106,42 @@ return new class extends Migration
                 CASE WHEN p_sort = 'oldest' THEN created_at END ASC;
             END
         ");
+
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_perfil_por_usuario_id;");
+        DB::unprepared("
+            CREATE PROCEDURE IF NOT EXISTS obtener_publicaciones_perfil_por_usuario_id(
+                IN p_usuario_id BIGINT
+            )
+            BEGIN
+                SELECT
+                    p.id,
+                    p.Nombre,
+                    p.Tipo_Publicacion,
+                    p.Tipo_Beneficio,
+                    p.created_at,
+                    o.Precio,
+                    d.Presupuesto,
+                    img.Direccion AS imagenDireccion
+                FROM publicacions p
+                LEFT JOIN ofertas o
+                    ON p.id = o.id_publicacion
+                LEFT JOIN demandas d
+                    ON p.id = d.id_publicacion
+                LEFT JOIN(
+                    SELECT
+                        ip.id_publicacion,
+                        MAX(i.Direccion) AS Direccion
+                        FROM inter__imagen__public ip
+                        INNER JOIN imagens i
+                            ON ip.id_imagen = i.id
+                        WHERE i.Tipo = 1
+                        GROUP BY ip.id_publicacion
+                ) img
+                    ON p.id = img.id_publicacion
+                WHERE p.id_usuario = p_usuario_id
+                AND p.visible = 1;
+            END
+        ");
     }
     
 
@@ -116,6 +152,7 @@ return new class extends Migration
     {
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas;");
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas;");
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_perfil_por_usuario_id;");
         Schema::dropIfExists('publicacions');
     }
 };

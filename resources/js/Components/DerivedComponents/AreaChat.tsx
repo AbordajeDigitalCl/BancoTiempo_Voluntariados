@@ -35,7 +35,7 @@ const ordenarMensajesPorFecha = (mensajes: Mensaje[]): Mensaje[] => {
         return timestampA - timestampB;
     });
 };
-
+/*
 const mergeMensajesById = (a: Mensaje[], b: Mensaje[]) : Mensaje[] => {
 
     const map = new Map<number, Mensaje>();
@@ -45,8 +45,9 @@ const mergeMensajesById = (a: Mensaje[], b: Mensaje[]) : Mensaje[] => {
 
     return(ordenarMensajesPorFecha(Array.from(map.values())));
 }
-
-const upsertMnesajeEnConversacion = (
+*/
+/*
+const upsertMensajeEnConversacion = (
     prev: ConversacionDetalle[],
     convId: number,
     nuevoMensaje: Mensaje
@@ -64,6 +65,7 @@ const upsertMnesajeEnConversacion = (
     copia[idx] = {...actual, mensajes: mensajesMerged};
     return copia;
 }
+*/
 
 interface AreaChatProps {
     conversacion: Conversacion;
@@ -300,7 +302,7 @@ export default function AreaChat({ conversacion, mensajes: mensajesIniciales, us
             <div
                 ref={mensajesContainerRef}
                 className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin"
-            >   {/*ESTO ESTOY MODIFICANDO PARA TESTEAR LOS MENSAJES EN TIEMPO REAL*/}
+            >   
                 {mensajesIniciales.map((mensaje, index) => (
                     <GloboMensaje key={`${conversacion.id}-${index}-${mensaje.id}`} mensaje={mensaje} />
                 ))}

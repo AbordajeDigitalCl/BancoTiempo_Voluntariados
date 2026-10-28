@@ -116,6 +116,7 @@ return new class extends Migration
                 SELECT
                     p.id,
                     p.Nombre,
+                    p.Descripcion,
                     p.Tipo_Publicacion,
                     p.Tipo_Beneficio,
                     p.created_at,
@@ -186,6 +187,13 @@ return new class extends Migration
                 LIMIT 1;
             END
         ");
+
+        Schema::table('publicacions', function(Blueprint $table) {
+            $table->index(
+                ['id_usuario', 'created_at'],
+                'idx_publicacions_usuario_created'
+            );
+        });
     }
     
 
@@ -199,5 +207,8 @@ return new class extends Migration
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_perfil_por_usuario_id;");
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicacion_para_editar;");
         Schema::dropIfExists('publicacions');
+        Schema::table('publicacions', function(Blueprint $table) {
+            $table->dropIndex('idx_publicacions_usuario_created');
+        });
     }
 };

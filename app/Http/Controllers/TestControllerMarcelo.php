@@ -626,7 +626,9 @@ public function advertisementIndex(Request $request): Response
     {
 
         $user_id = $request->user()->id;
-
+        
+        //Se agregó filtro por id_usuario, ya que previamente se obtenían las publicaciones
+        //de todos los usuarios
         $createdAds = Advertisement::query()
         ->where('id_usuario', $user_id)
         ->get()

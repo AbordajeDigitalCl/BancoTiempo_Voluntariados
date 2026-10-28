@@ -11,46 +11,6 @@ import axios from 'axios';
 
 const CONVERSACIONES_PER_PAGE = 10;
 
-
-/**
- * Hacer merge de mensajes
- */
-
-const mergeMensajesById = (a: Mensaje[], b: Mensaje[]) : Mensaje[] => {
-
-    const map = new Map<number, Mensaje>();
-    [...a, ...b].forEach((m) => {
-        map.set(Number(m.id), m);
-    });
-
-    return Array.from(map.values()).sort((x, y) => {
-        const ax = new Date(`${x.fecha.split('/').reverse().join('-')}T${x.hora}`).getTime();
-        const by = new Date(`${y.fecha.split('/').reverse().join('-')}T${y.hora}`).getTime();
-        return ax - by;
-    });
-}
-
-const upsertMensajeEnConversacion = (
-    prev: ConversacionDetalle[],
-    convId: number,
-     nuevoMensaje: Mensaje
-) : ConversacionDetalle[] => {
-        
-    const idx = prev.findIndex((c) => c.conversacionId === convId);
-
-    if(idx === -1) {
-        return [...prev, {conversacionId: convId, mensajes: [nuevoMensaje]}];
-    }
-
-    const actual = prev[idx];
-    const mensajesMerged = mergeMensajesById(actual.mensajes, [nuevoMensaje]);
-
-    const copia = [...prev];
-    copia[idx] = {...actual, mensajes: mensajesMerged};
-
-    return copia;
-};
-
 const obtenerMensajesConversacion = async (conversacionId: number) => {
     const response = await axios.get('/chat/mensajes', {
         params: {conversacion_id: conversacionId},
@@ -286,23 +246,6 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
             const convId = Number(e.conversation_id);
             const isOwnMessage = Number(e.sender_id) === Number(auth.user.id);
             const isActive = convId === conversacionSeleccionada;
-            /*
-            setConversacionesConEstado((prev) =>
-                prev.map((conv) => {
-                    if(conv.id !== convId) return conv;
-
-                    const fechaHoraUltimoMensaje = `${formatearFecha(e.created_at).fecha} ${formatearFecha(e.created_at).hora}`; 
-
-                    return {
-                        ...conv,
-                        ultimoMensaje: String(e.preview ?? ''),
-                        fechaUltimoMensaje: fechaHoraUltimoMensaje,
-                        esMensajeDelUsuarioPrincipal:false,
-                        mensajesNoLeidos: isActive ? 0 : (conv.mensajesNoLeidos ?? 0) + 1,
-                    };
-                })
-            );
-            */
             
             if(convId === conversacionSeleccionada) {
                 void marcarConversacionComoLeida(convId);

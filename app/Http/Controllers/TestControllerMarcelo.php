@@ -438,6 +438,8 @@ public function advertisementIndex(Request $request): Response
     {
         $user_id = $request->user()->id;
 
+        //Para esta query se creó el index:  idx_publicacions_usuario_created, ya que sin ella
+        //la consulta arroja un error al ordenar las filas con latest().
         $createdAds = Advertisement::query()
             ->where('id_usuario', $user_id)
             ->latest()

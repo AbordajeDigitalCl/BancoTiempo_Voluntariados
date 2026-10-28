@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Traits\Cruds;
 use App\Models\Tipo_Usuario;
 use Inertia\Inertia;
+use Carbon\Carbon;
 /*
 Todos los request public que se encuentran en este archivo:
 
@@ -282,7 +283,7 @@ class TestControllerCris extends Controller
     {
         $usuario_logueado = $request->user();
         $isAdminLogueado = (bool) $request->session()->get('is_admin', false);
-
+        
         // Determina qué usuario ver
         if ($id) {
             // Si el usuario intenta ver un perfil diferente al suyo y no es admin, error
@@ -345,9 +346,11 @@ class TestControllerCris extends Controller
                 */
 
             $publicaciones = \DB::select(
-                'CALL obtener_publicaciones_perfil_por_usuario_id',
+                'CALL obtener_publicaciones_perfil_por_usuario_id(?)',
                 [$usuarioAVer->id]
             );
+
+            
 
             $publicaciones = collect($publicaciones)
                 //->get()
@@ -360,7 +363,7 @@ class TestControllerCris extends Controller
                     'ofertaDemanda' => $pub->Precio !== null ? 'Oferta' : 'Demanda',
                     'imagen' => $pub->imagenDireccion ? '/imagen/' . $pub->imagenDireccion : 'https://picsum.photos/200?random=' . $pub->id,
                     'estado' => 'Activo',
-                    'fecha' => $pub->created_at->format('Y-m-d'),
+                    'fecha' => Carbon::parse($pub->created_at)->format('Y-m-d'),
                     'popularidad' => null,
                 ])
                 ->toArray();

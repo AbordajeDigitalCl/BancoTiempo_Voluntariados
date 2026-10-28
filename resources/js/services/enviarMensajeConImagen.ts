@@ -43,9 +43,9 @@ export async function enviarMensajeConImagen(
             console.error('URL', error.config?.url);
             console.error('Método: ', error.config?.method);
         } else {
-            console.error('Error inesperado: '. error);
+            console.error('Error inesperado: ', error);
         }
         //console.error('Error al enviar mensaje con imagen:', error);
-        //throw error;
+        throw error;
     }
 }

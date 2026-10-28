@@ -310,7 +310,16 @@ class TestControllerMarcelo extends Controller
  * MOTIVO: Centralizar toda la lógica de filtrado en un único lugar (el SP), en vez de
  *        tenerla duplicada entre PHP y SQL. Además permite reutilizar el mismo SP desde
  *        otros lugares (por ejemplo Cruds.php) sin repetir código.
- *
+ * MODIFICADO   (3er cambio)
+ * AHORA: Se llama al stored procedure `obtener_publicaciones_cercanas_filtradas` (creado en MySQL),
+ *        que recibe 6 filtros (q, type, distance, sort, latitud, longitud) como parámetros y
+ *        devuelve directamente el resultado ya filtrado y ordenado desde la BD.
+ *        El resultado crudo (array de stdClass) se hidrata con Advertisement::hydrate()
+ *        para volver a tener Eloquent Models y poder usar sus accessors/casts
+ *        (por ejemplo el cast de image_urls a array).
+ * MOTIVO: Se modificó el SP anterior `obtener_publicaciones`, ya que no incluía todos los parámetros
+ *        necesarios para la operación. El SP `obtener_publicaciones` se conservó en las migraciones para
+ *        revisión.
  * @source tabla `advertisements`
  * @view resources/js/Pages/Advertisement.tsx
  * @param  \Illuminate\Http\Request  $request (query params opcionales)

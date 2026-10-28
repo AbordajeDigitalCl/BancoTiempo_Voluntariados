@@ -427,10 +427,13 @@ public function advertisementIndex(Request $request): Response
      */
     public function myAdvertisementsIndex(Request $request): Response
     {
+        $user_id = $request->user()->id;
+
         $createdAds = Advertisement::query()
+            ->where('id_usuario', $user_id)
             ->latest()
-            ->get()
-            ->map(function ($ad) {
+            ->paginate(10)
+            ->through(function ($ad) {
                 return [
                     'id' => $ad->id,
                     'title' => $ad->title,
@@ -610,7 +613,13 @@ public function advertisementIndex(Request $request): Response
      */
     public function dashboard(Request $request): Response
     {
-        $createdAds = Advertisement::query()->get()->map(function ($ad) {
+
+        $user_id = $request->user()->id;
+
+        $createdAds = Advertisement::query()
+        ->where('id_usuario', $user_id)
+        ->get()
+        ->map(function ($ad) {
             return [
                 'id' => $ad->id,
                 'title' => $ad->title,

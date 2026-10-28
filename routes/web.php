@@ -131,7 +131,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/Advertisement/create', [TestControllerMarcelo::class, 'advertisementCreate'])
         ->name('advertisement.create');
 
-    Route::get('/MyAdvertisements', [TestControllerMarcelo::class, 'myAdvertisementsIndex'])->name('myadvertisements');
+    Route::get('/MyAdvertisements', [TestControllerMarcelo::class, 'myAdvertisementsIndex'])
+    ->name('myadvertisements')
+    ->middleware(['auth', 'verified']);
 
     Route::get('/geo/reverse', function (Request $request) {
         $data = $request->validate([

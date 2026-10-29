@@ -123,6 +123,54 @@ class AdvertisementController extends Controller
         ];
     }
 
+    /**
+     * @summary Muestra las publicaciones del usuario autenticado
+     * @description Obtiene las publicaciones asociadas al usuario que inició sesión
+     * las ordena por fecha de creación descendente, aplica paginación de 10 registros
+     * y trasnforma los resultados al formato esperado por el frontend.
+     * 
+     * @source Modelo Advertisement (tabla publicacions).
+     * @view resources/js/Pages/MyAdvertisements.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Inertia\Response
+     */
+    public function myAdvertisementsIndex(Request $request): Response
+    {
+        $user_id = $request->user()->id;
+
+        //Para esta query se creó el index:  idx_publicacions_usuario_created, ya que sin ella
+        //la consulta arroja un error al ordenar las filas con latest().
+        $createdAds = Advertisement::query()
+            ->where('id_usuario', $user_id)
+            ->latest()
+            ->paginate(10)
+            ->through(function ($ad) {
+                return [
+                    'id' => $ad->id,
+                    'title' => $ad->title,
+                    'description' => $ad->description,
+                    'hours' => $ad->hours,
+                    'type' => $ad->type,
+                    'mode' => $ad->mode,
+                    'status' => $ad->status,
+                    'author' => $ad->author,
+                    'user_id' => $ad->user_id,
+                    'imageUrls' => $ad->image_urls ?? [],
+                    'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+                    'location_id' => $ad->location_id,
+                    'location_lat' => $ad->location_lat,
+                    'location_lng' => $ad->location_lng,
+                    'location_address' => $ad->location_address,
+                    'created_at' => optional($ad->created_at)?->toDateTimeString(),
+                    'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+                ];
+            })
+            ->toArray();
+ 
+        return Inertia::render('MyAdvertisements', [
+            'createdAds' => $createdAds,
+        ]);
+    }
 
 
     /**

@@ -174,6 +174,46 @@ class AdvertisementController extends Controller
 
 
     /**
+     * @summary Muestra el detalle de una publicación
+     * @description Busca una publicación por id y transforma sus datos al
+     * formato esperado por el frontend. Si no existe, envía item con valor null.
+     * 
+     * @source Modelo Advertisement (tabla publicacions)
+     * @view resources/js/Pages/AdvertisementShow.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id identificador de la publicación
+     * @return \Inertia\Response item=null si no existe.
+     */
+    public function advertisementShow(Request $request, int $id): Response
+    {
+        $ad = Advertisement::query()->find($id);
+ 
+        $item = $ad ? [
+            'id' => $ad->id,
+            'title' => $ad->title,
+            'description' => $ad->description,
+            'hours' => $ad->hours,
+            'type' => $ad->type,
+            'mode' => $ad->mode,
+            'status' => $ad->status,
+            'author' => $ad->author,
+            'user_id' => $ad->user_id,
+            'imageUrls' => $ad->image_urls ?? [],
+            'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+            'location_id' => $ad->location_id,
+            'location_lat' => $ad->location_lat,
+            'location_lng' => $ad->location_lng,
+            'location_address' => $ad->location_address,
+            'created_at' => optional($ad->created_at)?->toDateTimeString(),
+            'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+        ] : null;
+ 
+        return Inertia::render('AdvertisementShow', [
+            'item' => $item,
+        ]);
+    }
+
+    /**
      * Los siguientes métodos se encontraban en el controlador previo a la inclusión de los demás
      * métodos: index(Request $request), my(Request $request), showw(Request $request),
      * create(Request $request, $id), create(Request $request), store(Request $request), status(Request $request, $id),

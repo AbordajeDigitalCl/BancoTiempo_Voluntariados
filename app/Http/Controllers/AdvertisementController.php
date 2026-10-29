@@ -97,6 +97,32 @@ class AdvertisementController extends Controller
         ]);
     }
 
+    /**
+     * @summary Obtiene y valida los filtros de búsqueda de publicaciones.
+     * @description Lee los filtros de la URL y sustituye los valores no permitidos
+     * por valores predeterminados para garantizar que tengan un formato esperado.
+     *
+     * @param  \Illuminate\Http\Request  $request  Petición HTTP con los filtros.
+     * @return array{q:string,type:string,sort:string,distance:string}
+     */
+    private function parseAdvertisementFilters(Request $request): array
+    {
+        $q = (string) $request->query('q', '');
+        $type = (string) $request->query('type', 'all');
+        $sort = (string) $request->query('sort', 'newest');
+        $distance = (string) $request->query('distance', 'Cualquiera');
+ 
+        if (!in_array($type, ['all', 'Servicio', 'Producto'], true)) $type = 'all';
+        if (!in_array($sort, ['newest', 'oldest'], true)) $sort = 'newest';
+        if (!in_array($distance, ['Cualquiera', '0', '1', '5', '10', '20', '30', '50'], true)) $distance = 'Cualquiera';
+        return [
+            'q' => $q,
+            'type' => $type,
+            'sort' => $sort,
+            'distance' => $distance,
+        ];
+    }
+
 
 
     /**

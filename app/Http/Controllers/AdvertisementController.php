@@ -6,8 +6,105 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
+
+/**
+ * Conotrolador encargado de gestionar las publicaciones.
+ */
+
+
 class AdvertisementController extends Controller
 {
+
+    /**
+     * Muestra el listado de publicaciones disponibles.
+     *
+     * - Procesa y normaliza los filtros de búsqueda recibidos en la petición.
+     * - Obtiene las coordenadas del usuario para filtrar publicaciones por ubicación.
+     * - Consulta el procedimiento almacenado `obtener_publicaciones_cercanas_filtradas`,
+     *   que aplica los filtros y devuelve las publicaciones correspondientes.
+     * - Transforma los resultados en un formato adecuado para el frontend.
+     * - Renderiza la página `Advertisement` mediante Inertia, enviando las publicaciones,
+     *   los filtros aplicados y el estado administrativo de la sesión.
+     *
+     * @param  \Illuminate\Http\Request  $request  Petición HTTP con los filtros de búsqueda.
+     * @return \Inertia\Response
+     */
+    
+    public function advertisementIndex(Request $request): Response
+    {
+
+
+        $filters = $this->parseAdvertisementFilters($request);
+
+        $latitude = $request->query('userLocation.latiude');
+        $longitude = $request->query('userLocation.longitude');
+        
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+    
+        // Se ejecuta el stored procedure `obtener_publicaciones` pasando los 4 filtros
+        // ya sanitizados por parseAdvertisementFilters(). El SP hace todo el trabajo de
+        // WHERE (búsqueda por texto, tipo, distancia/modalidad) y ORDER BY (newest/oldest)
+        // directamente en MySQL, devolviendo solo las filas que corresponden.
+        /*
+        $rows = \DB::select('call obtener_publicaciones_cercanas(?, ?, ?, ?)', [
+            $filters['q'],
+            $filters['type'],
+            $filters['distance'],
+            $filters['sort'],
+        ]);
+        */
+
+        
+        $rows = \DB::select('call obtener_publicaciones_cercanas_filtradas(?, ?, ?, ?, ?, ?)', [
+            $filters['q'],
+            $filters['type'],
+            $filters['distance'],
+            $filters['sort'],
+            $latitude,
+            $longitude
+        ]);
+        
+
+        $query = Advertisement::hydrate($rows);
+    
+
+        $createdAds = $query->map(function ($ad) {
+            return [
+                'id' => $ad->id,
+                'title' => $ad->title,
+                'description' => $ad->description,
+                'hours' => $ad->hours,
+                'type' => $ad->type,
+                'mode' => $ad->mode,
+                'status' => $ad->status,
+                'author' => $ad->author,
+                'user_id' => $ad->user_id,
+                'imageUrls' => $ad->image_urls ?? [],
+                'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+                'location_id' => $ad->location_id,
+                'location_lat' => $ad->location_lat,
+                'location_lng' => $ad->location_lng,
+                'location_address' => $ad->location_address,
+                'created_at' => optional($ad->created_at)?->toDateTimeString(),
+                'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+            ];
+        })->toArray();
+    
+        return Inertia::render('Advertisement', [
+            'createdAds' => $createdAds,
+            'filters' => $filters,
+            'isAdmin' => $isAdmin,
+        ]);
+    }
+
+
+
+    /**
+     * Los siguientes métodos se encontraban en el controlador previo a la inclusión de los demás
+     * métodos: index(Request $request), my(Request $request), showw(Request $request),
+     * create(Request $request, $id), create(Request $request), store(Request $request), status(Request $request, $id),
+     * destroy(Request $request, $id).
+     */
     public function index(Request $request)
     {
         $createdAds = session('created_ads', []);
@@ -131,4 +228,9 @@ class AdvertisementController extends Controller
 
         return back();
     }
+
+    
+
+
+
 }

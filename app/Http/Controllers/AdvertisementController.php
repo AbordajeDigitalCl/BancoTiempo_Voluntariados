@@ -356,6 +356,253 @@ class AdvertisementController extends Controller
         ]);
     }
 
+    /**
+     * @summary Sube una imagen y la asocia a una publicación existente.
+     * @description
+     * - Obtiene al usuario autenticado y verifica que haya iniciado sesión.
+     * - Comprueba los permisos de acceso a la publicación:
+     *   - Los usuarios normales únicamente pueden subir imágenes a sus propias publicaciones.
+     *   - Los administradores pueden subir imágenes a cualquier publicación.
+     * - Verifica que la publicación exista y que el usuario tenga permisos para modificarla.
+     * - Valida que se haya proporcionado un archivo de imagen con un formato permitido (JPEG, PNG, JPG, GIF o SVG) y un tamaño máximo de 2 MB.
+     * - Guarda físicamente el archivo en el directorio `storage/app/uploads`, utilizando un nombre de archivo único.
+     * - Registra la imagen mediante el método `saveImagen()` y establece su tipo como imagen de publicación (`Tipo = 1`).
+     * - Consulta el número de imágenes asociadas a la publicación mediante el procedimiento almacenado `contar_imagenes_publicacion_por_tipo`.
+     * - Comprueba que la publicación no supere el límite de cinco imágenes. Si se alcanza el límite, elimina el archivo y su registro de la base de datos.
+     * - Crea una asociación entre la publicación y la imagen en la tabla `inter__imagen__public`.
+     * - Registra información de la operación en el log de Laravel.
+     * - Devuelve los datos de la imagen, su URL de acceso y un token CSRF actualizado en formato JSON.
+     *
+     * @source
+     * - Tabla `publicacions`: identificación y propiedad de la publicación.
+     * - Tabla `imagens`: almacenamiento de los registros de imágenes.
+     * - Tabla `inter__imagen__public`: asociación entre publicaciones e imágenes.
+     * - Procedimiento almacenado `contar_imagenes_publicacion_por_tipo`: contabilización de imágenes de publicación.
+     * - Método `saveImagen()`: registro de la imagen en la base de datos.
+     *
+     * @route Definida en routes/web.php.
+     * @frontend
+     * - actualizarCSRFToken.ts
+     * - estadosPublicaciones.ts
+     * - subirImagenPublicacion.ts
+     * - servicioImagenesPublicacion.ts
+     * - FormEditarMiPublicacionCRIS.tsx
+     * - EditarMiPublicacionCRIS.tsx
+     * - AjustadorImagenPublicacion.tsx
+     *
+     * @param Request $request Petición HTTP que contiene el archivo de imagen.
+     * @param int $publicacion_id Identificador de la publicación a la que se asociará la imagen.
+     * @return \Illuminate\Http\JsonResponse Datos de la imagen guardada, su URL y el token CSRF actualizado.
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException Si el usuario no está autenticado (401) o no tiene permisos para modificar la publicación (403).
+     * @throws \Illuminate\Validation\ValidationException Si el archivo no cumple las reglas de validación.
+     */
+    public function subirImagenPublicacion(Request $request, $publicacion_id)
+    {
+        $usuarioActual = $request->user();
+        if (!$usuarioActual) {
+            abort(401, 'No autenticado');
+        }
+
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+        
+        $query = \DB::table('publicacions')
+            ->where('id', $publicacion_id);
+        
+        // Solo usuarios normales solo pueden subir imágenes a sus propias publicaciones
+        // Los admins pueden subir a cualquier publicación
+        if (!$isAdmin) {
+            $query = $query->where('id_usuario', $usuarioActual->id);
+        }
+        
+        $publicacion = $query->first();
+
+        if (!$publicacion) {
+            abort(403, 'No tienes permiso para subir imágenes a esta publicación');
+        }
+
+        
+        $validated = $request->validate([
+            'image' => 'required|file|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        // Guardar la imagen en storage
+        $image = $request->file('image');
+        $filename = uniqid() . '.' . $image->extension();
+        
+        try {
+            
+            $uploadDir = storage_path('app/uploads');
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0755, true);
+            }
+            
+            
+            $image->move($uploadDir, $filename);
+            
+            \Log::info('Imagen guardada exitosamente', [
+                'filename' => $filename,
+                'path' => $uploadDir . DIRECTORY_SEPARATOR . $filename,
+                'exists' => file_exists($uploadDir . DIRECTORY_SEPARATOR . $filename),
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Error al guardar imagen', [
+                'error' => $e->getMessage(),
+                'filename' => $filename,
+                'uploadDir' => $uploadDir ?? 'undefined',
+            ]);
+            return response()->json(['error' => 'Error al guardar imagen: ' . $e->getMessage()], 500);
+        }
+
+        
+        $imagenGuardada = $this->saveImagen($filename, $usuarioActual->id);
+
+        // Cambiar Tipo a 1 (imagen de publicación)
+        \DB::table('imagens')
+            ->where('id', $imagenGuardada->id)
+            ->update(['Tipo' => 1]);
+
+        // Verificar cuántas imágenes ya tiene esta publicación, máximo 5.
+        /*
+        $conteoImagenes = \DB::table('inter__imagen__public')
+            ->where('id_publicacion', $publicacion_id)
+            ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
+            ->where('imagens.Tipo', 1)  // Solo buscar imágenes de tipo publicación
+            ->count();
+        */
+        $conteoImagenes = \DB::select(
+            'CALL contar_imagenes_publicacion_por_tipo(?)',
+            [$publicacion_id]
+        );
+        
+        if ($conteoImagenes >= 5) {
+           
+            \Storage::disk('uploads')->delete($filename);
+            \DB::table('imagens')->where('id', $imagenGuardada->id)->delete();
+            
+            return response()->json(['error' => 'La publicación ya tiene el máximo de imágenes (5)'], 422);
+        }
+
+        // Crear nueva asociación en `inter__imagen__public` sin borrar las anteriores
+        
+        \DB::table('inter__imagen__public')->insert([
+            'id_publicacion' => $publicacion_id,
+            'id_imagen' => $imagenGuardada->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        
+        \Log::info('Nueva imagen agregada a publicacion', [
+            'id_publicacion' => $publicacion_id,
+            'id_imagen' => $imagenGuardada->id,
+            'total_imagenes' => $conteoImagenes + 1,  
+        ]);
+
+        // Devolver imagen + CSRF token actualizado
+        $response = [
+            'id' => $imagenGuardada->id,
+            'Direccion' => $imagenGuardada->Direccion,
+            'imagenUrl' => '/imagen/' . $imagenGuardada->Direccion, 
+            'csrf_token' => csrf_token(),
+        ];
+
+        return response()->json($response);
+    }
+
+    /**
+     * Desasocia una imagen de una publicación sin eliminar el archivo físico.
+     *
+     * - Obtiene el usuario autenticado y comprueba que haya iniciado sesión.
+     * - Identifica si el usuario tiene privilegios de administrador.
+     * - Verifica que la publicación exista y que el usuario tenga permiso
+     *   para modificarla. Los administradores pueden modificar cualquier publicación.
+     * - Comprueba que la imagen esté asociada a la publicación y que corresponda
+     *   al tipo de imagen destinado a publicaciones (Tipo = 1).
+     * - Elimina la relación entre la imagen y la publicación en
+     *   inter__imagen__public.
+     * - Registra la operación en el log de la aplicación.
+     * - Devuelve una respuesta JSON indicando que la imagen fue desasociada.
+     *
+     * Importante:
+     * Esta operación no elimina el archivo físico almacenado en storage/app/uploads/
+     * ni elimina su registro de la tabla imagens. Únicamente elimina la asociación
+     * con la publicación.
+     *
+     * Tablas involucradas:
+     * - publicacions: verifica la existencia y propiedad de la publicación.
+     * - inter__imagen__public: elimina la asociación entre publicación e imagen.
+     * - imagens: verifica que la imagen corresponda a una imagen de publicación.
+     *
+     * Archivos relacionados:
+     * - routes/web.php: definición de la ruta.
+     * - servicioImagenesPublicacion.ts: servicio para gestionar imágenes de publicaciones.
+     * - eliminarImagenPublicacion.tsx: lógica de eliminación de imágenes.
+     * - CambiarEliminarImagenPublicacion.tsx: componente de interacción.
+     * - FormEditarMiPublicacionCRIS.tsx y EditarMiPublicacionCRIS.tsx:
+     *   componentes relacionados con la edición de publicaciones.
+     *
+     * @param \Illuminate\Http\Request $request Solicitud del usuario autenticado.
+     * @param int $publicacion_id Identificador de la publicación.
+     * @param int $imagen_id Identificador de la imagen que se desea desasociar.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *         Devuelve un mensaje de confirmación con estado HTTP 200.
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException Si el usuario
+     *         no está autenticado (401) o no tiene permisos (403).
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     *         Si la imagen no está asociada a la publicación (404).
+     */
+    public function eliminarImagenPublicacion(Request $request, $publicacion_id, $imagen_id)
+    {
+        $usuarioActual = $request->user();
+        if (!$usuarioActual) {
+            abort(401, 'No autenticado');
+        }
+
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+        
+        $query = \DB::table('publicacions')
+            ->where('id', $publicacion_id);
+        
+        // Solo usuarios normales solo pueden eliminar imágenes de sus propias publicaciones
+        // Los admins pueden eliminar de cualquier publicación
+        if (!$isAdmin) {
+            $query = $query->where('id_usuario', $usuarioActual->id);
+        }
+        
+        $publicacion = $query->first();
+
+        if (!$publicacion) {
+            abort(403, 'No tienes permiso para modificar esta publicación');
+        }
+
+        
+        $asociacion = \DB::table('inter__imagen__public')
+            ->where('id_publicacion', $publicacion_id)
+            ->where('id_imagen', $imagen_id)
+            ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
+            ->where('imagens.Tipo', 1)  // Solo imágenes de publicación
+            ->first();
+
+        if (!$asociacion) {
+            abort(404, 'Imagen no encontrada en esta publicación');
+        }
+
+        
+        \DB::table('inter__imagen__public')
+            ->where('id_publicacion', $publicacion_id)
+            ->where('id_imagen', $imagen_id)
+            ->delete();
+
+        \Log::info('Imagen desasociada de publicación', [
+            'publicacion_id' => $publicacion_id,
+            'imagen_id' => $imagen_id,
+            'usuario_id' => $usuarioActual->id,
+        ]);
+
+        return response()->json(['message' => 'Imagen eliminada correctamente'], 200);
+    }
+
 
     /**
      * Los siguientes métodos se encontraban en el controlador previo a la inclusión de los demás

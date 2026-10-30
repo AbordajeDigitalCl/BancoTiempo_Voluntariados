@@ -61,4 +61,97 @@ class DashboardController extends Controller
             'unreadNotificationCount' => $stats['badges']['unreadNotifications'] ?? 0,
         ]);
     }
+
+    /**
+     * @summary Calcula estadísticas del Dashboard.
+     * @description
+     * - Normaliza los estados de las publicaciones, identifica las
+     * pertenecientes al usuario autenticado y calcula los totales
+     * por estado.
+     * También obtiene la cantidad de mensajes sin leer del usuario y prepara
+     * los contadores que se mostrarán en el Dashboard.
+     * 
+     * @notes
+     * - Los estados permitidos son: active, paused y finished.
+     * - La identificación de las publicaciones utiliza user_id cuando
+     *   está disponible. En su ausencia, utiliza author.
+     * - El contador de notificaciones sin leer permanece como placeholder.
+     * - Los datos usados en el cálculo provienen de base de datos.
+     * @source Datos de publicaciones recibidos en $createdAds y tabla
+     * mensajes.
+     * @param  \Illuminate\Http\Request  $request
+     * @param  array  $createdAds Publicaciones utilizadas para calcular
+     * las estadísticas.
+     * @return array<string,mixed>
+     */
+    private function buildDashboardStats(Request $request, array $createdAds): array
+    {
+        $user = $request->user();
+ 
+        $normalizeStatus = function ($x) {
+            $s = $x['status'] ?? 'active';
+            return in_array($s, ['active', 'paused', 'finished'], true) ? $s : 'active';
+        };
+ 
+        $ads = array_map(function ($x) use ($normalizeStatus) {
+            $x['status'] = $normalizeStatus($x);
+            $x['author'] = $x['author'] ?? null;
+            $x['user_id'] = $x['user_id'] ?? null;
+            return $x;
+        }, $createdAds);
+ 
+        $myAds = array_values(array_filter($ads, function ($x) use ($user) {
+            if (!$user) return false;
+ 
+            if (isset($x['user_id']) && $x['user_id'] !== null) {
+                return (int)$x['user_id'] === (int)$user->id;
+            }
+ 
+            if (isset($x['author']) && $x['author'] !== null) {
+                return (string)$x['author'] === (string)$user->name;
+            }
+ 
+            return false;
+        }));
+ 
+        $countByStatus = function (array $list, string $status) {
+            $c = 0;
+            foreach ($list as $x) {
+                if (($x['status'] ?? 'active') === $status) $c++;
+            }
+            return $c;
+        };
+ 
+        $myTotal = count($myAds);
+        $myAvailable = $countByStatus($myAds, 'active');
+        $mySoldOut = $countByStatus($myAds, 'finished');
+        $myDisabled = $countByStatus($myAds, 'paused');
+ 
+        $adsActiveTotal = $countByStatus($ads, 'active');
+
+        $unreadMessageCount = 0;
+        if($user) {
+            $unreadMessageCount = \DB::table('mensajes')
+            ->where('id_usuario_destino', (int) $user->id)
+            ->whereNull('read_at')
+            ->count();
+        }
+ 
+        return [
+            'me' => [
+                'name' => $user?->name,
+            ],
+            'counts' => [
+                'myAdsTotal' => $myTotal,
+                'myAdsAvailable' => $myAvailable,
+                'myAdsSoldOut' => $mySoldOut,
+                'myAdsDisabled' => $myDisabled,
+                'adsActiveTotal' => $adsActiveTotal,
+            ],
+            'badges' => [
+                'unreadMessages' => $unreadMessageCount,
+                'unreadNotifications' => 0,
+            ],
+        ];
+    }
 }

@@ -131,4 +131,60 @@ class AdminUsuariosController extends Controller
             'isAdmin' => $isAdmin,
         ]);
     }
+
+
+    /**
+     * @summary Elimina un usuario del sistema mediante una operación exclusiva de administradores.
+     * @description
+     * - Comprueba que el usuario autenticado tenga privilegios de administrador mediante la variable de sesión `is_admin`.
+     * - Rechaza la operación con un error HTTP 403 si el usuario no tiene permisos de administrador.
+     * - Valida que se haya proporcionado un identificador de usuario válido y que exista en la tabla `users`.
+     * - Determina si el usuario que se eliminará es el mismo administrador que realiza la operación.
+     * - Elimina el registro correspondiente de la tabla `users`.
+     * - Si el administrador elimina su propia cuenta, lo redirige a la página principal.
+     * - Si elimina a otro usuario, lo redirige a la página de administración de usuarios.
+     *
+     * @source
+     * - Tabla `users`: almacenamiento de los usuarios registrados.
+     *
+     * @route Definida en routes/web.php.
+     * @frontend
+     * - eliminarUsuario.ts
+     * - FilaUsuario.tsx
+     * - AdministrarUsuarios.tsx
+     *
+     * @param Request $request Petición HTTP con el identificador del usuario que se desea eliminar.
+     * @return \Illuminate\Http\RedirectResponse Redirección a la página principal o a la administración de usuarios.
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException Si el usuario no tiene permisos de administrador (403).
+     * @throws \Illuminate\Validation\ValidationException Si el identificador del usuario no es válido.
+     */
+    public function eliminarUsuario(Request $request)
+    {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
+        if (!$isAdmin) {
+            abort(403, 'No tienes permiso');
+        }
+
+        $validated = $request->validate([
+            'usuario_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $usuarioId = $validated['usuario_id'];
+        $user = $request->user();
+
+        
+        $esSelfDelete = $user->id === $usuarioId;
+
+        // Eliminar usuario (las conversaciones persisten)
+        \DB::table('users')->where('id', $usuarioId)->delete();
+
+        // Si se eliminó a sí mismo, redirigir a home
+        if ($esSelfDelete) {
+            return redirect('/');
+        }
+
+        // Si eliminó a otro usuario, redirigir a Administrar Usuarios
+        return redirect()->route('administrar-usuarios');
+    }
 }

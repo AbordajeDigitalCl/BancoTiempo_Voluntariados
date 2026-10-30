@@ -246,4 +246,143 @@ class PerfilController extends Controller
         
         return response()->json($imagenGuardada);
     }
+
+
+    /**
+     * @summary Muestra el perfil de un usuario.
+     *
+     * @description
+     * - Determina si se mostrará el perfil del usuario autenticado o el de otro usuario.
+     * - Restringe el acceso a perfiles ajenos a los administradores.
+     * - Comprueba que el usuario solicitado exista y determina si tiene permisos de administrador.
+     * - Obtiene la imagen de perfil más reciente o utiliza una imagen de reemplazo si no existe.
+     * - Si el usuario consultado no es administrador, obtiene sus publicaciones mediante el procedimiento almacenado
+     *   obtener_publicaciones_perfil_por_usuario_id y adapta sus datos al formato esperado por el frontend.
+     * - Incluye los datos del usuario, sus publicaciones y los indicadores necesarios para mostrar el perfil propio o ajeno.
+     * - La popularidad de las publicaciones está pendiente de implementar y actualmente se devuelve como null.
+     *
+     * @source Tablas users, Tipo_Usuario e imagens; procedimiento almacenado
+     *         obtener_publicaciones_perfil_por_usuario_id.
+     * @view resources/js/Pages/VerPerfil.tsx
+     * @route Definida en routes/web.php.
+     *
+     * @param \Illuminate\Http\Request $request Solicitud HTTP con el usuario autenticado y la sesión actual.
+     * @param int|null $id ID del usuario cuyo perfil se desea consultar; si se omite, se muestra el perfil propio.
+     *
+     * @return \Inertia\Response Página VerPerfil con los datos del usuario, sus publicaciones y los indicadores de permisos.
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException Si un usuario no administrador intenta acceder
+     *         al perfil de otra persona (403).
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException Si el usuario solicitado no existe (404).
+     */
+    public function verPerfil(Request $request, $id = null)
+    {
+        $usuario_logueado = $request->user();
+        $isAdminLogueado = (bool) $request->session()->get('is_admin', false);
+        
+        // Determina qué usuario ver
+        if ($id) {
+            // Si el usuario intenta ver un perfil diferente al suyo y no es admin, error
+            if (!$isAdminLogueado && $id != $usuario_logueado->id) {
+                abort(403, 'Solo administradores pueden ver otros perfiles');
+            }
+            $usuarioAVer = \DB::table('users')->find($id);
+            if (!$usuarioAVer) {
+                abort(404, 'Usuario no encontrado');
+            }
+        } else {
+            // Ver perfil propio
+            $usuarioAVer = $usuario_logueado;
+        }
+
+        // Verificar si el usuario a ver es admin
+        $esAdminUsuarioAVer = \App\Models\Tipo_Usuario::where('id_usuario', $usuarioAVer->id)->exists();
+
+        // Obtener imagen de perfil
+        $imagenUsuario = \DB::table('imagens')
+            ->where('id_usuario_origen', $usuarioAVer->id)
+            ->where('Tipo', 0)
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        $fotoUrl = $imagenUsuario 
+            ? '/imagen/' . $imagenUsuario->Direccion 
+            : 'https://picsum.photos/200?random=' . $usuarioAVer->id;
+
+       
+        $publicaciones = [];
+        if (!$esAdminUsuarioAVer) {
+
+            /*
+            // Subquery para obtener la primera imagen de cada publicación
+            $imagenSubquery = \DB::table('inter__imagen__public')
+                ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
+                ->where('imagens.Tipo', 1)
+                ->selectRaw('inter__imagen__public.id_publicacion, MAX(imagens.Direccion) as Direccion')
+                ->groupBy('inter__imagen__public.id_publicacion');
+
+            $publicaciones = \App\Models\Publicacion::where('publicacions.id_usuario', $usuarioAVer->id)
+                ->where('publicacions.visible', 1)
+                ->leftJoin('ofertas', 'publicacions.id', '=', 'ofertas.id_publicacion')
+                ->leftJoin('demandas', 'publicacions.id', '=', 'demandas.id_publicacion')
+                ->leftJoinSub($imagenSubquery, 'imagen_primera', function($join) {
+                    $join->on('publicacions.id', '=', 'imagen_primera.id_publicacion');
+                })
+                ->select(
+                    'publicacions.id',
+                    'publicacions.Nombre',
+                    'publicacions.Descripcion',
+                    'publicacions.Tipo_Publicacion',
+                    'publicacions.Tipo_Beneficio',
+                    'publicacions.created_at',
+                    'ofertas.Precio',
+                    'demandas.Presupuesto',
+                    'imagen_primera.Direccion as imagenDireccion'
+                )
+                */
+
+            $publicaciones = \DB::select(
+                'CALL obtener_publicaciones_perfil_por_usuario_id(?)',
+                [$usuarioAVer->id]
+            );
+
+            
+
+            $publicaciones = collect($publicaciones)
+                //->get()
+                ->map(fn($pub) => [
+                    'id' => $pub->id,
+                    'titulo' => $pub->Nombre,
+                    'descripcion' => $pub->Descripcion,
+                    'costo' => $pub->Precio !== null ? ($pub->Precio ?? 0) : ($pub->Presupuesto ?? 0),
+                    'tipo' => (int) $pub->Tipo_Beneficio === 0 ? 'Servicio' : 'Producto',
+                    'ofertaDemanda' => $pub->Precio !== null ? 'Oferta' : 'Demanda',
+                    'imagen' => $pub->imagenDireccion ? '/imagen/' . $pub->imagenDireccion : 'https://picsum.photos/200?random=' . $pub->id,
+                    'estado' => 'Activo',
+                    'fecha' => Carbon::parse($pub->created_at)->format('Y-m-d'),
+                    'popularidad' => null,
+                ])
+                ->toArray();
+        }
+
+        return Inertia::render('VerPerfil', [
+            'datosUsuario' => [
+                'id' => $usuarioAVer->id,
+                'nombre' => $usuarioAVer->name ?? '',
+                'apellidoPaterno' => $usuarioAVer->Apellido_Paterno ?? '',
+                'apellidoMaterno' => $usuarioAVer->Apellido_Materno ?? '',
+                'ciudad' => $usuarioAVer->Ciudad ?? '',
+                'telefono' => $usuarioAVer->Telefono ?? '',
+                'direccion' => $usuarioAVer->Direccion ?? '',
+                'email' => $usuarioAVer->email ?? '',
+                'fechaNacimiento' => $usuarioAVer->Age ?? '',
+                'saldoHoras' => $usuarioAVer->saldo ?? 0,
+                'foto' => $fotoUrl,
+            ],
+            'publicaciones' => $publicaciones,
+            'isAdmin' => $isAdminLogueado,
+            'esAdminUsuarioAVer' => $esAdminUsuarioAVer,
+            'esPerfilPropio' => !$id, 
+        ]);
+    }
 }

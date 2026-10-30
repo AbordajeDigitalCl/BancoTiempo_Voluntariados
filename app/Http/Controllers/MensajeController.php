@@ -202,5 +202,147 @@ class MensajeController extends Controller
         return redirect('/chat');
     }
 
-    
+
+    /**
+     * @summary Envía una imagen como mensaje dentro de una conversación.
+     *
+     * @description
+     * - Obtiene al usuario autenticado y valida el identificador de la conversación y los datos de la imagen en Base64.
+     * - Comprueba que la conversación exista y que el usuario autenticado sea uno de sus participantes.
+     * - Identifica al otro participante para establecerlo como destinatario del mensaje.
+     * - Procesa la cadena Base64, eliminando el prefijo de datos si está presente.
+     * - Decodifica la imagen y verifica su tipo MIME, permitiendo únicamente JPEG, PNG, GIF y WebP.
+     * - Comprueba que el tamaño de la imagen no supere los 5 MB.
+     * - Genera un nombre único para el archivo y lo almacena en storage/app/uploads.
+     * - Registra el mensaje en la tabla mensajes, utilizando Tipo_Mensaje = 1 para identificarlo como imagen.
+     * - Dispara el evento ChatMessageCreated para notificar al destinatario de la nueva imagen en tiempo real.
+     * - Devuelve una respuesta JSON con los datos del mensaje y la URL de la imagen almacenada.
+     *
+     * @source Modelo Conversation, tabla conversations, tabla mensajes, directorio storage/app/uploads
+     *         y evento ChatMessageCreated.
+     * @route Definida en routes/web.php.
+     * @frontend enviarMensajeConImagen.ts, AreaChat.tsx, Chat.tsx y GloboMensaje.tsx.
+     *
+     * @param \Illuminate\Http\Request $request Solicitud HTTP con el identificador de conversación y la imagen en Base64.
+     *
+     * @return \Illuminate\Http\JsonResponse Respuesta JSON con el resultado del envío y los datos del mensaje creado.
+     *
+     * @throws \Illuminate\Validation\ValidationException Si faltan los datos obligatorios.
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException Si la conversación no existe (404)
+     *         o el usuario no tiene acceso a ella (403).
+     */
+    public function enviarMensajeConImagen(Request $request)
+    {
+        $user = $request->user();
+
+        
+        $validated = $request->validate([
+            'conversacion_id' => ['required', 'integer'],
+            'imagen_base64' => ['required', 'string'], 
+        ]);
+
+        
+
+        $conversacion = \App\Models\Conversation::find($validated['conversacion_id']);
+
+        if (!$conversacion) {
+            abort(404, 'Conversacion no encontrada');
+        }
+
+        if ($conversacion->user_one_id !== $user->id && $conversacion->user_two_id !== $user->id) {
+            abort(403, 'No tienes acceso a esta conversacion');
+        }
+
+        $otroUsuarioId = $conversacion->user_one_id === $user->id ? $conversacion->user_two_id : $conversacion->user_one_id;
+
+        // Procesa
+        $base64Image = $validated['imagen_base64'];
+        
+        // Extrae la parte de datos
+        if (strpos($base64Image, 'base64,') !== false) {
+            list(, $base64Image) = explode('base64,', $base64Image);
+        }
+
+        $imageData = base64_decode($base64Image);
+        
+        // Valida que sea imagen
+        $finfo = finfo_open();
+        $mime = finfo_buffer($finfo, $imageData, FILEINFO_MIME_TYPE);
+        finfo_close($finfo);
+
+        if (!in_array($mime, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) {
+            return response()->json(['error' => 'Archivo no es una imagen válida'], 400);
+        }
+
+        if (strlen($imageData) > 5 * 1024 * 1024) {
+            return response()->json(['error' => 'Imagen muy grande (máximo 5MB)'], 400);
+        }
+
+        $filename = uniqid() . '.' . match($mime) {
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'image/webp' => 'webp',
+            default => 'jpg',
+        };
+
+        try {
+            $uploadDir = storage_path('app/uploads');
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0755, true);
+            }
+            
+            file_put_contents($uploadDir . DIRECTORY_SEPARATOR . $filename, $imageData);
+            
+            if (!file_exists($uploadDir . DIRECTORY_SEPARATOR . $filename)) {
+                return response()->json(['error' => 'Error al guardar imagen'], 500);
+            }
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Error al guardar imagen: ' . $e->getMessage()], 500);
+        }
+
+        // Guardar en BD
+        $mensajeId = \DB::table('mensajes')->insertGetId([
+            'id_usuario_origen' => $user->id,
+            'id_usuario_destino' => $otroUsuarioId,
+            'Mensaje' => $filename, 
+            'Tipo_Mensaje' => 1, // 1 = imagen
+            'created_at' => now(),
+            'updated_at' => now(),
+            'read_at'=> null,
+        ]);
+
+        //evento de notificacion de mensajes no leídos
+        event(new \App\Events\ChatMessageCreated(
+            messageId: (int) $mensajeId,
+            conversationId: (int) $conversacion->id,
+            senderId: (int) $user->id,
+            receiverId: (int) $otroUsuarioId,
+            //preview: (string) $validated['contenido'],
+            preview: 'Imagen',
+            isImage: true,
+            createdAt: now()->toISOString(),
+        ));
+
+        
+        $ahora = now();
+        $fecha = $ahora->format('d/m/Y');
+        $hora = $ahora->format('H:i:s');
+
+        
+        return response()->json([
+            'success' => true,
+            'mensaje' => [
+                'id' => $mensajeId,
+                'contenido' => '[Imagen compartida]',
+                'esDelUsuarioPrincipal' => true,
+                'fecha' => $fecha,
+                'hora' => $hora,
+                'esImagen' => true,
+                'imagenUrl' => '/imagen/' . $filename,
+            ]
+        ]);
+    }
+
+
 }

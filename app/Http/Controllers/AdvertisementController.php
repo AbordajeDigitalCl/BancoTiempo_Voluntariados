@@ -213,6 +213,116 @@ class AdvertisementController extends Controller
         ]);
     }
 
+    /*
+     |--------------------------------------------------------------------------
+     | PUBLICACIÓN (EDITAR FORM)
+     |--------------------------------------------------------------------------
+     | - Vista: resources/js/Pages/EditarPublicacion.tsx
+     | - Fuente: tabla `publicacions` mediante modelo Advertisement
+     | - Guardado real: PATCH /Advertisement/{id} en routes/web.php
+     */
+ 
+    /**
+     * @summary Formulario de edición de publicación.
+     * @description Carga una publicación por id desde base de datos para editarla en el frontend.
+     *
+     * @source tabla `advertisements`
+     * @view resources/js/Pages/EditarPublicacion.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Inertia\Response item=null si no existe.
+     */
+    public function advertisementEdit(Request $request, int $id): Response
+    {
+        $ad = Advertisement::query()->find($id);
+ 
+        $item = $ad ? [
+            'id' => $ad->id,
+            'title' => $ad->title,
+            'description' => $ad->description,
+            'hours' => $ad->hours,
+            'type' => $ad->type,
+            'mode' => $ad->mode,
+            'status' => $ad->status,
+            'author' => $ad->author,
+            'user_id' => $ad->user_id,
+            'imageUrls' => $ad->image_urls ?? [],
+            'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+            'location_id' => $ad->location_id,
+            'location_lat' => $ad->location_lat,
+            'location_lng' => $ad->location_lng,
+            'location_address' => $ad->location_address,
+            'created_at' => optional($ad->created_at)?->toDateTimeString(),
+            'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
+        ] : null;
+ 
+        return Inertia::render('EditarPublicacion', [
+            'item' => $item,
+        ]);
+    }
+
+    /**
+     * @summary Actualiza una publicación existente.
+     * @description Valida los datos recibidos del formulario, comprueba que el
+     * usuario autenticado tenga permisos para modificar la publicación, procesa
+     * las imágenes y actualiza sus datos en la base de datos. Finalmente,
+     * redirige al listado de publicaciones del usuario.
+     * 
+     * @source Modelo Advertisement (tabla publicacions)
+     * @route PATCH /Advertisement/{id}
+     * @param \Illuminate\Http\Request $request
+     */
+    public function advertisementUpdate(Request $request, int $id): Response {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:80'],
+            'description' => ['required', 'string', 'max:1000'],
+            'hours' => ['required', 'integer', 'min:1', 'max:999'],
+            'type' => ['required', 'in:Servicio,Producto'],
+            'mode' => ['required', 'in:Oferta,Demanda'],
+            'imageUrls' => ['nullable', 'array', 'max:5'],
+            'imageUrls.*' => ['nullable', 'string'],
+            'location_id' => ['nullable', 'integer'],
+            'location_lat' => ['nullable', 'numeric', 'min:-90', 'max:90'],
+            'location_lng' => ['nullable', 'numeric', 'min:-180', 'max:180'],
+            'location_address' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $ad = Advertisement::find($id);
+        if (!$ad) {
+            return redirect()->route('myadvertisements');
+        }
+
+        if (
+            !$isAdmin &&
+            (int) ($ad->user_id ?? 0) !== (int) ($request->user()->id ?? 0) &&
+            (string) ($ad->author ?? '') !== (string) ($request->user()->name ?? '')
+        ) {
+            return redirect()->route('myadvertisements');
+        }
+
+        $imgs = $data['imageUrls'] ?? [];
+        $imgs = array_values(array_filter($imgs, fn ($x) => is_string($x) && trim($x) !== ''));
+        $imgs = array_slice($imgs, 0, 5);
+
+        $ad->update([
+            'title' => $data['title'],
+            'description' => $data['description'],
+            'hours' => (int) $data['hours'],
+            'type' => $data['type'],
+            'mode' => $data['mode'],
+            'image_urls' => $imgs,
+            'location_id' => array_key_exists('location_id', $data) ? $data['location_id'] : null,
+            'location_lat' => array_key_exists('location_lat', $data) ? $data['location_lat'] : null,
+            'location_lng' => array_key_exists('location_lng', $data) ? $data['location_lng'] : null,
+            'location_address' => array_key_exists('location_address', $data) ? $data['location_address'] : null,
+        ]);
+
+        return redirect()->route('myadvertisements');   
+    }
+
+
     /**
      * Los siguientes métodos se encontraban en el controlador previo a la inclusión de los demás
      * métodos: index(Request $request), my(Request $request), showw(Request $request),

@@ -226,7 +226,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('advertisement.store');
 
     Route::get('/Advertisement/{id}/edit', [TestControllerMarcelo::class, 'advertisementEdit'])->name('advertisement.edit');
-
+    /*
     Route::patch('/Advertisement/{id}', function (Request $request, $id) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
 
@@ -276,6 +276,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return redirect()->route('myadvertisements');
     })->name('advertisement.update');
+    */
+    Route::patch('/Advertisement/{id}/edit', [AdvertisementController::class, 'advertisementUpdate'])
+    ->name('advertisement.update');
 
     Route::patch('/Advertisement/{id}/status', function (Request $request, $id) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);

@@ -324,6 +324,38 @@ class AdvertisementController extends Controller
         return redirect()->route('myadvertisements');   
     }
 
+    /**
+     * @summary Muestra el formulario de creación de publicación.
+     * @description Comprueba si el usuario tiene el indicador de 
+     * administrador en la sesión. Si es administrador, obtiene la
+     * lista de usuarios (id y nombre) para permitir la asignación de
+     * la publicación. Finalmente, carga el formulario de creación
+     * en el frontend.
+     *
+     * @source session('is_admin') y modelo User (tabla users)
+     * @view resources/js/Pages/CreateAdvertisement.tsx
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Inertia\Response
+     */
+    public function advertisementCreate(Request $request): Response
+    {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+ 
+        $users = [];
+ 
+        if ($isAdmin) {
+            $users = User::query()
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        }
+ 
+        return Inertia::render('CreateAdvertisement', [
+            'users' => $users,
+        ]);
+    }
+
 
     /**
      * Los siguientes métodos se encontraban en el controlador previo a la inclusión de los demás

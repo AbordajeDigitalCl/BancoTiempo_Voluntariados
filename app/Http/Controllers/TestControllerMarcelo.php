@@ -210,6 +210,7 @@ class TestControllerMarcelo extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse Redirect a '/Advertisement' autenticado.
      */
+    
     public function adminRegister(Request $request): RedirectResponse
     {
         $request->session()->put('is_admin', true);
@@ -245,7 +246,7 @@ class TestControllerMarcelo extends Controller
 
         return redirect()->intended('/Advertisement');
     }
-
+    
     /*
      |--------------------------------------------------------------------------
      | ADMIN LOGIN (ACCIÓN)
@@ -266,7 +267,8 @@ class TestControllerMarcelo extends Controller
      * @view resources/js/Pages/AdminLogin.tsx
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse Redirect a '/Advertisement' o back con error.
-     */
+     */ 
+       
     public function adminLogin(Request $request): RedirectResponse
     {
         $request->session()->put('is_admin', true);
@@ -288,7 +290,7 @@ class TestControllerMarcelo extends Controller
 
         return redirect()->intended('/Advertisement');
     }
-
+    
     /*
  /*
 |--------------------------------------------------------------------------

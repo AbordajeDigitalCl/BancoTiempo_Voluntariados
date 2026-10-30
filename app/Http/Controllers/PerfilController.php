@@ -174,4 +174,76 @@ class PerfilController extends Controller
         }
         return redirect()->route('verperfil');
     }
+
+    /**
+     * @summary Sube y registra una imagen de perfil.
+     * @description Comprueba que el usuario esté autenticado, valida el
+     * archivo recibido y lo almacena en el directorio storage/app/uploads.
+     * Posteriormente, registra la imagen en la base de datos asociándola
+     * al usuario indicado en la URL mediante el método saveImagen().
+     * Finalmente, devuelve los datos de la imagen junto con un nuevo token
+     * CSRF en una respuesta JSON.
+     * 
+     * @source Directorio storage/app/uploads y método saveImagen().
+     * @route Ruta de subida de impagenes definida en routes/web.php
+     * @param \Illuminate\Http\Request $request
+     * @param int $usuario_id Identificador del usuario al que se asociará la
+     * imágen.
+     * @return \Illuminate\Http\JsonResponse
+     * 
+     * @throws \Symphony\Component\Http\Kernel\Exception\HttpException Si no
+     * existe un usuario autenticado (401).
+     */
+    // Archivos vinculados: web.php, subirImagen.ts, actualizarCSRFToken.ts, FormEditarPerfil.tsx, EditarPerfil.tsx, usarEstadoFormulario.ts, datosMockEditarPerfil.ts.
+    // Visuales conectadas: Editar Perfil.
+    public function subirImagen(Request $request, $usuario_id)
+    {
+        $usuarioActual = $request->user();
+        if (!$usuarioActual) {
+            abort(401, 'No autenticado');
+        }
+
+        // Valida
+        $validated = $request->validate([
+            'image' => 'required|file|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        // Guarda
+        $image = $request->file('image');
+        $filename = uniqid() . '.' . $image->extension();
+        
+        try {
+            // Crear carpeta si no existe
+            $uploadDir = storage_path('app/uploads');
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0755, true);
+            }
+            
+            // Guarda el archivo
+            $image->move($uploadDir, $filename);
+            
+            \Log::info('Imagen perfil guardada exitosamente', [
+                'filename' => $filename,
+                'usuario_id' => $usuario_id,
+                'path' => $uploadDir . DIRECTORY_SEPARATOR . $filename,
+                'exists' => file_exists($uploadDir . DIRECTORY_SEPARATOR . $filename),
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error('Error al guardar imagen perfil', [
+                'error' => $e->getMessage(),
+                'filename' => $filename,
+                'usuario_id' => $usuario_id,
+                'uploadDir' => $uploadDir ?? 'undefined',
+            ]);
+            return response()->json(['error' => 'Error al guardar imagen: ' . $e->getMessage()], 500);
+        }
+
+        // Guardar en BD con el usuario_id de la URL
+        $imagenGuardada = $this->saveImagen($filename, (int) $usuario_id);
+
+        // Devolver imagen + CSRF token actualizado
+        $imagenGuardada['csrf_token'] = csrf_token();
+        
+        return response()->json($imagenGuardada);
+    }
 }

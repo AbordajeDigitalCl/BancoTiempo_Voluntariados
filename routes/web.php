@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Advertisement;
 use App\Http\Controllers\TestControllerMarcelo;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\AdvertisementController;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -277,7 +278,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->route('myadvertisements');
     })->name('advertisement.update');
     */
-    Route::patch('/Advertisement/{id}/edit', [AdvertisementController::class, 'advertisementUpdate'])
+    Route::patch('/Advertisement/{id}', [AdvertisementController::class, 'advertisementUpdate'])
     ->name('advertisement.update');
 
     Route::patch('/Advertisement/{id}/status', function (Request $request, $id) {

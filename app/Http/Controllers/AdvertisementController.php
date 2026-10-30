@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use App\Models\Advertisement;
+use Illuminate\Http\RedirectResponse;
 
 
 /**
@@ -272,7 +274,7 @@ class AdvertisementController extends Controller
      * @route PATCH /Advertisement/{id}
      * @param \Illuminate\Http\Request $request
      */
-    public function advertisementUpdate(Request $request, int $id): Response {
+    public function advertisementUpdate(Request $request, int $id): RedirectResponse {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
 
         $data = $request->validate([

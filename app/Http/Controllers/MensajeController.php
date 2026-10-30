@@ -345,4 +345,86 @@ class MensajeController extends Controller
     }
 
 
+    /**
+     * Marca como leídos los mensajes recibidos de otro participante en una conversación.
+     *
+     * - Obtiene el usuario autenticado mediante la solicitud.
+     * - Valida que se proporcione un ID de conversación existente.
+     * - Comprueba que el usuario autenticado sea uno de los participantes.
+     * - Identifica al otro participante de la conversación.
+     * - Actualiza la fecha de lectura (read_at) de los mensajes recibidos
+     *   que todavía no han sido marcados como leídos.
+     * - Calcula el total global de mensajes no leídos del usuario autenticado.
+     * - Devuelve una respuesta JSON con el resultado de la operación.
+     *
+     * Tablas involucradas:
+     * - conversations: identifica a los participantes de la conversación.
+     * - mensajes: actualiza el estado de lectura y calcula los mensajes pendientes.
+     *
+     * @param \Illuminate\Http\Request $request Solicitud con el ID de la conversación.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     *         Devuelve el ID de la conversación, la cantidad de mensajes actualizados
+     *         y el total global de mensajes no leídos.
+     *
+     * @throws \Illuminate\Validation\ValidationException Si el ID de conversación
+     *         no es válido o no existe.
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException Si el usuario
+     *         no tiene autorización para acceder a la conversación (403).
+     */
+    public function marcarLeidos(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'conversacion_id'=>['required', 'integer', 'exists:conversations,id'],
+        ]);
+        
+        $conversacionId = (int) $validated['conversacion_id'];
+
+        $conversacion = \DB::table('conversations')
+        ->where('id', $conversacionId)
+        ->first();
+
+        if(!$conversacion) {
+            abort(404, 'Converasacion no encontrada');
+        }
+
+        $esParticipante = 
+        ((int) $conversacion->user_one_id === (int) $user->id || 
+        (int) $conversacion->user_two_id === (int) $user->id);
+
+        if(!$esParticipante) {
+            abort(403, 'No tienes acceso a esta conversacion');
+        }
+
+        //Identificar al otro participante
+        $otroUsuarioId = ((int) $conversacion->user_one_id === (int) $user->id)
+        ? (int) $conversacion->user_two_id : (int) $conversacion->user_one_id;
+
+        $ahora = now();
+
+        $updatedCount = \DB::table('mensajes')
+        ->where('id_usuario_origen', $otroUsuarioId)
+        ->where('id_usuario_destino', (int) $user->id)
+        ->whereNull('read_at')
+        ->update([
+            'read_at'=>$ahora,
+            'updated_at'=> $ahora,
+        ]);
+
+
+        //conteo global de no leidos (badge total)
+        $unreadTotal = \DB::table('mensajes')
+        ->where('id_usuario_destino', (int) $user->id)
+        ->whereNull('read_at')
+        ->count();
+
+        return response()->json([
+            'success' => true,
+            'conversation_id' => $conversacionId,
+            'updated_count' => $updatedCount,
+            'unread_total' => $unreadTotal,
+        ]);
+    }
 }

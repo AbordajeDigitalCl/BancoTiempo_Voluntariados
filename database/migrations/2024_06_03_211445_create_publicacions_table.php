@@ -36,7 +36,7 @@ return new class extends Migration
             $table->unsignedInteger('hours')->nullable();
             $table->enum('type', ['Servicio', 'Producto'])->nullable();
             $table->enum('mode', ['Oferta', 'Demanda'])->nullable();
-            $table->enum('status', ['active', 'paused', 'finished'])->default('active');
+            $table->enum('status', ['active', 'paused', 'finished', 'deleted'])->default('active');
             $table->string('author')->nullable();
             $table->json('image_urls')->nullable();
             $table->unsignedBigInteger('location_id')->nullable();

@@ -92,7 +92,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return response()->json(['csrf_token' => csrf_token()]);
     })->name('refresh-csrf');
 
-    Route::get('/Advertisement', [TestControllerMarcelo::class, 'advertisementIndex'])->name('advertisement');
+    Route::get('/Advertisement', [AdvertisementController::class, 'advertisementIndex'])->name('advertisement');
 
     Route::get('/MenuHeader', function () {
         return Inertia::render('MenuHeader');

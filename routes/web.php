@@ -226,7 +226,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->route('myadvertisements');
     })->name('advertisement.store');
 
-    Route::get('/Advertisement/{id}/edit', [TestControllerMarcelo::class, 'advertisementEdit'])->name('advertisement.edit');
+    Route::get('/Advertisement/{id}/edit', [AdvertisementController::class, 'advertisementEdit'])->name('advertisement.edit');
     /*
     Route::patch('/Advertisement/{id}', function (Request $request, $id) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);

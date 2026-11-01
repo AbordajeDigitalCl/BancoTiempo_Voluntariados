@@ -342,7 +342,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.report');
 
-    Route::get('/Advertisement/{id}', [TestControllerMarcelo::class, 'advertisementShow'])->name('advertisement.show');
+    Route::get('/Advertisement/{id}', [AdvertisementController::class, 'advertisementShow'])->name('advertisement.show');
 
     Route::get('/chat', [\App\Http\Controllers\TestControllerCris::class, 'chat'])
         ->middleware(['auth', 'verified'])->name('chat');

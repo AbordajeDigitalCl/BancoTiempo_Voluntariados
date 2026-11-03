@@ -104,7 +104,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/administrar-usuarios/crear-conversacion', [\App\Http\Controllers\TestControllerCris::class, 'crearOBuscarConversacion'])
         ->middleware(['auth', 'verified']);
 
-    Route::delete('/administrar-usuarios/eliminar-usuario', [\App\Http\Controllers\TestControllerCris::class, 'eliminarUsuario'])
+    Route::delete('/administrar-usuarios/eliminar-usuario', [\App\Http\Controllers\UserAdminController::class, 'eliminarUsuario'])
         ->middleware(['auth', 'verified']);
 
     Route::get('/Editar-Publicacion', function () {

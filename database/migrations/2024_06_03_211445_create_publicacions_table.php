@@ -95,25 +95,25 @@ return new class extends Migration
                 p.location_address,
                 p.created_at,
                 p.updated_at,
-                calcular_distancia(p_lat, p_lng, location_lat, location_lng) AS distancia_km
-                FROM publicacions
-                WHERE location_lat IS NOT NULL
-                AND location_lng IS NOT NULL
+                calcular_distancia(p_lat, p_lng, p.location_lat, p.location_lng) AS distancia_km
+                FROM publicacions p
+                WHERE p.location_lat IS NOT NULL
+                AND p.location_lng IS NOT NULL
                 AND (
 				    p_q = ''
-                    OR Nombre LIKE CONCAT('%', p_q, '%')
-                    OR Descripcion LIKE CONCAT('%', p_q,'%')
+                    OR p.Nombre LIKE CONCAT('%', p_q, '%')
+                    OR p.Descripcion LIKE CONCAT('%', p_q,'%')
                 )
                 AND (
 				    p_type = 'all'
-                    OR publicacions.type = p_type
+                    OR p.type = p_type
                 )
                 HAVING
                     p_distance = 'Cualquiera'
                     OR distancia_km <= CAST(p_distance AS DECIMAL(10,2))
                 ORDER BY 
-				CASE WHEN p_sort = 'newest' THEN created_at END DESC,
-                CASE WHEN p_sort = 'oldest' THEN created_at END ASC;
+				CASE WHEN p_sort = 'newest' THEN p.created_at END DESC,
+                CASE WHEN p_sort = 'oldest' THEN p.created_at END ASC;
             END
         ");
 

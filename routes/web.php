@@ -347,7 +347,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/chat', [\App\Http\Controllers\ChatController::class, 'chat'])
         ->middleware(['auth', 'verified'])->name('chat');
 
-    Route::post('/chat/enviar-mensaje', [\App\Http\Controllers\TestControllerCris::class, 'enviarMensaje'])
+    Route::post('/chat/enviar-mensaje', [\App\Http\Controllers\MensajeController::class, 'enviarMensaje'])
         ->middleware(['auth', 'verified']);
 
     Route::post('/chat/enviar-mensaje-imagen', [\App\Http\Controllers\TestControllerCris::class, 'enviarMensajeConImagen'])

@@ -350,7 +350,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/chat/enviar-mensaje', [\App\Http\Controllers\MensajeController::class, 'enviarMensaje'])
         ->middleware(['auth', 'verified']);
 
-    Route::post('/chat/enviar-mensaje-imagen', [\App\Http\Controllers\TestControllerCris::class, 'enviarMensajeConImagen'])
+    Route::post('/chat/enviar-mensaje-imagen', [\App\Http\Controllers\MensajeController::class, 'enviarMensajeConImagen'])
         ->middleware(['auth', 'verified']);
 
     Route::post('/chat/marcar-leidos', [\App\Http\Controllers\TestControllerCris::class, 'marcarLeidos'])

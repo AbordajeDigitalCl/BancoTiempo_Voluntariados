@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Advertisement;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {

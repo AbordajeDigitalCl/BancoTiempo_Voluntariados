@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use App\Models\Advertisement;
 use Illuminate\Http\RedirectResponse;
+use Inertia\Response;
 
 
 /**

@@ -8,6 +8,7 @@ use App\Models\Advertisement;
 use App\Http\Controllers\TestControllerMarcelo;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\AdvertisementController;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     if (auth()->check()) {

@@ -358,7 +358,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     ->name('chat.marcar-leidos');
 
     //Ruta para obtener mensajes de una conversación para el mostrar el chat en tiempo real
-    Route::get('/chat/mensajes', [\App\Http\Controllers\TestControllerCris::class, 'obtenerMensajesConversacion'])
+    Route::get('/chat/mensajes', [\App\Http\Controllers\MensajeController::class, 'obtenerMensajesConversacion'])
     ->name('chat.mensajes');
 
     Route::get('/verperfil/{id?}', [\App\Http\Controllers\PerfilController::class, 'verPerfil'])

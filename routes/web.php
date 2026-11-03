@@ -46,7 +46,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [AdvertisementController::class, 'dashboard'])->name('dashboard');
 
 
-    Route::get('/EditarPerfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil']);
+    Route::get('/EditarPerfil/{id?}', [\App\Http\Controllers\PerfilController::class, 'editarPerfil']);
 
     Route::get('/EditarPerfil', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil'])
         ->middleware(['auth', 'verified'])->name('editarperfil');

@@ -52,7 +52,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware(['auth', 'verified'])->name('editarperfil');
 
 
-    Route::post('/EditarPerfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'guardarPerfil'])
+    Route::post('/EditarPerfil/{id?}', [\App\Http\Controllers\PerfilController::class, 'guardarPerfil'])
         ->middleware(['auth', 'verified']);
 
     // MODIFICADO: Ruta de upload movida de routes/api.php a routes/web.php porque las rutas API no reconocen autenticación por sesión (solo Sanctum tokens).

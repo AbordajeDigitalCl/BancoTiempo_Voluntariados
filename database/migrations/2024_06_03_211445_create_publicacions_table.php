@@ -80,11 +80,21 @@ return new class extends Migration
             )
             BEGIN
                 SELECT
-                id,
-                Nombre,
-                Descripcion,
-                location_lat,
-                location_lng,
+                p.id,
+                Nombre AS title,
+                Descripcion AS description,
+                p.hours,
+                p.type,
+                p.mode,
+                p.status,
+                p.id_usuario AS user_id,
+                p.image_urls,
+                p.location_id,
+                p.location_lat,
+                p.location_lng,
+                p.location_address,
+                p.created_at,
+                p.updated_at,
                 calcular_distancia(p_lat, p_lng, location_lat, location_lng) AS distancia_km
                 FROM publicacions
                 WHERE location_lat IS NOT NULL

@@ -72,7 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // NUEVO: Endpoint para eliminar una imagen de una publicación
     // Solo desasocia la imagen
-    Route::delete('/eliminar-imagen-publicacion/{publicacion_id}/{imagen_id}', [\App\Http\Controllers\TestControllerCris::class, 'eliminarImagenPublicacion'])
+    Route::delete('/eliminar-imagen-publicacion/{publicacion_id}/{imagen_id}', [\App\Http\Controllers\AdvertisementController::class, 'eliminarImagenPublicacion'])
         ->name('eliminar-imagen-publicacion');
 
     // NUEVO: Endpoint alternativo para servir imágenes (backup si /api/file/ no funciona)

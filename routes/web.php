@@ -129,7 +129,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::post('/asociar-calificaciones/{publicacion_id}', [\App\Http\Controllers\TestControllerCris::class, 'asociarcalificaciones'])
     //     ->middleware(['auth', 'verified'])->name('calificaciones-post');
 
-    Route::get('/Advertisement/create', [TestControllerMarcelo::class, 'advertisementCreate'])
+    Route::get('/Advertisement/create', [AdvertisementController::class, 'advertisementCreate'])
         ->name('advertisement.create');
 
     Route::get('/MyAdvertisements', [AdvertisementController::class, 'myAdvertisementsIndex'])

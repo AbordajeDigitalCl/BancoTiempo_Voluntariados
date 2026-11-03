@@ -43,7 +43,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/dashboard', [TestControllerMarcelo::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [AdvertisementController::class, 'dashboard'])->name('dashboard');
 
 
     Route::get('/EditarPerfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil']);

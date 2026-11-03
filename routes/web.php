@@ -67,7 +67,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('subir-imagen');
 
     // NUEVO: Endpoint para subir imagen a una publicación
-    Route::post('/subir-imagen-publicacion/{publicacion_id}', [\App\Http\Controllers\TestControllerCris::class, 'subirImagenPublicacion'])
+    Route::post('/subir-imagen-publicacion/{publicacion_id}', [\App\Http\Controllers\AdvertisementController::class, 'subirImagenPublicacion'])
         ->name('subir-imagen-publicacion');
 
     // NUEVO: Endpoint para eliminar una imagen de una publicación

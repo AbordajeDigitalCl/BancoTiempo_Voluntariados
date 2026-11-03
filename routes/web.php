@@ -361,7 +361,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/chat/mensajes', [\App\Http\Controllers\TestControllerCris::class, 'obtenerMensajesConversacion'])
     ->name('chat.mensajes');
 
-    Route::get('/verperfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'verPerfil'])
+    Route::get('/verperfil/{id?}', [\App\Http\Controllers\PerfilController::class, 'verPerfil'])
         ->middleware(['auth', 'verified'])->name('verperfil');
 
     Route::get('/perfil-Admin/{id?}', function ($id = null) {

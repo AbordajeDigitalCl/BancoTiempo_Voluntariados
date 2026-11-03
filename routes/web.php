@@ -63,7 +63,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // MODIFICADO: Endpoint adicional en TestControllerCris.php para subir imagen con usuario_id específico.
     // Permite editar imágenes de otros usuarios como admin, y devuelve CSRF token actualizado para evitar error 419.
     // Se aplican los mismos middleware que las otras rutas del grupo (auth, verified, csrf automático)
-    Route::post('/subir-imagen/{usuario_id}', [\App\Http\Controllers\TestControllerCris::class, 'subirImagen'])
+    Route::post('/subir-imagen/{usuario_id}', [\App\Http\Controllers\PerfilController::class, 'subirImagen'])
         ->name('subir-imagen');
 
     // NUEVO: Endpoint para subir imagen a una publicación

@@ -87,6 +87,7 @@ return new class extends Migration
                 p.type,
                 p.mode,
                 p.status,
+                p.author,
                 p.id_usuario AS user_id,
                 p.image_urls,
                 p.location_id,

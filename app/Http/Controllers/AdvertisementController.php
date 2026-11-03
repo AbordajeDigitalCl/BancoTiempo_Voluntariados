@@ -92,6 +92,8 @@ class AdvertisementController extends Controller
                 'updated_at' => optional($ad->updated_at)?->toDateTimeString(),
             ];
         })->toArray();
+
+        
     
         return Inertia::render('Advertisement', [
             'createdAds' => $createdAds,
@@ -99,7 +101,7 @@ class AdvertisementController extends Controller
             'isAdmin' => $isAdmin,
         ]);
     }
-
+    
     /**
      * @summary Obtiene y valida los filtros de búsqueda de publicaciones.
      * @description Lee los filtros de la URL y sustituye los valores no permitidos

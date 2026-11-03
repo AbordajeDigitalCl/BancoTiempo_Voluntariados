@@ -98,7 +98,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('MenuHeader');
     })->middleware(['auth', 'verified'])->name('menuheader');
 
-    Route::get('/Administrar-Usuarios', [\App\Http\Controllers\TestControllerCris::class, 'administrarUsuarios'])
+    Route::get('/Administrar-Usuarios', [\App\Http\Controllers\UserAdminController::class, 'administrarUsuarios'])
         ->middleware(['auth', 'verified'])->name('administrar-usuarios');
 
     Route::post('/administrar-usuarios/crear-conversacion', [\App\Http\Controllers\TestControllerCris::class, 'crearOBuscarConversacion'])

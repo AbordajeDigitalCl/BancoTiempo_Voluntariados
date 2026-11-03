@@ -101,7 +101,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/Administrar-Usuarios', [\App\Http\Controllers\UserAdminController::class, 'administrarUsuarios'])
         ->middleware(['auth', 'verified'])->name('administrar-usuarios');
 
-    Route::post('/administrar-usuarios/crear-conversacion', [\App\Http\Controllers\TestControllerCris::class, 'crearOBuscarConversacion'])
+    Route::post('/administrar-usuarios/crear-conversacion', [\App\Http\Controllers\ConversacionController::class, 'crearOBuscarConversacion'])
         ->middleware(['auth', 'verified']);
 
     Route::delete('/administrar-usuarios/eliminar-usuario', [\App\Http\Controllers\UserAdminController::class, 'eliminarUsuario'])

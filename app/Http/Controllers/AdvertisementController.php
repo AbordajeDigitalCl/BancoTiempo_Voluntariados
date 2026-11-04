@@ -651,6 +651,146 @@ class AdvertisementController extends Controller
         return response()->json(['message' => 'Imagen eliminada correctamente'], 200);
     }
 
+    /**
+     * @summary Obtiene los datos de una publicación y muestra el formulario para editarla.
+     * @description
+     * - Obtiene al usuario autenticado y verifica si tiene privilegios de administrador mediante la sesión.
+     * - Recupera los datos de la publicación mediante el procedimiento almacenado `obtener_publicacion_para_editar`.
+     * - Comprueba los permisos de acceso a la publicación:
+     *   - Los usuarios normales únicamente pueden editar sus propias publicaciones.
+     *   - Los administradores pueden editar cualquier publicación.
+     * - Devuelve un error 404 si la publicación no existe o el usuario no tiene permisos para editarla.
+     * - Determina si la publicación corresponde a una Oferta o una Demanda mediante la información obtenida de las tablas `ofertas` y `demandas`.
+     * - Obtiene el valor económico correspondiente: `Precio` para las ofertas o `Presupuesto` para las demandas.
+     * - Convierte los valores numéricos de `Tipo_Beneficio` y `Tipo_Publicacion` a las denominaciones esperadas por el frontend (Servicio/Producto y Oferta/Demanda).
+     * - Obtiene la URL de la imagen asociada a la publicación. Si no existe una imagen, utiliza una imagen placeholder de Picsum.
+     * - Organiza los datos de la publicación en un objeto con la estructura esperada por el formulario de edición.
+     * - Recupera el parámetro `return_to` de la URL para determinar a qué vista regresar después de editar la publicación. Utiliza `/verperfil` como destino predeterminado.
+     * - Renderiza el componente `EditarMiPublicacionCRIS` mediante Inertia, enviándole los datos de la publicación y la ruta de retorno.
+     *
+     * @source
+     * - Tabla `publicacions`: información general de la publicación, propietario y tipo de beneficio.
+     * - Tablas `ofertas` y `demandas`: obtención del precio o presupuesto según el tipo de publicación.
+     * - Tabla `imagens`: obtención de la dirección y el identificador de la imagen asociada.
+     * - Tabla `inter__imagen__public`: relación entre publicaciones e imágenes.
+     * - Procedimiento almacenado `obtener_publicacion_para_editar`: recuperación de los datos de la publicación y aplicación de las restricciones de acceso.
+     *
+     * @route Definida en routes/web.php.
+     * @frontend
+     * - estadosPublicaciones.ts
+     * - EditarMiPublicacionCRIS.tsx
+     * - FormEditarMiPublicacionCRIS.tsx
+     * - EditarPublicacion.tsx
+     * - guardarPublicacion.ts
+     * - servicioImagenesPublicacion.ts
+     * - subirImagenPublicacion.ts
+     * - MyAdvertisements.tsx
+     * - VerPerfil.tsx
+     * - AuthenticatedLayout.tsx
+     * - usarFiltroServicio.ts
+     * - SeleccionarPublicacionEditarCRIS.tsx
+     * - ServicioProductoCard.tsx
+     * - ServicioProductoCardSelectable.tsx
+     * - ServiceCardListview.tsx
+     * - ServiceCardListviewSelectable.tsx
+     *
+     * @views
+     * - Editar publicación.
+     * - Ver perfil (enlace para acceder a la edición de una publicación).
+     */
+    public function editarPublicacion(Request $request, $id)
+    {
+        $user = $request->user();
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+        $returnTo = $request->query('return_to', '/verperfil');
+        
+        /*
+        // Subquery para obtener la primera imagen de la publicación
+        $imagenSubquery = \DB::table('inter__imagen__public')
+            ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
+            ->where('imagens.Tipo', 1)
+            ->selectRaw('inter__imagen__public.id_publicacion, MAX(imagens.Direccion) as Direccion, MAX(imagens.id) as id')
+            ->groupBy('inter__imagen__public.id_publicacion');
+
+        $publicacion = \App\Models\Publicacion::where('publicacions.id', $id);
+        
+        // Solo usuarios normales solo pueden editar sus propias publicaciones
+        // Los admins pueden editar cualquier publicación
+        if (!$isAdmin) {
+            $publicacion = $publicacion->where('id_usuario', $user->id);
+        }
+        
+        $publicacion = $publicacion
+            ->leftJoin('ofertas', 'publicacions.id', '=', 'ofertas.id_publicacion')
+            ->leftJoin('demandas', 'publicacions.id', '=', 'demandas.id_publicacion')
+            ->leftJoinSub($imagenSubquery, 'imagen_primera', function($join) {
+                $join->on('publicacions.id', '=', 'imagen_primera.id_publicacion');
+            })
+            ->select(
+                'publicacions.id',
+                'publicacions.Nombre',
+                'publicacions.Descripcion',
+                'publicacions.Tipo_Publicacion',
+                'publicacions.Tipo_Beneficio',
+                'ofertas.Precio',
+                'demandas.Presupuesto',
+                'imagen_primera.Direccion as imagenDireccion',
+                'imagen_primera.id as imagenId'
+            )
+            ->first();
+        */
+
+        $publicacion = collect(\DB::select(
+            'CALL obtener_publicacion_para_editar(?,?,?)',
+            [$id,
+            $user->id,
+            $isAdmin ? 1 : 0
+            ]
+        ))
+        ->first();
+
+        if (!$publicacion) {
+            abort(404);
+        }
+
+        // CORREGIDO: Determinar Tipo_Publicacion consultando las tablas
+        // Tipo_Publicacion: 0=Oferta (Precio), 1=Demanda (Presupuesto)
+        $esOferta = $publicacion->Precio !== null;
+        $tipoPublicacionCalculado = $esOferta ? 0 : 1;
+        $saldo = $esOferta ? ($publicacion->Precio ?? 0) : ($publicacion->Presupuesto ?? 0);
+        
+        // Convertir números a strings de tipo para el componente frontend
+        $tipoBeneficioText = (int) $publicacion->Tipo_Beneficio === 0 ? 'Servicio' : 'Producto';
+        $tipoOfertaDemandaText = $esOferta ? 'Oferta' : 'Demanda';
+
+        // NUEVO: Obtener URL de imagen real o usar placeholder
+        // Usar endpoint alternativo /imagen/ para mayor compatibilidad
+        $imagenUrl = $publicacion->imagenDireccion 
+            ? '/imagen/' . $publicacion->imagenDireccion
+            : 'https://picsum.photos/200?random=' . $publicacion->id;
+
+        $datosPublicacion = [
+            'id' => $publicacion->id,
+            'titulo' => $publicacion->Nombre,
+            'descripcion' => $publicacion->Descripcion,
+            'costo' => $saldo,
+            'tipo' => $tipoBeneficioText, 
+            'ofertaDemanda' => $tipoOfertaDemandaText, 
+            'imagen' => $imagenUrl,
+            'imagenId' => $publicacion->imagenId, 
+            'estado' => 'Activo',
+            'tipoPublicacion' => $tipoPublicacionCalculado, 
+            'tipoBeneficio' => (int) $publicacion->Tipo_Beneficio, 
+            'Precio' => $esOferta ? $saldo : null,
+            'Presupuesto' => !$esOferta ? $saldo : null,
+        ];
+
+        return Inertia::render('EditarMiPublicacionCRIS', [
+            'datosPublicacion' => $datosPublicacion,
+            'returnTo' => $returnTo,
+        ]);
+    }
+
 
     /**
      * Los siguientes métodos se encontraban en el controlador previo a la inclusión de los demás

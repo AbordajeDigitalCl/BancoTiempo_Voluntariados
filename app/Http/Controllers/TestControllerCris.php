@@ -435,13 +435,13 @@ class TestControllerCris extends Controller
             ->first();
         */
 
-        $publicacion = \DB::select(
+        $publicacion = collect(\DB::select(
             'CALL obtener_publicacion_para_editar(?,?,?)',
             [$id,
             $user->id,
             $isAdmin ? 1 : 0
             ]
-        )
+        ))
         ->first();
 
         if (!$publicacion) {

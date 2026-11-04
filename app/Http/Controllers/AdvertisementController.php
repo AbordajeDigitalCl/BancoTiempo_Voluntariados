@@ -9,6 +9,7 @@ use App\Models\Advertisement;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
+use App\Traits\Cruds;
 
 
 /**
@@ -18,6 +19,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class AdvertisementController extends Controller
 {
+
+    use Cruds;
 
     /**
      * Muestra el listado de publicaciones disponibles.
@@ -517,12 +520,14 @@ class AdvertisementController extends Controller
             ->where('imagens.Tipo', 1)  // Solo buscar imágenes de tipo publicación
             ->count();
         */
-        $conteoImagenes = \DB::select(
+        $conteoImagenes = \DB::selectOne(
             'CALL contar_imagenes_publicacion_por_tipo(?)',
             [$publicacion_id]
         );
         
-        if ($conteoImagenes >= 5) {
+        $conteoImagenesTotal = (int) $conteoImagenes->conteo_imagenes;
+
+        if ($conteoImagenesTotal >= 5) {
            
             \Storage::disk('uploads')->delete($filename);
             \DB::table('imagens')->where('id', $imagenGuardada->id)->delete();
@@ -542,7 +547,7 @@ class AdvertisementController extends Controller
         \Log::info('Nueva imagen agregada a publicacion', [
             'id_publicacion' => $publicacion_id,
             'id_imagen' => $imagenGuardada->id,
-            'total_imagenes' => $conteoImagenes + 1,  
+            'total_imagenes' => $conteoImagenesTotal + 1,  
         ]);
 
         // Devolver imagen + CSRF token actualizado

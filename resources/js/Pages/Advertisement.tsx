@@ -32,6 +32,22 @@ type Coordinates = {
   longitude: number
 };
 
+type LaravelPaginator<T> = {
+  data: T[];
+  current_page: number;
+  last_page: number;
+  prev_page_url:string | null;
+  next_page_url: string | null;
+  total: number;
+};
+
+type AdvertisementProps = {
+  auth: any,
+  createdAds: LaravelPaginator<Ad>,
+  filters: any,
+  isAdmin: any
+};
+
 function OwnerStatusPill({ status }: { status: AdStatus }) {
   const label = status === 'active' ? 'Disponible' : status === 'finished' ? 'Agotado' : 'Desactivado';
   const cls =
@@ -115,7 +131,7 @@ function MiniMap({ lat, lng }: { lat: number; lng: number }) {
   return <div ref={divRef} className="w-full h-28 rounded-lg border border-gray-200 overflow-hidden" />;
 }
 
-export default function Advertisement({ auth, createdAds, filters, isAdmin }: any) {
+export default function Advertisement({ auth, createdAds, filters, isAdmin }: AdvertisementProps) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -176,7 +192,7 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
   const firstRunRef = useRef(true);
 
   const ads: Ad[] = useMemo(() => {
-    return (createdAds ?? []).map((x: any) => {
+    return (createdAds?.data ?? []).map((x: any) => {
       const normalizedImageUrls: string[] = (x.imageUrls ?? x.image_urls ?? x.images ?? []) as string[];
 
       return {
@@ -402,6 +418,7 @@ const filteredAds: Ad[] = useMemo(() => {
               </div>
             </div>
           </div>
+          <>
           <div className="space-y-4">
             {filteredAds.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-sm text-gray-600">
@@ -544,7 +561,38 @@ const filteredAds: Ad[] = useMemo(() => {
               })
             )}
           </div>
+          <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <button
+                disabled={!createdAds.prev_page_url}
+                onClick={() => {
+                  if (createdAds.prev_page_url) {
+                    router.get(createdAds.prev_page_url);
+                  }
+                }}
+                className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Anterior
+              </button>
+
+              <span className="text-sm text-gray-600">
+                Página {createdAds.current_page} de {createdAds.last_page}
+              </span>
+
+              <button
+                disabled={!createdAds.next_page_url}
+                onClick={() => {
+                  if (createdAds.next_page_url) {
+                    router.get(createdAds.next_page_url);
+                  }
+                }}
+                className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Siguiente
+              </button>
+          </div>
+          </>
         </div>
+        
       </div>
     </AuthenticatedLayout>
   );

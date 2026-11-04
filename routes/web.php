@@ -112,7 +112,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('SeleccionarPublicacionEditarCRIS');
     })->middleware(['auth', 'verified'])->name('editar-publicacion');
 
-    Route::get('/Editar-Publicacion/{id}', [\App\Http\Controllers\TestControllerCris::class, 'editarPublicacion'])
+    Route::get('/Editar-Publicacion/{id}', [\App\Http\Controllers\AdvertisementController::class, 'editarPublicacion'])
         ->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
 
     Route::post('/Editar-Publicacion/{id}', [\App\Http\Controllers\TestControllerCris::class, 'guardarPublicacion'])

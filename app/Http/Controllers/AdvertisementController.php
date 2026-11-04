@@ -39,9 +39,12 @@ class AdvertisementController extends Controller
 
         $filters = $this->parseAdvertisementFilters($request);
 
-        $latitude = $request->query('userLocation.latiude');
-        $longitude = $request->query('userLocation.longitude');
+        //$latitude = $request->query('userLocation.latiude');
+        //$longitude = $request->query('userLocation.longitude');
         
+        $latitude = -33.4372;
+        $longitude = -70.6506;
+
         $isAdmin = (bool) $request->session()->get('is_admin', false);
     
         // Se ejecuta el stored procedure `obtener_publicaciones` pasando los 4 filtros

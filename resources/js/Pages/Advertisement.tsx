@@ -563,13 +563,12 @@ const filteredAds: Ad[] = useMemo(() => {
           </div>
           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
               <button
-                disabled={!createdAds.prev_page_url}
                 onClick={() => {
                   if (createdAds.prev_page_url) {
                     router.get(createdAds.prev_page_url);
                   }
                 }}
-                className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.prev_page_url ? 'invisible' : ''}`}
               >
                 Anterior
               </button>
@@ -579,13 +578,12 @@ const filteredAds: Ad[] = useMemo(() => {
               </span>
 
               <button
-                disabled={!createdAds.next_page_url}
                 onClick={() => {
                   if (createdAds.next_page_url) {
                     router.get(createdAds.next_page_url);
                   }
                 }}
-                className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.next_page_url ? 'invisible' : ''}`}
               >
                 Siguiente
               </button>

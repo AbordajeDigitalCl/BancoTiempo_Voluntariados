@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use App\Models\Advertisement;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 
 /**
@@ -60,7 +61,7 @@ class AdvertisementController extends Controller
         ]);
         */
 
-        
+        /*
         $rows = \DB::select('call obtener_publicaciones_cercanas_filtradas(?, ?, ?, ?, ?, ?)', [
             $filters['q'],
             $filters['type'],
@@ -69,10 +70,42 @@ class AdvertisementController extends Controller
             $latitude,
             $longitude
         ]);
+        */
+
+        $perPage = 10;
         
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+
+        $offset = ($currentPage - 1) * $perPage;
+
+        $rows = \DB::select(
+            'CALL obtener_publicaciones_cercanas_filtradas_paginadas(?,?,?,?,?,?,?,?)',
+            [
+                $filters['q'],
+                $filters['type'],
+                $filters['distance'],
+                $filters['sort'],
+                $latitude,
+                $longitude,
+                $perPage,
+                $offset
+            ]
+        );
+
+        $totalPublicaciones = \DB::selectOne(
+            'CALL contar_publicaciones_cercanas_filtradas(?,?,?,?,?,?)', 
+            [
+                $filters['q'],
+                $filters['type'],
+                $filters['distance'],
+                $filters['sort'],
+                $latitude,
+                $longitude
+            ])->total;
 
         $query = Advertisement::hydrate($rows);
     
+
 
         $createdAds = $query->map(function ($ad) {
             return [
@@ -96,10 +129,19 @@ class AdvertisementController extends Controller
             ];
         })->toArray();
 
-        
+        $publicacionesPaginadas = new LengthAwarePaginator(
+            $createdAds,
+            $totalPublicaciones,
+            $perPage,
+            $currentPage,
+            [
+                'path' => request()->url(),
+                'query' => request()->query()
+            ]
+        );
     
         return Inertia::render('Advertisement', [
-            'createdAds' => $createdAds,
+            'createdAds' => $publicacionesPaginadas,
             'filters' => $filters,
             'isAdmin' => $isAdmin,
         ]);

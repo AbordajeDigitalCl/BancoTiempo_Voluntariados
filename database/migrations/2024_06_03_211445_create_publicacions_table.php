@@ -118,6 +118,102 @@ return new class extends Migration
             END
         ");
 
+        /**
+         * Se agregó este SP para obtener datos de la taba publicacions, paginadas y filtradas
+         * según los parámetros de búsqueda indicados.
+         */
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas_paginadas;");
+        DB::unprepared("
+            CREATE PROCEDURE if NOT EXISTS obtener_publicaciones_cercanas_filtradas_paginadas(
+            IN p_q VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_type VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_distance VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_sort VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_lat DECIMAL(10,8),
+            IN p_lng DECIMAL(11,8),
+            IN p_limit INT,
+            IN p_offset INT
+            )
+            BEGIN
+                SELECT
+                p.id,
+                Nombre AS title,
+                Descripcion AS description,
+                p.hours,
+                p.type,
+                p.mode,
+                p.status,
+                p.author,
+                p.id_usuario AS user_id,
+                p.image_urls,
+                p.location_id,
+                p.location_lat,
+                p.location_lng,
+                p.location_address,
+                p.created_at,
+                p.updated_at,
+                calcular_distancia(p_lat, p_lng, p.location_lat, p.location_lng) AS distancia_km
+                FROM publicacions p
+                WHERE p.location_lat IS NOT NULL
+                AND p.location_lng IS NOT NULL
+                AND (
+				    p_q = ''
+                    OR p.Nombre LIKE CONCAT('%', p_q, '%')
+                    OR p.Descripcion LIKE CONCAT('%', p_q,'%')
+                )
+                AND (
+				    p_type = 'all'
+                    OR p.type = p_type
+                )
+                HAVING
+                    p_distance = 'Cualquiera'
+                    OR distancia_km <= CAST(p_distance AS DECIMAL(10,2))
+                ORDER BY 
+				    CASE WHEN p_sort = 'newest' THEN p.created_at END DESC,
+                    CASE WHEN p_sort = 'oldest' THEN p.created_at END ASC, p.id DESC
+                LIMIT p_limit OFFSET p_offset;
+            END
+        ");
+
+        /**
+         * Se agregó este SP para tener el dato del total de las publicaciones filtradas
+         * para motivos de paginación.
+         */
+        DB::unprepared("DROP PROCEDURE IF EXISTS contar_publicaciones_cercanas_filtradas;");
+        DB::unprepared("
+            CREATE PROCEDURE IF NOT EXISTS contar_publicaciones_cercanas_filtradas(
+            IN p_q VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_type VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_distance VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_sort VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_lat DECIMAL(10,8),
+            IN p_lng DECIMAL(11,8)
+            )
+            BEGIN
+                SELECT COUNT(*) AS total
+                FROM (
+                    SELECT
+                    p.id,
+                    calcular_distancia(p_lat, p_lng, p.location_lat, p.location_lng) AS distancia_km
+                    FROM publicacions p
+                    WHERE p.location_lat IS NOT NULL
+                    AND p.location_lng IS NOT NULL
+                    AND (
+				        p_q = ''
+                        OR p.Nombre LIKE CONCAT('%', p_q, '%')
+                        OR p.Descripcion LIKE CONCAT('%', p_q,'%')
+                    )
+                    AND (
+				        p_type = 'all'
+                        OR p.type = p_type
+                    )
+                    HAVING
+                        p_distance = 'Cualquiera'
+                        OR distancia_km <= CAST(p_distance AS DECIMAL(10,2))
+                ) AS publicaciones_filtradas;
+            END;
+        ");
+
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_perfil_por_usuario_id;");
         DB::unprepared("
             CREATE PROCEDURE IF NOT EXISTS obtener_publicaciones_perfil_por_usuario_id(
@@ -217,6 +313,8 @@ return new class extends Migration
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas;");
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_perfil_por_usuario_id;");
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicacion_para_editar;");
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas_paginadas;");
+        DB::unprepared("DROP PROCEDURE IF EXISTS contar_publicaciones_cercanas_filtradas");
         Schema::dropIfExists('publicacions');
         Schema::table('publicacions', function(Blueprint $table) {
             $table->dropIndex('idx_publicacions_usuario_created');

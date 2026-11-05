@@ -85,7 +85,18 @@ export default function AjustadorImagenPublicacion({ imagenFile, onConfirm, onCa
     const cropY = cropBox.y * scaleFactor;
     const cropSize = cropBox.size * scaleFactor;
 
-    ctx.clearRect(cropX, cropY, cropSize, cropSize);
+    //ctx.clearRect(cropX, cropY, cropSize, cropSize);
+    ctx.drawImage(
+    imagenCargada,
+    cropBox.x,
+    cropBox.y,
+    cropBox.size,
+    cropBox.size,
+    cropX,
+    cropY,
+    cropSize,
+    cropSize
+    );
 
     // Borde blanco grueso del crop box
     ctx.strokeStyle = '#ffffff';
@@ -424,6 +435,9 @@ export default function AjustadorImagenPublicacion({ imagenFile, onConfirm, onCa
       cropBox.size,
       cropBox.size
     );
+
+    const debugUrl = cropCanvas.toDataURL('image/png');
+    window.open(debugUrl, '_blank');
 
     // Convertir canvas a File
     cropCanvas.toBlob((blob) => {

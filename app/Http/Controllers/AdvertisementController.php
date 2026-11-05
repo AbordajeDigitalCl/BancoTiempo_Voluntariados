@@ -224,7 +224,7 @@ class AdvertisementController extends Controller
                 ];
             })
             ->toArray();
-        dd($createdAds);
+        
  
         return Inertia::render('MyAdvertisements', [
             'createdAds' => $createdAds,

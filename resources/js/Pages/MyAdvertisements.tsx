@@ -64,7 +64,7 @@ export default function MyAdvertisements({ auth, createdAds }: MyAdvertisementsP
 
 
   const pickImage = (ad: Ad) => {
-    if (ad.imageUrls && ad.imageUrls.length > 0) return ad.imageUrls[0];
+    if (ad.imageUrls && ad.imageUrls.length > 0) return `imagen/${ad.imageUrls[0]}`;
     return ad.imageUrl || 'https://picsum.photos/seed/demo/900/600';
   };
 

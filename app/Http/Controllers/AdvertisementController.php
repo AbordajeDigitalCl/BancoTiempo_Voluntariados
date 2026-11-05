@@ -196,7 +196,7 @@ class AdvertisementController extends Controller
         $createdAds = Advertisement::query()
             ->where('id_usuario', $user_id)
             ->latest()
-            ->paginate(10)
+            ->paginate(10) 
             ->through(function ($ad) {
                 return [
                     'id' => $ad->id,

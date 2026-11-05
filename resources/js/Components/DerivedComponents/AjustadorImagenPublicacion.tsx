@@ -436,18 +436,18 @@ export default function AjustadorImagenPublicacion({ imagenFile, onConfirm, onCa
       cropBox.size
     );
 
-    const debugUrl = cropCanvas.toDataURL('image/png');
-    window.open(debugUrl, '_blank');
+    
 
     // Convertir canvas a File
     cropCanvas.toBlob((blob) => {
       if (blob) {
         const croppedFile = new File([blob], imagenFile.name, { type: 'image/jpeg' });
-        //onConfirm(croppedFile);
-        onConfirm(imagenFile);
+        onConfirm(croppedFile);
       }
     }, 'image/jpeg', 0.95);
   };
+
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">

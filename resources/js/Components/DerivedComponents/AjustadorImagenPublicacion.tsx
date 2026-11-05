@@ -429,7 +429,8 @@ export default function AjustadorImagenPublicacion({ imagenFile, onConfirm, onCa
     cropCanvas.toBlob((blob) => {
       if (blob) {
         const croppedFile = new File([blob], imagenFile.name, { type: 'image/jpeg' });
-        onConfirm(croppedFile);
+        //onConfirm(croppedFile);
+        onConfirm(imagenFile);
       }
     }, 'image/jpeg', 0.95);
   };

@@ -487,9 +487,32 @@ class AdvertisementController extends Controller
                 @mkdir($uploadDir, 0755, true);
             }
             
-            
+            $rutaOriginal = $image->getRealPath();
+
+            \Log::info('Antes de mover', [
+                'ruta_original'=>$rutaOriginal,
+                'existe_original'=> file_exists($rutaOriginal),
+            ]);
+
+            $hashOriginal = hash_file('sha256', $rutaOriginal);
+
             $image->move($uploadDir, $filename);
+
+            $rutaGuardada = $uploadDir . DIRECTORY_SEPARATOR . $filename;
+
+            \Log::info('Después de mover', [
+                'ruta_guardada'=> $rutaGuardada,
+                'existe_guardada'=> file_exists($rutaGuardada),
+            ]);
             
+            $hashGuardado = hash_file('sha256', $rutaGuardada);
+
+            \Log::info('Comparación de integridad de imagen', [
+            'hash_original' => $hashOriginal,
+            'hash_guardado' => $hashGuardado,
+            'identicos' => $hashOriginal === $hashGuardado,
+            ]);
+
             \Log::info('Imagen guardada exitosamente', [
                 'filename' => $filename,
                 'path' => $uploadDir . DIRECTORY_SEPARATOR . $filename,

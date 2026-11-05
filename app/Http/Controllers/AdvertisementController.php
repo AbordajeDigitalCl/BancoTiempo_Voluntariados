@@ -195,6 +195,7 @@ class AdvertisementController extends Controller
         //la consulta arroja un error al ordenar las filas con latest().
         $createdAds = Advertisement::query()
             ->where('id_usuario', $user_id)
+            ->width('images:id,Direccion')
             ->latest()
             ->paginate(10) 
             ->through(function ($ad) {
@@ -208,7 +209,10 @@ class AdvertisementController extends Controller
                     'status' => $ad->status,
                     'author' => $ad->author,
                     'user_id' => $ad->user_id,
-                    'imageUrls' => $ad->image_urls ?? [],
+                    //Este atributo almacenará las imágenes asociadas
+                    //con la respectiva publicación
+                    //'imageUrls' => $ad->image_urls ?? [],
+                    'imageUrls' => $ad->images->pluck('Direccion')->toArray() ?? [],
                     'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
                     'location_id' => $ad->location_id,
                     'location_lat' => $ad->location_lat,

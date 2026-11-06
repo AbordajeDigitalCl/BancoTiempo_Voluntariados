@@ -383,7 +383,7 @@ class AdvertisementController extends Controller
         $imgs = array_values(array_filter($imgs, fn ($x) => is_string($x) && trim($x) !== ''));
         $imgs = array_slice($imgs, 0, 5);
 
-
+        
         $ad->update([
             'title' => $data['title'],
             'description' => $data['description'],
@@ -821,8 +821,18 @@ class AdvertisementController extends Controller
         $imagenUrl = $publicacion->imagenDireccion 
             ? '/imagen/' . $publicacion->imagenDireccion
             : 'https://picsum.photos/200?random=' . $publicacion->id;
-
-        $datosPublicacion = [
+            
+        //Traduce los valores de status de la tabla publicacions en
+        //cadenas de texto en Español
+        $determinarEstado = fn($status) => match ($status) {
+            'active' => 'Activo',
+            'paused' => 'Pausado',
+            'finished' => 'Finalizado',
+            'deleted' => 'Borrado',
+            default => 'Desconocido',
+        };
+        
+            $datosPublicacion = [
             'id' => $publicacion->id,
             'titulo' => $publicacion->Nombre,
             'descripcion' => $publicacion->Descripcion,
@@ -831,7 +841,8 @@ class AdvertisementController extends Controller
             'ofertaDemanda' => $tipoOfertaDemandaText, 
             'imagen' => $imagenUrl,
             'imagenId' => $publicacion->imagenId, 
-            'estado' => $publicacion->status,
+            //'estado' => 'Activo',
+            'estado' => $determinarEstado($publicacion->status),
             'tipoPublicacion' => $tipoPublicacionCalculado, 
             'tipoBeneficio' => (int) $publicacion->Tipo_Beneficio, 
             'Precio' => $esOferta ? $saldo : null,

@@ -826,12 +826,12 @@ class AdvertisementController extends Controller
         //cadenas de texto en Español
         $determinarEstado = fn($status) => match ($status) {
             'active' => 'Activo',
-            'paused' => 'Pausado',
-            'finished' => 'Finalizado',
+            'paused' => 'Desactivado',
+            'finished' => 'Agotado',
             'deleted' => 'Borrado',
             default => 'Desconocido',
         };
-        dd($publicacion);
+        
             $datosPublicacion = [
             'id' => $publicacion->id,
             'titulo' => $publicacion->Nombre,

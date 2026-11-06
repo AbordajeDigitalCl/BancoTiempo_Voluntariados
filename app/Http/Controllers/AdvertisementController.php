@@ -383,7 +383,7 @@ class AdvertisementController extends Controller
         $imgs = array_values(array_filter($imgs, fn ($x) => is_string($x) && trim($x) !== ''));
         $imgs = array_slice($imgs, 0, 5);
 
-        
+
         $ad->update([
             'title' => $data['title'],
             'description' => $data['description'],
@@ -831,7 +831,7 @@ class AdvertisementController extends Controller
             'ofertaDemanda' => $tipoOfertaDemandaText, 
             'imagen' => $imagenUrl,
             'imagenId' => $publicacion->imagenId, 
-            'estado' => 'Activo',
+            'estado' => $publicacion->status,
             'tipoPublicacion' => $tipoPublicacionCalculado, 
             'tipoBeneficio' => (int) $publicacion->Tipo_Beneficio, 
             'Precio' => $esOferta ? $saldo : null,

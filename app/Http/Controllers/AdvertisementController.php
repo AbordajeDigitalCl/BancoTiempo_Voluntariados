@@ -212,10 +212,13 @@ class AdvertisementController extends Controller
                     //Este atributo almacenará las imágenes asociadas
                     //con la respectiva publicación
                     //'imageUrls' => $ad->image_urls ?? [],
-                    'imageUrls' => $ad->images->pluck('Direccion')->toArray(),
+                    'imageUrls' => $ad->images->map(function ($image) {
+                        return url('imagen/' . basename($image->Direccion));
+                    })->toArray(),
 
                     //'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
-                    'imageUrl' => $ad->images->first()?->Direccion,
+                    'imageUrl' => $ad->images->isNotEmpty()
+                    ? url('imagen/' . basename($ad->images->first()->Direccion)) : null,
 
                     'location_id' => $ad->location_id,
                     'location_lat' => $ad->location_lat,
@@ -265,11 +268,15 @@ class AdvertisementController extends Controller
             //Este atributo almacenará las imágenes asociadas
             //con la respectiva publicación
             //'imageUrls' => $ad->image_urls ?? [],
-            'imageUrls' => $ad->images->pluck('Direccion')->toArray() ?? [],
+            'imageUrls' => $ad->images->map(function ($image) {
+                return url('imagen/' . basename($image->Direccion));
+            })->toArray(),
+
 
             //'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
-            'imageUrl' => $ad->images->first()?->Direccion,
-            
+            'imageUrl' => $ad->images->isNotEmpty()
+                    ? url('imagen/' . basename($ad->images->first()->Direccion)) : null,
+
             'location_id' => $ad->location_id,
             'location_lat' => $ad->location_lat,
             'location_lng' => $ad->location_lng,

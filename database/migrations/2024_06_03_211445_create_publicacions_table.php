@@ -265,6 +265,7 @@ return new class extends Migration
                     p.Descripcion,
                     p.Tipo_Publicacion,
                     p.Tipo_Beneficio,
+                    p.status,
                     o.Precio,
                     d.Presupuesto,
                     img.Direccion AS imagenDireccion,

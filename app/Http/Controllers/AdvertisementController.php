@@ -831,7 +831,7 @@ class AdvertisementController extends Controller
             'deleted' => 'Borrado',
             default => 'Desconocido',
         };
-        
+        dd($publicacion);
             $datosPublicacion = [
             'id' => $publicacion->id,
             'titulo' => $publicacion->Nombre,

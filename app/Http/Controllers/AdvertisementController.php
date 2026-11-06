@@ -383,6 +383,7 @@ class AdvertisementController extends Controller
         $imgs = array_values(array_filter($imgs, fn ($x) => is_string($x) && trim($x) !== ''));
         $imgs = array_slice($imgs, 0, 5);
 
+        
         $ad->update([
             'title' => $data['title'],
             'description' => $data['description'],

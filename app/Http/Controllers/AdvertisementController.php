@@ -212,9 +212,11 @@ class AdvertisementController extends Controller
                     //Este atributo almacenará las imágenes asociadas
                     //con la respectiva publicación
                     //'imageUrls' => $ad->image_urls ?? [],
-                    'imageUrls' => $ad->images->pluck('Direccion')->toArray() ?? [],
+                    'imageUrls' => $ad->images->pluck('Direccion')->toArray(),
 
-                    'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+                    //'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+                    'imageUrl' => $ad->images->first()?->Direccion,
+
                     'location_id' => $ad->location_id,
                     'location_lat' => $ad->location_lat,
                     'location_lng' => $ad->location_lng,
@@ -245,7 +247,9 @@ class AdvertisementController extends Controller
      */
     public function advertisementShow(Request $request, int $id): Response
     {
-        $ad = Advertisement::query()->find($id);
+        $ad = Advertisement::query()
+        ->with('images:id,Direccion')
+        ->find($id);
  
         $item = $ad ? [
             'id' => $ad->id,
@@ -257,8 +261,15 @@ class AdvertisementController extends Controller
             'status' => $ad->status,
             'author' => $ad->author,
             'user_id' => $ad->user_id,
-            'imageUrls' => $ad->image_urls ?? [],
-            'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+            
+            //Este atributo almacenará las imágenes asociadas
+            //con la respectiva publicación
+            //'imageUrls' => $ad->image_urls ?? [],
+            'imageUrls' => $ad->images->pluck('Direccion')->toArray() ?? [],
+
+            //'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+            'imageUrl' => $ad->images->first()?->Direccion,
+            
             'location_id' => $ad->location_id,
             'location_lat' => $ad->location_lat,
             'location_lng' => $ad->location_lng,

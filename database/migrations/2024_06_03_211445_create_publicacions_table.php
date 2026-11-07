@@ -166,7 +166,7 @@ return new class extends Migration
                     OR p.type = p_type
                 )
                 AND (
-                    p.status = 'Active'
+                    p.status = 'active'
                 )
                 HAVING
                     p_distance = 'Cualquiera'

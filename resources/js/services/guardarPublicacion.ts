@@ -9,6 +9,7 @@ interface DatosPublicacion {
     costo: number;
     tipo: string; // 'Servicio' o 'Producto'
     ofertaDemanda: string; // 'Oferta' o 'Demanda'
+    estado: string
 }
 
 

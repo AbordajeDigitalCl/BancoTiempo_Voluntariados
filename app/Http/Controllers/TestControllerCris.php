@@ -518,6 +518,7 @@ class TestControllerCris extends Controller
             'Descripcion' => ['required', 'string', 'max:255'],
             'Tipo_Beneficio' => ['required', 'integer', 'in:0,1'], // 0=Servicio, 1=Producto
             'Tipo_Publicacion' => ['required', 'integer', 'in:0,1'], // 0=Oferta, 1=Demanda
+            'Estado' => ['required', 'string', 'in:Activo,Desactivado,Agotado'],
             'Precio' => ['nullable', 'integer', 'min:0'], // Para Ofertas
             'Presupuesto' => ['nullable', 'integer', 'min:0'], // Para Demandas
         ];

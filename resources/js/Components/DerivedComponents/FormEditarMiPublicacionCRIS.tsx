@@ -261,6 +261,7 @@ export default function FormEditarMiPublicacionCRIS({ publicacion, returnTo = '/
             tipo,
             ofertaDemanda,
             ...(imagenId && { imagenId }),
+            estado,
         }, returnTo);
     };
 

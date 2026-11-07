@@ -165,6 +165,9 @@ return new class extends Migration
 				    p_type = 'all'
                     OR p.type = p_type
                 )
+                AND (
+                    p.status = 'Active'
+                )
                 HAVING
                     p_distance = 'Cualquiera'
                     OR distancia_km <= CAST(p_distance AS DECIMAL(10,2))

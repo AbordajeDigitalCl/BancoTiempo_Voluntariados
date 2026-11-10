@@ -36,13 +36,13 @@ class ConversacionController extends Controller
     public function crearOBuscarConversacion(Request $request)
     {
         $user = $request->user();
-
+        
         $validated = $request->validate([
             'usuario_id' => ['required', 'integer', 'exists:users,id'],
         ]);
-
+        
         $otroUsuarioId = $validated['usuario_id'];
-
+        
         // No permitir crear conversación consigo mismo
         if ($user->id === $otroUsuarioId) {
             abort(400, 'No puedes crear conversacion contigo mismo');
@@ -70,8 +70,9 @@ class ConversacionController extends Controller
             ]
         );
         
-
-        if (!$conversacionExistente) {
+        $conversacionExiste = (bool) $conversacionExistente[0]->existe;
+        
+        if (!$conversacionExiste) {
             // Crear nueva conversación
             \DB::table('conversations')->insert([
                 'user_one_id' => $user->id,

@@ -263,8 +263,8 @@ class AdvertisementController extends Controller
             'mode' => $ad->mode,
             'status' => $ad->status,
             'author' => $ad->author,
-            'user_id' => $ad->user_id,
-            
+            //'user_id' => $ad->user_id,
+            'user_id' => $ad->id_usuario,
             //Este atributo almacenará las imágenes asociadas
             //con la respectiva publicación
             //'imageUrls' => $ad->image_urls ?? [],

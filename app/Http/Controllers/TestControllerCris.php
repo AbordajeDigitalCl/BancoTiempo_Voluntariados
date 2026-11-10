@@ -504,7 +504,7 @@ class TestControllerCris extends Controller
         
         $publicacion = $query->first();
 
-        dd($publicacion);
+        //dd($publicacion);
 
         if (!$publicacion) {
             abort(404);

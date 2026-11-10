@@ -148,6 +148,12 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
     });
   }, []);
 
+  const crearConversacion = (usuarioId: number) => {
+    router.post('/ruta-del-backend', {
+        usuario_id: usuarioId,
+    });
+  };
+
   useEffect(() => {
     if (!item) return;
     if (!hasLocation) return;

@@ -15,6 +15,7 @@ type Ad = {
   type: 'Servicio' | 'Producto';
   mode: 'Oferta' | 'Demanda';
   status?: AdStatus;
+  user_id:number;
   author?: string;
   imageUrl?: string | null;
   imageUrls?: string[];
@@ -149,7 +150,7 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
   }, []);
 
   const crearConversacion = (usuarioId: number) => {
-    router.post('/ruta-del-backend', {
+    router.post('/administrar-usuarios/crear-conversacion', {
         usuario_id: usuarioId,
     });
   };

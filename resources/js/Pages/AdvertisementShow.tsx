@@ -432,10 +432,18 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
               )}
 
               <div className="mt-5 flex flex-wrap gap-2 justify-end">
+                {/*
                 <Link href="/chat" className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50">
                   Chat
                 </Link>
-
+                */}
+                <button
+                  type="button"
+                  onClick={() => crearConversacion(item.user_id)}
+                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
+                >
+                  Chat
+                </button>
                 {isOwner ? (
                   <>
                     <button

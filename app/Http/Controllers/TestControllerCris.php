@@ -551,12 +551,22 @@ class TestControllerCris extends Controller
         $cambioDeOfertaDemanda = $tipoPublicacionAnterior !== $tipoPublicacionNuevo;
         $cambioDeTipoBeneficio = (int) $publicacion->Tipo_Beneficio !== (int) $validated['Tipo_Beneficio'];
 
+        //Traduce los valores de status de la tabla publicacions en
+        //cadenas de texto en Español
+        $determinarEstado = fn($status) => match ($status) {
+            'Activo' => 'active',
+            'Desactivado' => 'Paused',
+            'Agotado' => 'Finished',
+            'Borrado' => 'deleted'
+        };
+
         // Actualizar datos de la publicación
         $publicacion->update([
             'Nombre' => $validated['Nombre'],
             'Descripcion' => $validated['Descripcion'],
             'Tipo_Beneficio' => $validated['Tipo_Beneficio'], // Cambio entre Servicio/Producto
             'Tipo_Publicacion' => $tipoPublicacionNuevo, // Cambio entre Oferta/Demanda
+            'status' => $determinarEstado($validated['Estado'])
         ]);
 
         if ($cambioDeOfertaDemanda) {

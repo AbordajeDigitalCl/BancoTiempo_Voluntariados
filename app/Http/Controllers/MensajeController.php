@@ -139,7 +139,7 @@ class MensajeController extends Controller
     public function enviarMensaje(Request $request)
     {
         $user = $request->user();
-
+        
         $validated = $request->validate([
             'conversacion_id' => ['required', 'integer'],
             'contenido' => ['required', 'string', 'max:255'],
@@ -156,7 +156,7 @@ class MensajeController extends Controller
         }
 
         $otroUsuarioId = $conversacion->user_one_id === $user->id ? $conversacion->user_two_id : $conversacion->user_one_id;
-
+        
         $mensajeId = \DB::table('mensajes')->insertGetId([
             'id_usuario_origen' => $user->id,
             'id_usuario_destino' => $otroUsuarioId,

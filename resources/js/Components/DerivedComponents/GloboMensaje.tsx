@@ -13,6 +13,23 @@ const extraerHora = (hora: string): string => {
     return partes.length > 2 ? `${partes[0]}:${partes[1]}` : hora;
 };
 
+const formatearFechaHoraLocal = (fecha: string, hora: string): string => {
+    const [dia, mes, anio] = fecha.split('/');
+
+    const fechaUTC = new Date(
+        `${anio}-${mes}-${dia}T${hora}Z`
+    );
+
+    return fechaUTC.toLocaleString(undefined, {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+};
+
 export default function GloboMensaje({ mensaje }: GloboMensajeProps) {
     return (
         <div
@@ -49,7 +66,8 @@ export default function GloboMensaje({ mensaje }: GloboMensajeProps) {
                         mensaje.esDelUsuarioPrincipal ? 'text-right' : 'text-left'
                     }`}
                 >
-                    {mensaje.fecha} {extraerHora(mensaje.hora)}
+                    {/*{mensaje.fecha} {extraerHora(mensaje.hora)}*/}
+                    {formatearFechaHoraLocal(mensaje.fecha, mensaje.hora)}
                 </p>
             </div>
         </div>

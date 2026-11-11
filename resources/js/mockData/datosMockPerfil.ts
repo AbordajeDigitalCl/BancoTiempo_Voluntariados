@@ -8,6 +8,7 @@ export interface Servicio {
     imagen: string;
     estado: 'Activo' | 'Desactivado' | 'Agotado';
     fecha: string;
+    visible: number;
     imagenId?: number; // Optional image ID from server
 }
 
@@ -40,7 +41,7 @@ export const mockProfileData: PerfilData = {
     fechaExpiracion: "30/04/2025",
 };
 
-
+/*
 export const mockServiciosData: Servicio[] = [
     {
         id: 1,
@@ -98,3 +99,4 @@ export const mockServiciosData: Servicio[] = [
         fecha: "2025-01-30",
     },
 ];
+*/

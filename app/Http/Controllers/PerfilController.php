@@ -361,6 +361,7 @@ class PerfilController extends Controller
                     'ofertaDemanda' => $pub->Precio !== null ? 'Oferta' : 'Demanda',
                     'imagen' => $pub->imagenDireccion ? '/imagen/' . $pub->imagenDireccion : 'https://picsum.photos/200?random=' . $pub->id,
                     'estado' => 'Activo',
+                    'visible' => $pub->visible,
                     'fecha' => Carbon::parse($pub->created_at)->format('Y-m-d'),
                     'popularidad' => null,
                 ])

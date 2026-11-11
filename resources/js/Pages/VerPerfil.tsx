@@ -24,6 +24,7 @@ interface Publicacion {
     ofertaDemanda: 'Oferta' | 'Demanda';
     imagen: string;
     estado: 'Activo' | 'Desactivado' | 'Agotado';
+    visible: number;
     fecha: string;
     // Placeholder para popularidad.
     popularidad?: number | null;

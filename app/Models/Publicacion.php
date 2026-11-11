@@ -16,5 +16,6 @@ class Publicacion extends Model
         'Descripcion',
         'Tipo_Publicacion',
         'Tipo_Beneficio',
+        'status'
     ];
 }

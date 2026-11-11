@@ -555,11 +555,12 @@ class TestControllerCris extends Controller
         //cadenas de texto en Español
         $determinarEstado = fn($status) => match ($status) {
             'Activo' => 'active',
-            'Desactivado' => 'Paused',
-            'Agotado' => 'Finished',
+            'Desactivado' => 'paused',
+            'Agotado' => 'finished',
             'Borrado' => 'deleted'
         };
-
+        //dd($validated['Estado']);
+        //dd($determinarEstado($validated['Estado']));
         // Actualizar datos de la publicación
         $publicacion->update([
             'Nombre' => $validated['Nombre'],

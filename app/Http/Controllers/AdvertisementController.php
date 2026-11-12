@@ -856,6 +856,45 @@ class AdvertisementController extends Controller
     }
 
 
+    public function cambiarVisibilidad(Request $request, $id)
+    {
+        // 1. Obtener el usuario autenticado
+        $user = $request->user();
+
+        // 2. Comprobar si es administrador
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
+        // 3. Buscar la publicación
+        $query = Advertisement::where('id', $id);
+
+        // Si no es administrador, solo puede modificar sus publicaciones
+        if (!$isAdmin) {
+            $query->where('id_usuario', $user->id);
+        }
+
+        // Si no existe o no tiene permisos, Laravel devuelve un 404
+        $publicacion = $query->firstOrFail();
+
+        // 4. Invertir la visibilidad
+        $publicacion->visible = !$publicacion->visible;
+
+        // 5. Guardar los cambios
+        $publicacion->save();
+
+        // 6. Devolver el nuevo estado
+        return response()->json([
+            'success' => true,
+            'visible' => (bool) $publicacion->visible,
+            'message' => $publicacion->visible
+                ? 'Publicación visible nuevamente'
+                : 'Publicación ocultada correctamente'
+        ]);
+    }
+
+
+
+
+
     /**
      * Los siguientes métodos se encontraban en el controlador previo a la inclusión de los demás
      * métodos: index(Request $request), my(Request $request), showw(Request $request),

@@ -171,12 +171,12 @@ export default function ServicioProductoCard({ servicio, returnTo = '/verperfil'
             <div className="flex justify-end">
               <span
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                          servicio.visible
+                          visible
                               ? 'bg-green-100 text-green-700'
                               : 'bg-gray-100 text-gray-600'
                       }`}
                   >
-                      {servicio.visible ? 'Visible' : 'Invisible'}
+                      {visible ? 'Visible' : 'Invisible'}
               </span>
             </div>
           </div>
@@ -213,10 +213,10 @@ export default function ServicioProductoCard({ servicio, returnTo = '/verperfil'
             {/*Botón de visibilidad */}
             <button
                 type="button"
-                onClick={() => cambiarVisibilidad(servicio.id)}
+                onClick={() => handleCambiarVisibilidad()}
                 className="flex flex-col items-start hover:opacity-75 transition"
             >
-                {servicio.visible ? (
+                {visible ? (
                     <>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

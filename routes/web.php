@@ -345,6 +345,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/Advertisement/{id}', [AdvertisementController::class, 'advertisementShow'])->name('advertisement.show');
 
+    Route::patch(
+        '/publicaciones/{id}/visibilidad',
+        [AdvertisementController::class, 'cambiarVisibilidad']
+    )->middleware(['auth', 'verified']);
+
     Route::get('/chat', [\App\Http\Controllers\ChatController::class, 'chat'])
         ->middleware(['auth', 'verified'])->name('chat');
 

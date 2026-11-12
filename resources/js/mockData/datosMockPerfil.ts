@@ -8,7 +8,7 @@ export interface Servicio {
     imagen: string;
     estado: 'Activo' | 'Desactivado' | 'Agotado';
     fecha: string;
-    visible: number;
+    visible: boolean;
     imagenId?: number; // Optional image ID from server
 }
 

@@ -5,6 +5,7 @@ import { obtenerTextoEstado } from '@/services/estadosPublicaciones';
 import { obtenerImagenesPublicacion } from '@/services/servicioImagenesPublicacion';
 import { useEffect, useState } from 'react';
 import GaleriaImagenesPublicacion from './GaleriaImagenesPublicacion';
+import { cambiarVisibilidadPublicacion } from '@/services/publicacionesVisibilidad';
 
 interface ServicioProductoCardProps {
     servicio: Servicio;
@@ -22,6 +23,12 @@ export default function ServicioProductoCard({ servicio, returnTo = '/verperfil'
     // Estado para las imágenes de la publicación
     const [imagenes, setImagenes] = useState<any[]>([]);
     const [cargandoImagenes, setCargandoImagenes] = useState(true);
+
+    //---Estados para la visibilidad de la publicación: visible, actualizandoVisibilidad
+    // Estado actual de visibilidad de la publicación
+    const [visible, setVisible] = useState(servicio.visible);
+    // Indica si se está procesando el cambio
+    const [actualizandoVisibilidad, setActualizandoVisibilidad] = useState(false);
 
     const handleImagenClick = (imagen: any) => {
         // Mostrar la imagen clickeada en grande
@@ -59,7 +66,22 @@ export default function ServicioProductoCard({ servicio, returnTo = '/verperfil'
         backgroundColor: hex
     };
 
-    const cambiarVisibilidad = (int: number) => {};
+    const handleCambiarVisibilidad = async () => {
+        try {
+            setActualizandoVisibilidad(true);
+
+            const resultado = await cambiarVisibilidadPublicacion(servicio.id);
+
+            // Actualizar la interfaz con el resultado del servidor
+            setVisible(resultado.visible);
+
+        } catch (error) {
+            console.error('Error al cambiar la visibilidad:', error);
+            alert('No se pudo cambiar la visibilidad de la publicación');
+        } finally {
+            setActualizandoVisibilidad(false);
+        }
+    };
 
     return (
       <div className="w-full max-w-4xl mx-auto p-4 bg-white flex flex-col md:flex-row gap-4" style={cardStyle}>

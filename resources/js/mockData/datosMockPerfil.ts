@@ -12,6 +12,22 @@ export interface Servicio {
     imagenId?: number; // Optional image ID from server
 }
 
+export interface Publicacion {
+    id: number;
+    titulo: string;
+    descripcion: string;
+    costo: string;
+    tipo: 'Servicio' | 'Producto';
+    ofertaDemanda: 'Oferta' | 'Demanda';
+    imagen: string;
+    estado: 'Activo' | 'Desactivado' | 'Agotado';
+    visible: boolean;
+    fecha: string;
+    // Placeholder para popularidad.
+    imagenId?: number;
+    popularidad?: number | null;
+}
+
 export interface PerfilData {
     id: number;
     nombre: string;

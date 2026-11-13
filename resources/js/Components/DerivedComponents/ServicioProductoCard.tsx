@@ -1,4 +1,5 @@
-import { Servicio } from '@/mockData/datosMockPerfil';
+//import { Servicio } from '@/mockData/datosMockPerfil';
+import { Publicacion } from '@/mockData/datosMockPerfil';
 import { getStateColors, STATE_COLORS } from '@/constants/coloresEstado';
 import { Link } from '@inertiajs/react';
 import { obtenerTextoEstado } from '@/services/estadosPublicaciones';
@@ -8,7 +9,7 @@ import GaleriaImagenesPublicacion from './GaleriaImagenesPublicacion';
 import { cambiarVisibilidadPublicacion } from '@/services/publicacionesVisibilidad';
 
 interface ServicioProductoCardProps {
-    servicio: Servicio;
+    servicio: Publicacion;
     returnTo?: string;
 }
 

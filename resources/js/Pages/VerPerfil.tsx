@@ -8,13 +8,15 @@ import ServicioDropDown from '@/Components/DerivedComponents/ServiciosDropDown';
 import OrdenarDropDown from '@/Components/DerivedComponents/OrdenarDropDown';
 import OfertaDropDown from '@/Components/DerivedComponents/OfertaDropDown';
 import MenuHamburguesa from '@/Components/DerivedComponents/MenuHamburguesa';
-import { mockProfileData, mockServiciosData } from '@/mockData/datosMockPerfil';
+//import { mockProfileData, mockServiciosData } from '@/mockData/datosMockPerfil';
+import { Publicacion } from '@/mockData/datosMockPerfil';
 import { mockUsuarioHeader, mockOpcionesMenu } from '@/mockData/datosMockEncabezadoMenu';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 const ITEMS_PER_PAGE = 5;
 
 // Interface para las publicaciones con calificaciones
+/*
 interface Publicacion {
     id: number;
     titulo: string;
@@ -29,7 +31,7 @@ interface Publicacion {
     // Placeholder para popularidad.
     popularidad?: number | null;
 }
-
+*/
 interface VerPerfilProps extends PageProps {
     datosUsuario: {
         id: number;

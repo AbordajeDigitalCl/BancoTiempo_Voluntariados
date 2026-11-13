@@ -326,6 +326,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.destroy');
 
+    Route::delete(
+        '/Advertisement/{id}',
+        [AdvertisementController::class, 'eliminarPublicacion']
+    )->middleware(['auth', 'verified'])
+    ->name('advertisement.destroy');
+
     Route::post('/Advertisement/{id}/report', function (Request $request, $id) {
         $ad = Advertisement::find($id);
         if (!$ad) {

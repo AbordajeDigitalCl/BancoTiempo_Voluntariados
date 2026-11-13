@@ -892,7 +892,26 @@ class AdvertisementController extends Controller
     }
 
 
+    public function eliminarPublicacion(Request $request, $id) {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
 
+        $ad = Advertisement::find($id);
+        if (!$ad) return redirect()->back();
+
+        if (
+            !$isAdmin &&
+            (int) ($ad->user_id ?? 0) !== (int) ($request->user()->id ?? 0) &&
+            (string) ($ad->author ?? '') !== (string) ($request->user()->name ?? '')
+        ) {
+            return redirect()->back();
+        }
+
+        //$ad->delete();
+        $ad->status = 'deleted';
+        $ad.save();
+
+        return redirect()->back();
+    }
 
 
     /**

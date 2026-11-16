@@ -21,7 +21,6 @@ export default function FilaConversacion({
    // el último mensaje sea una imágen, y una versión truncada del mensaje
    // en caso de que el mensaje sea solo texto.
     const mostrarNombreMensaje = () => {
-        console.log(`Tipo de mensaje: ${conversacion.tipoUltimoMensaje}`);
         switch(conversacion.tipoUltimoMensaje) {
             case 0:
                 return conversacion.ultimoMensaje.length > 35 ?
@@ -29,7 +28,7 @@ export default function FilaConversacion({
                 : conversacion.ultimoMensaje;
                 break;
             case 1:
-                return 'Imagen';
+                return '📷 Imagen';
                 break;
             default:
                 return '';
@@ -77,7 +76,7 @@ export default function FilaConversacion({
                             : 'text-gray-700 font-medium'
                     }`}
                 >
-                    {conversacion.esMensajeDelUsuarioPrincipal && 'Tú: '}
+                    {conversacion.esMensajeDelUsuarioPrincipal == true && 'Tú: '}
                     {mostrarNombreMensaje()}
                 </p>
             </div>

@@ -182,6 +182,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
             const isOwnMessage = Number(e.sender_id) === Number(auth.user.id);
             const isActive = convId === conversacionSeleccionada;
             
+            
             setConversacionesConEstado((prev) =>
                 prev.map((conv) => {
                     if(conv.id !== convId) return conv;
@@ -198,7 +199,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     };
                 })
             );
-
+            
             const cargarMensajes = async () => {
                 try {
                     const data = await obtenerMensajesConversacion(
@@ -248,6 +249,25 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
             const convId = Number(e.conversation_id);
             const isOwnMessage = Number(e.sender_id) === Number(auth.user.id);
             const isActive = convId === conversacionSeleccionada;
+
+            setConversacionesConEstado((prev) =>
+                prev.map((conv) => {
+                    if (conv.id !== convId) return conv;
+
+                    const fecha = formatearFecha(e.created_at);
+
+                    return {
+                        ...conv,
+                        ultimoMensaje: String(e.preview ?? ''),
+                        fechaUltimoMensaje: `${fecha.fecha} ${fecha.hora}`,
+                        tipoUltimoMensaje: Number(e.tipo_mensaje),
+                        esMensajeDelUsuarioPrincipal: isOwnMessage,
+                        mensajesNoLeidos: isActive || isOwnMessage
+                            ? 0
+                            : (conv.mensajesNoLeidos ?? 0) + 1,
+                    };
+                })
+            );
             
             if(convId === conversacionSeleccionada) {
                 void marcarConversacionComoLeida(convId);
@@ -259,6 +279,56 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         };
     }, [auth?.user?.id, conversacionSeleccionada]);
 
+
+    /**
+     * Carga el historial de mensajes cada vez que se selecciona
+     * una conversación.
+     */
+    useEffect(() => {
+        if (!conversacionSeleccionada) return;
+
+        const cargarMensajes = async () => {
+            try {
+                const data = await obtenerMensajesConversacion(
+                    conversacionSeleccionada
+                );
+
+                setMensajesPorConversacionState((prev) => {
+                    const idx = prev.findIndex(
+                        (c) => c.conversacionId === conversacionSeleccionada
+                    );
+
+                    if (idx === -1) {
+                        return [
+                            ...prev,
+                            {
+                                conversacionId: conversacionSeleccionada,
+                                mensajes: data.mensajes ?? [],
+                            },
+                        ];
+                    }
+
+                    const copia = [...prev];
+
+                    copia[idx] = {
+                        ...copia[idx],
+                        mensajes: data.mensajes ?? [],
+                    };
+
+                    return copia;
+                });
+
+            } catch (error) {
+                console.error(
+                    'Error al cargar mensajes de la conversación:',
+                    error
+                );
+            }
+        };
+
+        void cargarMensajes();
+
+    }, [conversacionSeleccionada]);
 
 
     return (

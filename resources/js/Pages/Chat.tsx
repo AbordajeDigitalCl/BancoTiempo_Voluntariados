@@ -26,6 +26,7 @@ type ChatMessageEvent = {
     receiver_id: number;
     preview: string;
     is_image:boolean;
+    tipo_mensaje:number;
     created_at: string;
 };
 
@@ -192,6 +193,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                         ultimoMensaje: String(e.preview ?? ''),
                         fechaUltimoMensaje: fechaHoraUltimoMensaje,
                         esMensajeDelUsuarioPrincipal:false,
+                        tipoUltimoMensaje: e.tipo_mensaje,
                         mensajesNoLeidos: isActive ? 0 : (conv.mensajesNoLeidos ?? 0) + 1,
                     };
                 })

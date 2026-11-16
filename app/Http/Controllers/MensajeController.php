@@ -176,7 +176,7 @@ class MensajeController extends Controller
             senderId: (int) $user->id,
             receiverId: (int) $otroUsuarioId,
             preview: (string) $validated['contenido'],
-            tipo_mensaje: 0,
+            tipoMensaje: 0,
             isImage: false,
             createdAt: now()->toISOString(),
         ));
@@ -321,7 +321,7 @@ class MensajeController extends Controller
             receiverId: (int) $otroUsuarioId,
             //preview: (string) $validated['contenido'],
             preview: 'Imagen',
-            tipo_mensaje:1,
+            tipoMensaje:1,
             isImage: true,
             createdAt: now()->toISOString(),
         ));

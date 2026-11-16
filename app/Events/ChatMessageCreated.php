@@ -19,6 +19,7 @@ class ChatMessageCreated implements ShouldBroadcastNow
         public int $receiverId,
         public string $preview,
         public bool $isImage,
+        public int $tipoMensaje,
         public string $createdAt
     ) {
 
@@ -49,6 +50,7 @@ class ChatMessageCreated implements ShouldBroadcastNow
             'receiver_id'=> $this->receiverId,
             'preview'=> $this->preview,
             'is_image'=> $this->isImage,
+            'tipo_mensaje'=>$this->tipoMensaje,
             'created_at'=> $this->createdAt,
         ];
     } 

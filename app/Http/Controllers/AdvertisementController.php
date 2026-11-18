@@ -316,7 +316,9 @@ class AdvertisementController extends Controller
      */
     public function advertisementEdit(Request $request, int $id): Response
     {
-        $ad = Advertisement::query()->find($id);
+        $ad = Advertisement::query()
+        ->with('images:id,Direccion')
+        ->find($id);
  
         $item = $ad ? [
             'id' => $ad->id,

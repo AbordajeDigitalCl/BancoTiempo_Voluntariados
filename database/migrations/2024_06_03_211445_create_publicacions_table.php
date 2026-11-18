@@ -178,6 +178,77 @@ return new class extends Migration
             END
         ");
 
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas_paginadas_img;");
+        DB::unprepared("
+            CREATE PROCEDURE if NOT EXISTS obtener_publicaciones_cercanas_filtradas_paginadas_img(
+            IN p_q VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_type VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_distance VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_sort VARCHAR(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+            IN p_lat DECIMAL(10,8),
+            IN p_lng DECIMAL(11,8),
+            IN p_limit INT,
+            IN p_offset INT
+            )
+            BEGIN
+                SELECT
+                p.id,
+                Nombre AS title,
+                Descripcion AS description,
+                p.hours,
+                p.type,
+                p.mode,
+                p.status,
+                p.author,
+                p.id_usuario AS user_id,
+                p.image_urls,
+                p.location_id,
+                p.location_lat,
+                p.location_lng,
+                p.location_address,
+                p.created_at,
+                p.updated_at,
+                calcular_distancia(p_lat, p_lng, p.location_lat, p.location_lng) AS distancia_km
+                FROM publicacions p
+                LEFT JOIN (
+                    SELECT
+                        ip_publicacion,
+                        MIN(i.id) AS imagen_id
+                    FROM inter__imagen__public ip
+                    INNER JOIN imagens i
+                      ON ip.id_imagen = i.id
+                    WHERE i-Tipo = 1
+                    GROUP BY ip.id_publicacion
+                ) imagen_seleccionada
+                    ON p.id = imagen_seleccionada.id_publicacion
+
+                LEFT JOIN imagens imagen_primera
+                    ON imagen_seleccionada.imagen_id = imagen_primera.id
+
+                WHERE p.location_lat IS NOT NULL
+                AND p.location_lng IS NOT NULL
+                AND (
+				    p_q = ''
+                    OR p.Nombre LIKE CONCAT('%', p_q, '%')
+                    OR p.Descripcion LIKE CONCAT('%', p_q,'%')
+                )
+                AND (
+				    p_type = 'all'
+                    OR p.type = p_type
+                )
+                AND (
+                    p.status = 'active'
+                )
+                HAVING
+                    p_distance = 'Cualquiera'
+                    OR distancia_km <= CAST(p_distance AS DECIMAL(10,2))
+                ORDER BY 
+				    CASE WHEN p_sort = 'newest' THEN p.created_at END DESC,
+                    CASE WHEN p_sort = 'oldest' THEN p.created_at END ASC, p.id DESC
+                LIMIT p_limit OFFSET p_offset;
+            END
+        ");
+
         /**
          * Se agregó este SP para tener el dato del total de las publicaciones filtradas
          * para motivos de paginación.
@@ -320,6 +391,7 @@ return new class extends Migration
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicacion_para_editar;");
         DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas_paginadas;");
         DB::unprepared("DROP PROCEDURE IF EXISTS contar_publicaciones_cercanas_filtradas");
+        DB::unprepared("DROP PROCEDURE IF EXISTS obtener_publicaciones_cercanas_filtradas_paginadas_img;");
         Schema::dropIfExists('publicacions');
         Schema::table('publicacions', function(Blueprint $table) {
             $table->dropIndex('idx_publicacions_usuario_created');

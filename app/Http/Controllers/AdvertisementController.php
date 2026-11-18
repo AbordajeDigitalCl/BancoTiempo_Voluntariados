@@ -330,8 +330,17 @@ class AdvertisementController extends Controller
             'status' => $ad->status,
             'author' => $ad->author,
             'user_id' => $ad->user_id,
-            'imageUrls' => $ad->image_urls ?? [],
-            'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+            //'imageUrls' => $ad->image_urls ?? [],
+            //'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+            // Imágenes asociadas a la publicación
+            'imageUrls' => $ad->images->map(function ($image) {
+                return url('imagen/' . basename($image->Direccion));
+            })->values()->toArray(),
+
+            'imageUrl' => $ad->images->isNotEmpty()
+                ? url('imagen/' . basename($ad->images->first()->Direccion))
+                : null,
+            
             'location_id' => $ad->location_id,
             'location_lat' => $ad->location_lat,
             'location_lng' => $ad->location_lng,

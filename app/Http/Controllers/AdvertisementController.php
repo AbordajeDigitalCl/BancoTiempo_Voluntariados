@@ -82,7 +82,7 @@ class AdvertisementController extends Controller
         $offset = ($currentPage - 1) * $perPage;
 
         $rows = \DB::select(
-            'CALL obtener_publicaciones_cercanas_filtradas_paginadas(?,?,?,?,?,?,?,?)',
+            'CALL obtener_publicaciones_cercanas_filtradas_paginadas_img(?,?,?,?,?,?,?,?)',
             [
                 $filters['q'],
                 $filters['type'],

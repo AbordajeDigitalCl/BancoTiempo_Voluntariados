@@ -201,7 +201,7 @@ return new class extends Migration
                 p.status,
                 p.author,
                 p.id_usuario AS user_id,
-                p.image_urls,
+                imagen_primera.Direccion AS imagenDireccion,
                 p.location_id,
                 p.location_lat,
                 p.location_lng,

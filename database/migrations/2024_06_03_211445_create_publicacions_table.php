@@ -212,12 +212,12 @@ return new class extends Migration
                 FROM publicacions p
                 LEFT JOIN (
                     SELECT
-                        ip_publicacion,
+                        ip.id_publicacion,
                         MIN(i.id) AS imagen_id
                     FROM inter__imagen__public ip
                     INNER JOIN imagens i
                       ON ip.id_imagen = i.id
-                    WHERE i-Tipo = 1
+                    WHERE i.Tipo = 1
                     GROUP BY ip.id_publicacion
                 ) imagen_seleccionada
                     ON p.id = imagen_seleccionada.id_publicacion

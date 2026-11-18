@@ -105,12 +105,15 @@ class AdvertisementController extends Controller
                 $latitude,
                 $longitude
             ])->total;
-
+        
         $query = Advertisement::hydrate($rows);
     
 
 
         $createdAds = $query->map(function ($ad) {
+            $imagenUrl = $ad->imagenDireccion
+                ? url('imagen/' . basename($ad->imagenDireccion))
+                : 'https://picsum.photos/200?random=' . $ad->id;
             return [
                 'id' => $ad->id,
                 'title' => $ad->title,
@@ -121,8 +124,10 @@ class AdvertisementController extends Controller
                 'status' => $ad->status,
                 'author' => $ad->author,
                 'user_id' => $ad->user_id,
-                'imageUrls' => $ad->image_urls ?? [],
-                'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+                //'imageUrls' => $ad->image_urls ?? [],
+                //'imageUrl' => !empty($ad->image_urls) ? $ad->image_urls[0] : null,
+                'imageUrls' => [$imagenUrl],
+                'imageUrl' => $imagenUrl,
                 'location_id' => $ad->location_id,
                 'location_lat' => $ad->location_lat,
                 'location_lng' => $ad->location_lng,

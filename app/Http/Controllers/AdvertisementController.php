@@ -10,6 +10,8 @@ use Illuminate\Http\RedirectResponse;
 use Inertia\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\Traits\Cruds;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 
 /**
@@ -382,6 +384,10 @@ class AdvertisementController extends Controller
             'mode' => ['required', 'in:Oferta,Demanda'],
             'imageUrls' => ['nullable', 'array', 'max:5'],
             'imageUrls.*' => ['nullable', 'string'],
+            'existingImageIds' => ['nullable', 'array', 'max:5'],
+            'existingImageIds.*' => ['integer', 'distinct'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
             'location_id' => ['nullable', 'integer'],
             'location_lat' => ['nullable', 'numeric', 'min:-90', 'max:90'],
             'location_lng' => ['nullable', 'numeric', 'min:-180', 'max:180'],
@@ -400,12 +406,15 @@ class AdvertisementController extends Controller
         ) {
             return redirect()->route('myadvertisements');
         }
+        
 
+        
+        /*
         $imgs = $data['imageUrls'] ?? [];
         $imgs = array_values(array_filter($imgs, fn ($x) => is_string($x) && trim($x) !== ''));
         $imgs = array_slice($imgs, 0, 5);
-
-        
+        */
+        /*
         $ad->update([
             'title' => $data['title'],
             'description' => $data['description'],
@@ -420,6 +429,138 @@ class AdvertisementController extends Controller
         ]);
 
         return redirect()->route('myadvertisements');   
+        */
+
+
+
+        // 4. Obtener los IDs de imágenes que se conservarán.
+        $existingImageIds = array_map(
+            'intval',
+            $data['existingImageIds'] ?? []
+        );
+
+        // 5. Obtener los archivos nuevos.
+        $newImages = $request->file('images', []);
+
+        // Comprobar el límite total de cinco imágenes.
+        if (count($existingImageIds) + count($newImages) > 5) {
+            return back()->withErrors([
+                'images' => 'La publicación no puede tener más de 5 imágenes.'
+            ])->withInput();
+        }
+
+        // Aquí registraremos los archivos guardados por si ocurre un error.
+        $archivosGuardados = [];
+
+        try {
+
+            DB::transaction(function () use (
+                $ad,
+                $data,
+                $existingImageIds,
+                $newImages,
+                $request,
+                &$archivosGuardados
+            ) {
+
+                // 6. Comprobar que los IDs recibidos pertenecen
+                // realmente a esta publicación y son imágenes Tipo=1.
+
+                $imagenesValidas = DB::table('inter__imagen__public as pivote')
+                    ->join('imagens as imagen', 'imagen.id', '=', 'pivote.id_imagen')
+                    ->where('pivote.id_publicacion', $ad->id)
+                    ->where('imagen.Tipo', 1)
+                    ->whereIn('imagen.id', $existingImageIds)
+                    ->pluck('imagen.id')
+                    ->map(fn ($id) => (int) $id)
+                    ->all();
+
+                if (count($imagenesValidas) !== count($existingImageIds)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'existingImageIds' => 'Una o varias imágenes no pertenecen a esta publicación.'
+                    ]);
+                }
+
+                // 7. Actualizar los datos de la publicación.
+
+                $ad->update([
+                    'title' => $data['title'],
+                    'description' => $data['description'],
+                    'hours' => (int) $data['hours'],
+                    'type' => $data['type'],
+                    'mode' => $data['mode'],
+                    'location_id' => $data['location_id'] ?? null,
+                    'location_lat' => $data['location_lat'] ?? null,
+                    'location_lng' => $data['location_lng'] ?? null,
+                    'location_address' => $data['location_address'] ?? null,
+                ]);
+
+                // 8. Eliminar las asociaciones de imágenes
+                // que el usuario decidió quitar.
+
+                $consultaPivote = DB::table('inter__imagen__public')
+                    ->where('id_publicacion', $ad->id);
+
+                if (count($existingImageIds) > 0) {
+                    $consultaPivote->whereNotIn('id_imagen', $existingImageIds);
+                }
+
+                $consultaPivote->delete();
+
+                // 9. Guardar las imágenes nuevas.
+
+                foreach ($newImages as $image) {
+
+                    // Generar un nombre único para el archivo.
+                    $filename = Str::uuid() . '.' . $image->extension();
+
+                    // Guardar el archivo en storage/app/uploads.
+                    $path = Storage::disk('local')->putFileAs(
+                        'uploads',
+                        $image,
+                        $filename
+                    );
+
+                    if (!$path) {
+                        throw new \RuntimeException(
+                            'No se pudo guardar una imagen.'
+                        );
+                    }
+
+                    $archivosGuardados[] = $path;
+
+                    // Crear el registro en la tabla imagens.
+                    $imagenGuardada = $this->saveImagen(
+                        $filename,
+                        $request->user()->id
+                    );
+
+                    // Cambiar Tipo de 0 a 1.
+                    $imagenGuardada->Tipo = 1;
+                    $imagenGuardada->save();
+
+                    // Crear la asociación con la publicación.
+                    DB::table('inter__imagen__public')->insert([
+                        'id_publicacion' => $ad->id,
+                        'id_imagen' => $imagenGuardada->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
+
+        } catch (\Throwable $e) {
+
+            // Si falla la transacción, eliminar los archivos
+            // que alcanzamos a guardar en el almacenamiento.
+            foreach ($archivosGuardados as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $e;
+        }
+
+        return redirect()->route('myadvertisements');
     }
 
     /**

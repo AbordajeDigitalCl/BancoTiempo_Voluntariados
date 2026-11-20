@@ -431,7 +431,7 @@ const filteredAds: Ad[] = useMemo(() => {
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [q, typeFilter, sort, distance]);
+  }, [q, typeFilter, sort, distance, userLocation]);
 
   return (
     <AuthenticatedLayout user={auth.user}>

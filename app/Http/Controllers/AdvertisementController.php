@@ -42,14 +42,15 @@ class AdvertisementController extends Controller
     public function advertisementIndex(Request $request): Response
     {
 
-
+        
         $filters = $this->parseAdvertisementFilters($request);
 
-        //$latitude = $request->query('userLocation.latiude');
-        //$longitude = $request->query('userLocation.longitude');
+        $userLocation = $request->query('userLocation');
+        $latitude = $userLocation['latitude'] ?? null;
+        $longitude = $userLocation['longitude'] ?? null;
         
-        $latitude = -33.4372;
-        $longitude = -70.6506;
+        //$latitude = -33.4372;
+        //$longitude = -70.6506;
 
         $isAdmin = (bool) $request->session()->get('is_admin', false);
     

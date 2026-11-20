@@ -340,7 +340,13 @@ class AdvertisementController extends Controller
             'imageUrl' => $ad->images->isNotEmpty()
                 ? url('imagen/' . basename($ad->images->first()->Direccion))
                 : null,
-            
+            //Prueba para manejar imágenes en el front sin transformar a cadenas de base 64
+            'images' => $ad->images->map(function ($image) {
+                return [
+                    'id' => $image->id,
+                    'url' => url('imagen/' . basename($image->Direccion))
+                ];
+            })->values()->toArray(),
             'location_id' => $ad->location_id,
             'location_lat' => $ad->location_lat,
             'location_lng' => $ad->location_lng,
@@ -367,7 +373,7 @@ class AdvertisementController extends Controller
      */
     public function advertisementUpdate(Request $request, int $id): RedirectResponse {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
-
+        
         $data = $request->validate([
             'title' => ['required', 'string', 'max:80'],
             'description' => ['required', 'string', 'max:1000'],

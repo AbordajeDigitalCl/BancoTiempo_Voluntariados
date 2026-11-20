@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
 
@@ -143,40 +143,163 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: Ad
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);  
 
-  
+
   const [locationStatus, setLocationStatus] =
       useState<LocationStatus>('checking');
 
 
-  const getUserLocation = () => {
-    if(!navigator.geolocation) {
-      setLocationError('Tu navegador no admite la geolocalización');
-      return;
+  const getUserLocation = useCallback(() => {
+
+    if (!navigator.geolocation) {
+        setLocationStatus('unavailable');
+        setLocationError('Tu navegador no admite la geolocalización.');
+        return;
     }
 
+    setLocationStatus('checking');
     setLocationError(null);
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const {latitude, longitude} = position.coords;
 
-        setUserLocation({latitude, longitude});
-        setLocationError(null);
-      },
-      (error) => {
-        if(error.code === error.PERMISSION_DENIED) {
-          setLocationError('El acceso a la ubicación está bloqueado ' + 
-            'Permítelo en la configuracuión del sitio y vuelve a intentarlo.'
-          );
-        } else if(error.code === error.POSITION_UNAVAILABLE) {
-          setLocationError('No se pudo determinar tu ubicación.');
-        } else if(error.code === error.TIMEOUT) {
-          setLocationError('La solicitud tardó demasiado. Inténtalo de nuevo.');
+        (position) => {
+
+            const { latitude, longitude } = position.coords;
+
+            setUserLocation({
+                latitude,
+                longitude
+            });
+
+            setLocationStatus('granted');
+            setLocationError(null);
+        },
+
+        (error) => {
+
+            setUserLocation(null);
+
+            if (error.code === error.PERMISSION_DENIED) {
+
+                setLocationStatus('denied');
+
+                setLocationError(
+                    'El acceso a la ubicación está bloqueado. ' +
+                    'Actívalo desde la configuración de tu navegador.'
+                );
+
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+
+                setLocationStatus('error');
+
+                setLocationError(
+                    'No se pudo determinar tu ubicación.'
+                );
+
+            } else if (error.code === error.TIMEOUT) {
+
+                setLocationStatus('error');
+
+                setLocationError(
+                    'La solicitud tardó demasiado. Inténtalo de nuevo.'
+                );
+            }
+
+        },
+
+        {
+            timeout: 10000,
+            maximumAge: 60000
         }
-      },
-      {timeout: 10000}
     );
-  };
+
+  }, []);
+
+  useEffect(() => {
+
+    let permissionStatus: PermissionStatus | null = null;
+    let cancelled = false;
+
+    if (!navigator.geolocation) {
+
+        setLocationStatus('unavailable');
+
+        setLocationError(
+            'Tu navegador no admite la geolocalización.'
+        );
+
+        return;
+    }
+
+    const handlePermissionChange = () => {
+
+        if (!permissionStatus) return;
+
+        if (permissionStatus.state === 'granted') {
+
+            getUserLocation();
+
+        } else if (permissionStatus.state === 'denied') {
+
+            setUserLocation(null);
+            setLocationStatus('denied');
+
+            setLocationError(
+                'El acceso a la ubicación está bloqueado. ' +
+                'Actívalo desde la configuración del navegador.'
+            );
+
+        }
+
+    };
+
+    navigator.permissions.query({
+        name: 'geolocation'
+    }).then((permission) => {
+
+        if (cancelled) return;
+
+        permissionStatus = permission;
+
+        permissionStatus.addEventListener(
+            'change',
+            handlePermissionChange
+        );
+
+        if (permission.state === 'denied') {
+
+            setLocationStatus('denied');
+
+        } else {
+
+            // Si está concedido, obtenemos las coordenadas.
+            // Si está pendiente, el navegador puede mostrar
+            // su solicitud de autorización.
+            getUserLocation();
+
+        }
+
+    }).catch(() => {
+
+        // Si Permissions API no está disponible o falla,
+        // intentamos obtener la ubicación directamente.
+        if (!cancelled) {
+            getUserLocation();
+        }
+
+    });
+
+    return () => {
+
+        cancelled = true;
+
+        permissionStatus?.removeEventListener(
+            'change',
+            handlePermissionChange
+        );
+
+    };
+
+  }, [getUserLocation]);
 
   const initial = useMemo(() => {
     const fromUrl = safeParseFromUrl();
@@ -313,17 +436,28 @@ const filteredAds: Ad[] = useMemo(() => {
   return (
     <AuthenticatedLayout user={auth.user}>
       <Head title="Publicaciones" />
-      {userLocation === null && (
-        <>
+      {locationStatus === 'denied' && (
           <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-yellow-800">
-            <p>
-                En este momento no tienes la geolocalización activada.
-                Para el correcto funcionamiento de la aplicación,
-                te recomendamos activarla desde la configuración
-                de tu navegador.
-            </p>
-        </div>
-      </>
+
+              <p>
+                  Para utilizar correctamente las funciones de ubicación
+                  de esta aplicación, necesitas permitir el acceso a tu ubicación.
+              </p>
+
+              <p className="mt-2 text-sm">
+                  Puedes activarlo desde la configuración de permisos
+                  del sitio en tu navegador.
+              </p>
+
+              <button
+                  type="button"
+                  onClick={getUserLocation}
+                  className="mt-3 rounded-lg bg-yellow-600 px-4 py-2 text-sm text-white hover:bg-yellow-700"
+              >
+                  Ya habilité la ubicación. Volver a intentar
+              </button>
+
+          </div>
       )}
       <div className="w-full flex justify-center px-4 py-6" onClick={() => closeMenu()}>
         <div className="w-full max-w-4xl space-y-4" onClick={(e) => e.stopPropagation()}>

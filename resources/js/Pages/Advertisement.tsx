@@ -48,6 +48,13 @@ type AdvertisementProps = {
   isAdmin: any
 };
 
+type LocationStatus =
+    | 'checking'
+    | 'granted'
+    | 'denied'
+    | 'error'
+    | 'unavailable';
+
 function OwnerStatusPill({ status }: { status: AdStatus }) {
   const label = status === 'active' ? 'Disponible' : status === 'finished' ? 'Agotado' : 'Desactivado';
   const cls =
@@ -134,7 +141,13 @@ function MiniMap({ lat, lng }: { lat: number; lng: number }) {
 export default function Advertisement({ auth, createdAds, filters, isAdmin }: AdvertisementProps) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);  
+
+  
+  const [locationStatus, setLocationStatus] =
+      useState<LocationStatus>('checking');
+
+
   const getUserLocation = () => {
     if(!navigator.geolocation) {
       setLocationError('Tu navegador no admite la geolocalización');

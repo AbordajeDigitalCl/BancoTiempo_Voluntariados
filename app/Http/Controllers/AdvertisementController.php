@@ -321,7 +321,7 @@ class AdvertisementController extends Controller
         $ad = Advertisement::query()
         ->with('images:id,Direccion')
         ->find($id);
- 
+
         $item = $ad ? [
             'id' => $ad->id,
             'title' => $ad->title,

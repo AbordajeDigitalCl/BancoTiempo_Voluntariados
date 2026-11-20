@@ -639,7 +639,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
                   <span className="text-xs text-gray-500">{imagenesExistentes.length + imagenesNuevas.length}/5</span>
                 </div>
 
-                {data.imageUrls.length > 0 && (
+                {imagenesExistentes.length + imagenesNuevas.length > 0 && (
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     {/*
                     {data.imageUrls.map((src, idx) => (

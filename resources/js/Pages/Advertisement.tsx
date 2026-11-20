@@ -413,6 +413,27 @@ const filteredAds: Ad[] = useMemo(() => {
     });
   }
 
+  function cancelarDebounce() {
+    if (debounceRef.current !== null) {
+        window.clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+    }
+  }
+
+  function cambiarPagina(url: string | null) {
+      if (!url) return;
+
+      // Cancelamos cualquier petición de filtros que todavía
+      // esté esperando a que termine el debounce.
+      cancelarDebounce();
+
+      // Navegamos a la página solicitada.
+      router.get(url, {}, {
+          preserveState: true,
+          preserveScroll: true,
+      });
+  }
+
   useEffect(() => {
     getUserLocation()
   }, []);
@@ -709,6 +730,7 @@ const filteredAds: Ad[] = useMemo(() => {
             )}
           </div>
           <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              {/*
               <button
                 onClick={() => {
                   if (createdAds.prev_page_url) {
@@ -719,18 +741,33 @@ const filteredAds: Ad[] = useMemo(() => {
               >
                 Anterior
               </button>
-
+              */}
+              <button
+              onClick={() => cambiarPagina(createdAds.prev_page_url)}
+              className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.prev_page_url ? 'invisible' : ''}`}
+              >
+                Anterior
+              </button>
               <span className="text-sm text-gray-600">
                 Página {createdAds.current_page} de {createdAds.last_page}
               </span>
-
+              {/*
               <button
+               
                 onClick={() => {
                   if (createdAds.next_page_url) {
                     router.get(createdAds.next_page_url);
                   }
                 }}
+                
                 className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.next_page_url ? 'invisible' : ''}`}
+              >
+                Siguiente
+              </button>
+              */}
+              <button
+              onClick={() => cambiarPagina(createdAds.next_page_url)}
+              className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.next_page_url ? 'invisible' : ''}`}
               >
                 Siguiente
               </button>

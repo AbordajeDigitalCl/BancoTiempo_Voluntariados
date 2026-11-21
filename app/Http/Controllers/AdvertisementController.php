@@ -565,6 +565,136 @@ class AdvertisementController extends Controller
         return redirect()->route('myadvertisements');
     }
 
+
+    public function advertisementStore(Request $request): RedirectResponse
+    {
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
+        $data = $request->validate([
+            'title' => ['required', 'string', 'max:80'],
+            'description' => ['required', 'string', 'max:1000'],
+            'hours' => ['required', 'integer', 'min:1', 'max:999'],
+            'type' => ['required', 'in:Servicio,Producto'],
+            'mode' => ['required', 'in:Oferta,Demanda'],
+
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['image', 'mimes:jpg,jpeg,png,gif,webp', 'max:2048'],
+
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'location_id' => ['nullable', 'integer'],
+            'location_lat' => ['nullable', 'numeric', 'min:-90', 'max:90'],
+            'location_lng' => ['nullable', 'numeric', 'min:-180', 'max:180'],
+            'location_address' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        // Determinar el propietario de la publicación.
+        $targetUserId = $request->user()->id;
+        $targetAuthor = $request->user()->name;
+
+        if ($isAdmin && !empty($data['user_id'])) {
+            $u = User::query()
+                ->select('id', 'name')
+                ->find($data['user_id']);
+
+            if ($u) {
+                $targetUserId = $u->id;
+                $targetAuthor = $u->name;
+            }
+        }
+
+        // Obtener los archivos recibidos.
+        $newImages = $request->file('images', []);
+
+        $archivosGuardados = [];
+
+        try {
+            DB::transaction(function () use (
+                $data,
+                $newImages,
+                $targetUserId,
+                $targetAuthor,
+                &$archivosGuardados
+            ) {
+
+                // 1. Crear la publicación.
+                $ad = Advertisement::create([
+                    'title' => $data['title'],
+                    'description' => $data['description'],
+                    'hours' => (int) $data['hours'],
+                    'type' => $data['type'],
+                    'mode' => $data['mode'],
+                    'status' => 'active',
+                    'author' => $targetAuthor,
+
+                    'id_usuario' => $targetUserId,
+
+                    'Nombre' => $data['title'],
+                    'Descripcion' => $data['description'],
+
+                    'Tipo_Publicacion' => $data['mode'] === 'Oferta' ? 0 : 1,
+                    'Tipo_Beneficio' => $data['type'] === 'Servicio' ? 0 : 1,
+
+                    'location_id' => $data['location_id'] ?? null,
+                    'location_lat' => $data['location_lat'] ?? null,
+                    'location_lng' => $data['location_lng'] ?? null,
+                    'location_address' => $data['location_address'] ?? null,
+                ]);
+
+                // 2. Procesar las imágenes.
+                foreach ($newImages as $image) {
+
+                    $filename = Str::uuid() . '.' . $image->extension();
+
+                    // Guardar archivo.
+                    $path = Storage::disk('local')->putFileAs(
+                        'uploads',
+                        $image,
+                        $filename
+                    );
+
+                    if (!$path) {
+                        throw new \RuntimeException(
+                            'No se pudo guardar una imagen.'
+                        );
+                    }
+
+                    $archivosGuardados[] = $path;
+
+                    // Crear registro de imagen utilizando el método
+                    // que ya tienes implementado en el controlador.
+                    $imagenGuardada = $this->saveImagen(
+                        $filename,
+                        $targetUserId
+                    );
+
+                    // Cambiar Tipo a 1.
+                    $imagenGuardada->Tipo = 1;
+                    $imagenGuardada->save();
+
+                    // Asociar imagen con publicación.
+                    DB::table('inter__imagen__public')->insert([
+                        'id_publicacion' => $ad->id,
+                        'id_imagen' => $imagenGuardada->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
+
+        } catch (\Throwable $e) {
+
+            // Eliminar archivos físicos si falla la operación.
+            foreach ($archivosGuardados as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $e;
+        }
+
+        return redirect()->route('myadvertisements');
+    }
+
+
     /**
      * @summary Muestra el formulario de creación de publicación.
      * @description Comprueba si el usuario tiene el indicador de 

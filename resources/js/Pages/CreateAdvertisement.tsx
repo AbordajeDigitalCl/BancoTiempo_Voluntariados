@@ -1,9 +1,9 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
-
+/*
 function fileToDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -12,11 +12,33 @@ function fileToDataUrl(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
-
+*/
+interface ImagenNueva {
+    file: File;
+    preview: string;
+}
 export default function CreateAdvertisement({ auth, users }: any) {
-  const [images, setImages] = useState<string[]>([]);
+  //const [images, setImages] = useState<string[]>([]);
   const [imgError, setImgError] = useState<string>('');
   const isAdmin = Array.isArray(users) && users.length > 0;
+
+  const [imagenesNuevas, setImagenesNuevas] = useState<ImagenNueva[]>([]);
+
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const imagenesNuevasRef = useRef<ImagenNueva[]>([]);
+
+  useEffect(() => {
+      imagenesNuevasRef.current = imagenesNuevas;
+  }, [imagenesNuevas]);
+
+  useEffect(() => {
+      return () => {
+          imagenesNuevasRef.current.forEach(imagen => {
+              URL.revokeObjectURL(imagen.preview);
+          });
+      };
+  }, []);
 
   const { data, setData, post, processing, errors } = useForm({
     title: '',
@@ -24,7 +46,7 @@ export default function CreateAdvertisement({ auth, users }: any) {
     type: 'Servicio' as 'Servicio' | 'Producto',
     mode: 'Oferta' as 'Oferta' | 'Demanda',
     hours: '1',
-    imageUrls: [] as string[],
+    //imageUrls: [] as string[],
     user_id: null as number | null,
     location_id: null as number | null,
     location_lat: null as number | null,
@@ -263,7 +285,7 @@ export default function CreateAdvertisement({ auth, users }: any) {
       }
     }
   }, [data.location_lat, data.location_lng, openMap]);
-
+/*
   async function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
     setImgError('');
     const files = Array.from(e.target.files ?? []);
@@ -297,13 +319,72 @@ export default function CreateAdvertisement({ auth, users }: any) {
       e.target.value = '';
     }
   }
+*/
 
+  function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
+      setImgError('');
+
+      const files = Array.from(e.target.files ?? []);
+
+      if (!files.length) return;
+
+      const remaining = 5 - imagenesNuevas.length;
+
+      if (remaining <= 0) {
+          setImgError('Máximo 5 imágenes.');
+          e.target.value = '';
+          return;
+      }
+
+      const take = files.slice(0, remaining);
+
+      for (const file of take) {
+          if (!file.type.startsWith('image/')) {
+              setImgError('Solo se permiten imágenes.');
+              e.target.value = '';
+              return;
+          }
+
+          const maxBytes = 2 * 1024 * 1024;
+
+          if (file.size > maxBytes) {
+              setImgError('Una imagen supera el tamaño máximo (2MB).');
+              e.target.value = '';
+              return;
+          }
+      }
+
+      const nuevas: ImagenNueva[] = take.map(file => ({
+          file,
+          preview: URL.createObjectURL(file),
+      }));
+
+      setImagenesNuevas(prev => [...prev, ...nuevas]);
+
+      e.target.value = '';
+  }
+
+  /*
   function removeImage(idx: number) {
     const next = images.filter((_, i) => i !== idx);
     setImages(next);
     setData((prev: any) => ({ ...prev, imageUrls: next }));
   }
+  */
 
+  function removeImage(idx: number) {
+    const imagen = imagenesNuevas[idx];
+
+    if (imagen) {
+        URL.revokeObjectURL(imagen.preview);
+    }
+
+    setImagenesNuevas(prev =>
+        prev.filter((_, i) => i !== idx)
+    );
+  }
+
+  /*
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const nextImageUrls = (data.imageUrls ?? []).filter((x: any) => typeof x === 'string' && x.trim() !== '').slice(0, 5);
@@ -318,7 +399,22 @@ export default function CreateAdvertisement({ auth, users }: any) {
       forceFormData: true,
     });
   }
+  */
 
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+
+    const datos = {
+        ...data,
+
+        images: imagenesNuevas.map(imagen => imagen.file),
+    };
+
+    router.post('/Advertisement', datos, {
+        preserveScroll: true,
+        forceFormData: true,
+    });
+  }
   return (
     <AuthenticatedLayout user={auth.user}>
       <Head title="Crear publicación" />
@@ -487,7 +583,7 @@ export default function CreateAdvertisement({ auth, users }: any) {
                   <p className="text-xs text-red-500 mt-2">{fieldError('location_lat') || fieldError('location_lng')}</p>
                 )}
               </div>
-
+{/*
               <div>
                 <div className="flex items-center justify-between">
                   <label className="block text-xs text-gray-600 mb-1">Fotos (opcional, máx. 5)</label>
@@ -524,7 +620,60 @@ export default function CreateAdvertisement({ auth, users }: any) {
                 {imgError && <p className="text-xs text-red-500 mt-1">{imgError}</p>}
                 {(errors as any)?.imageUrls && <p className="text-xs text-red-500 mt-1">{(errors as any).imageUrls}</p>}
               </div>
+*/}
+              <div>
+                  <div className="flex items-center justify-between">
+                      <label className="block text-xs text-gray-600 mb-1">
+                          Fotos (opcional, máx. 5)
+                      </label>
 
+                      <span className="text-xs text-gray-500">
+                          {imagenesNuevas.length}/5
+                      </span>
+                  </div>
+
+                  {imagenesNuevas.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2 mb-2">
+                          {imagenesNuevas.map((imagen, idx) => (
+                              <div
+                                  key={idx}
+                                  className="relative rounded-lg overflow-hidden border border-gray-200"
+                              >
+                                  <img
+                                      src={imagen.preview}
+                                      alt={`Foto ${idx + 1}`}
+                                      className="h-24 w-full object-cover"
+                                  />
+
+                                  <button
+                                      type="button"
+                                      onClick={() => removeImage(idx)}
+                                      className="absolute top-1 right-1 bg-white/90 border border-gray-200 rounded-md px-2 py-1 text-xs hover:bg-white"
+                                      title="Quitar"
+                                  >
+                                      ✕
+                                  </button>
+                              </div>
+                          ))}
+                      </div>
+                  )}
+
+                  <input
+                      ref={inputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={onPickFiles}
+                      disabled={imagenesNuevas.length >= 5}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
+                  />
+
+                  {imgError && (
+                      <p className="text-xs text-red-500 mt-1">
+                          {imgError}
+                      </p>
+                  )}
+              </div>
               <button
                 type="submit"
                 disabled={processing}

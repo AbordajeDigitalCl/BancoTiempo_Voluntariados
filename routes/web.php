@@ -166,9 +166,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('geo.reverse');
 
+    /*
     Route::post('/Advertisement', function (Request $request) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
-
+        
         $data = $request->validate([
             'title' => ['required', 'string', 'max:80'],
             'description' => ['required', 'string', 'max:1000'],
@@ -183,11 +184,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'location_lng' => ['nullable', 'numeric', 'min:-180', 'max:180'],
             'location_address' => ['nullable', 'string', 'max:500'],
         ]);
-
+        
         $imgs = $data['imageUrls'] ?? [];
         $imgs = array_values(array_filter($imgs, fn ($x) => is_string($x) && trim($x) !== ''));
         $imgs = array_slice($imgs, 0, 5);
-
+        
         $targetUserId = $request->user()->id;
         $targetAuthor = $request->user()->name;
 
@@ -198,7 +199,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 $targetAuthor = $u->name;
             }
         }
-
+        
         Advertisement::create([
             'title' => $data['title'],
             'description' => $data['description'],
@@ -207,26 +208,126 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'mode' => $data['mode'],
             'status' => 'active',
             'author' => $targetAuthor,
-// La tabla publicacions usa id_usuario en lugar de user_id, por eso se camabio.
-            'id_usuario' => $targetUserId,
-// publicacions requiere Nombre y Descripcion como campos obligatorios
-// Se mapean desde title y description del formulario
-            'Nombre' => $data['title'],
-            'Descripcion' => $data['description'],
-// publicacions requiere Tipo_Publicacion y Tipo_Beneficio como campos obligatorios
-// Oferta=0, Demanda=1 / Servicio=0, Producto=1
-            'Tipo_Publicacion' => $data['mode'] === 'Oferta' ? 0 : 1,
-            'Tipo_Beneficio' => $data['type'] === 'Servicio' ? 0 : 1,
-            'image_urls' => $imgs,
-            'location_id' => $data['location_id'] ?? null,
-            'location_lat' => $data['location_lat'] ?? null,
-            'location_lng' => $data['location_lng'] ?? null,
-            'location_address' => $data['location_address'] ?? null,
-]);
+        // La tabla publicacions usa id_usuario en lugar de user_id, por eso se camabio.
+                    'id_usuario' => $targetUserId,
+        // publicacions requiere Nombre y Descripcion como campos obligatorios
+        // Se mapean desde title y description del formulario
+                    'Nombre' => $data['title'],
+                    'Descripcion' => $data['description'],
+        // publicacions requiere Tipo_Publicacion y Tipo_Beneficio como campos obligatorios
+        // Oferta=0, Demanda=1 / Servicio=0, Producto=1
+                    'Tipo_Publicacion' => $data['mode'] === 'Oferta' ? 0 : 1,
+                    'Tipo_Beneficio' => $data['type'] === 'Servicio' ? 0 : 1,
+                    //'image_urls' => $imgs,
+                    'images' => ['nullable', 'array', 'max:5'],
+                    'images.*' => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+                    'location_id' => $data['location_id'] ?? null,
+                    'location_lat' => $data['location_lat'] ?? null,
+                    'location_lng' => $data['location_lng'] ?? null,
+                    'location_address' => $data['location_address'] ?? null,
+        ]);
+
+        return redirect()->route('myadvertisements');
+        
+
+        // Obtener los archivos recibidos.
+        $newImages = $request->file('images', []);
+
+        // Registrar los archivos guardados por si ocurre un error.
+        $archivosGuardados = [];
+
+        try {
+            DB::transaction(function () use (
+                $data,
+                $newImages,
+                $targetUserId,
+                $targetAuthor,
+                $request,
+                &$archivosGuardados
+            ) {
+
+                // 1. Crear la publicación.
+                $ad = Advertisement::create([
+                    'title' => $data['title'],
+                    'description' => $data['description'],
+                    'hours' => (int) $data['hours'],
+                    'type' => $data['type'],
+                    'mode' => $data['mode'],
+                    'status' => 'active',
+                    'author' => $targetAuthor,
+
+                    'id_usuario' => $targetUserId,
+
+                    'Nombre' => $data['title'],
+                    'Descripcion' => $data['description'],
+
+                    'Tipo_Publicacion' => $data['mode'] === 'Oferta' ? 0 : 1,
+                    'Tipo_Beneficio' => $data['type'] === 'Servicio' ? 0 : 1,
+
+                    'location_id' => $data['location_id'] ?? null,
+                    'location_lat' => $data['location_lat'] ?? null,
+                    'location_lng' => $data['location_lng'] ?? null,
+                    'location_address' => $data['location_address'] ?? null,
+                ]);
+
+                // 2. Guardar las imágenes y asociarlas a la publicación.
+                foreach ($newImages as $image) {
+
+                    // Generar un nombre único para el archivo.
+                    $filename = Str::uuid() . '.' . $image->extension();
+
+                    // Guardar en storage/app/uploads.
+                    $path = Storage::disk('local')->putFileAs(
+                        'uploads',
+                        $image,
+                        $filename
+                    );
+
+                    if (!$path) {
+                        throw new \RuntimeException(
+                            'No se pudo guardar una imagen.'
+                        );
+                    }
+
+                    $archivosGuardados[] = $path;
+
+                    // Crear el registro en la tabla imagens.
+                    $imagenGuardada = saveImagen(
+                        $filename,
+                        $targetUserId
+                    );
+
+                    // Cambiar Tipo de 0 a 1.
+                    $imagenGuardada->Tipo = 1;
+                    $imagenGuardada->save();
+
+                    // Crear la asociación con la publicación.
+                    DB::table('inter__imagen__public')->insert([
+                        'id_publicacion' => $ad->id,
+                        'id_imagen' => $imagenGuardada->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
+
+        } catch (\Throwable $e) {
+
+            // Si falla la transacción, eliminar los archivos guardados.
+            foreach ($archivosGuardados as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $e;
+        }
 
         return redirect()->route('myadvertisements');
     })->name('advertisement.store');
-
+    */
+    
+    Route::post('/Advertisement',[AdvertisementController::class, 'advertisementStore'])
+    ->name('advertisement.store');
+    
     Route::get('/Advertisement/{id}/edit', [AdvertisementController::class, 'advertisementEdit'])->name('advertisement.edit');
     /*
     Route::patch('/Advertisement/{id}', function (Request $request, $id) {

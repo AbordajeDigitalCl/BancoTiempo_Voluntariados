@@ -321,8 +321,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return redirect()->back();
         }
 
-        $ad->delete();
-
+        //$ad->delete();
+        $ad->status = 'deleted';
+        $ad-save();
+        
         return redirect()->back();
     })->name('advertisement.destroy');
 

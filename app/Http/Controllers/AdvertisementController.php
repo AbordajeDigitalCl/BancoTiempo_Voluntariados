@@ -754,6 +754,171 @@ class AdvertisementController extends Controller
     }
 
     /**
+     * Actualiza una publicación existente y sincroniza sus datos relacionados.
+     *
+     * Permite modificar los datos generales de la publicación, su estado,
+     * el tipo de beneficio (Servicio/Producto) y el tipo de publicación
+     * (Oferta/Demanda).
+     *
+     * Control de acceso:
+     * - Los usuarios normales solo pueden modificar sus propias publicaciones.
+     * - Los administradores pueden modificar cualquier publicación.
+     *
+     * Validaciones:
+     * - Comprueba que los campos obligatorios tengan valores válidos.
+     * - Verifica que Oferta tenga Precio y no Presupuesto.
+     * - Verifica que Demanda tenga Presupuesto y no Precio.
+     *
+     * Actualización de datos relacionados:
+     * - Si cambia de Oferta a Demanda, elimina el registro de ofertas
+     *   y crea uno nuevo en demandas.
+     * - Si cambia de Demanda a Oferta, elimina el registro de demandas
+     *   y crea uno nuevo en ofertas.
+     * - Si no cambia el tipo de publicación, actualiza únicamente
+     *   el Precio o Presupuesto de la tabla correspondiente.
+     *
+     * También traduce los estados recibidos en español a los valores
+     * internos utilizados en la columna status de publicacions.
+     *
+     * @param Request $request Solicitud HTTP con los datos que se desean actualizar.
+     * @param int|string $id Identificador de la publicación que se actualizará.
+     *
+     * @return \Illuminate\Http\RedirectResponse Redirige a la ruta indicada
+     *                                           mediante el parámetro return_to.
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     *         Si la publicación no existe o el usuario no tiene permiso para editarla.
+     */
+    public function guardarPublicacion(Request $request, $id)
+    {
+        $user = $request->user();
+        $isAdmin = (bool) $request->session()->get('is_admin', false);
+
+        $query = \App\Models\Publicacion::where('id', $id);
+        
+        // Solo usuarios normales solo pueden editar sus propias publicaciones
+        // Los admins pueden editar cualquier publicación
+        if (!$isAdmin) {
+            $query = $query->where('id_usuario', $user->id);
+        }
+        
+        $publicacion = $query->first();
+
+        //dd($publicacion);
+
+        if (!$publicacion) {
+            abort(404);
+        }
+
+        // CORREGIDO: Usar el sistema correcto
+        // Tipo_Publicacion: Cambia el tipo de saldo dependiendo del tipo.
+        // Tipo_Beneficio: 0=Servicio, 1=Producto (cambio independiente)
+        $rules = [
+            'Nombre' => ['required', 'string', 'max:255'],
+            'Descripcion' => ['required', 'string', 'max:255'],
+            'Tipo_Beneficio' => ['required', 'integer', 'in:0,1'], // 0=Servicio, 1=Producto
+            'Tipo_Publicacion' => ['required', 'integer', 'in:0,1'], // 0=Oferta, 1=Demanda
+            'Estado' => ['required', 'string', 'in:Activo,Desactivado,Agotado'],
+            'Precio' => ['nullable', 'integer', 'min:0'], // Para Ofertas
+            'Presupuesto' => ['nullable', 'integer', 'min:0'], // Para Demandas
+        ];
+
+        $validated = $request->validate($rules);
+
+        $tipoPublicacionAnterior = (int) $publicacion->Tipo_Publicacion;
+        $tipoPublicacionNuevo = (int) $validated['Tipo_Publicacion'];
+        
+        $tienePrecio = $request->filled('Precio');
+        $tienePresupuesto = $request->filled('Presupuesto');
+
+        if ($tipoPublicacionNuevo === 0) {
+            if (!$tienePrecio) {
+                return response()->json(['message' => 'Oferta (Tipo_Publicacion=0) requiere campo "Precio"'], 400);
+            }
+            if ($tienePresupuesto) {
+                return response()->json(['message' => 'Oferta (Tipo_Publicacion=0) NO puede tener "Presupuesto"'], 400);
+            }
+        } else {
+            if (!$tienePresupuesto) {
+                return response()->json(['message' => 'Demanda (Tipo_Publicacion=1) requiere campo "Presupuesto"'], 400);
+            }
+            if ($tienePrecio) {
+                return response()->json(['message' => 'Demanda (Tipo_Publicacion=1) NO puede tener "Precio"'], 400);
+            }
+        }
+
+        // Detectar cambios
+        $cambioDeOfertaDemanda = $tipoPublicacionAnterior !== $tipoPublicacionNuevo;
+        $cambioDeTipoBeneficio = (int) $publicacion->Tipo_Beneficio !== (int) $validated['Tipo_Beneficio'];
+
+        //Traduce los valores de status de la tabla publicacions en
+        //cadenas de texto en Español
+        $determinarEstado = fn($status) => match ($status) {
+            'Activo' => 'active',
+            'Desactivado' => 'paused',
+            'Agotado' => 'finished',
+            'Borrado' => 'deleted'
+        };
+        //dd($validated['Estado']);
+        //dd($determinarEstado($validated['Estado']));
+        // Actualizar datos de la publicación
+        $publicacion->update([
+            'Nombre' => $validated['Nombre'],
+            'Descripcion' => $validated['Descripcion'],
+            'Tipo_Beneficio' => $validated['Tipo_Beneficio'], // Cambio entre Servicio/Producto
+            'Tipo_Publicacion' => $tipoPublicacionNuevo, // Cambio entre Oferta/Demanda
+            'status' => $determinarEstado($validated['Estado'])
+        ]);
+
+        if ($cambioDeOfertaDemanda) {
+            if ($tipoPublicacionAnterior === 0) {
+                // Cambia el tipo oferta a demanda, y luego Elimina de ofertas, crea en demandas
+                \DB::table('ofertas')->where('id_publicacion', $publicacion->id)->delete();
+                \DB::table('demandas')->insert([
+                    'id_publicacion' => $publicacion->id,
+                    'Presupuesto' => $validated['Presupuesto'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            } else {
+                // Cambia el tipo demanda a oferta, y luego Elimina de demandas, crea en ofertas
+                \DB::table('demandas')->where('id_publicacion', $publicacion->id)->delete();
+                \DB::table('ofertas')->insert([
+                    'id_publicacion' => $publicacion->id,
+                    'Precio' => $validated['Precio'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        } else {
+            //Actualiza el saldo en su tabla correspondiente
+            if ($tipoPublicacionNuevo === 0) {
+                // Es Oferta: actualizar Precio
+                \DB::table('ofertas')
+                    ->where('id_publicacion', $publicacion->id)
+                    ->update(['Precio' => $validated['Precio']]);
+            } else {
+                // Es Demanda: actualizar Presupuesto
+                \DB::table('demandas')
+                    ->where('id_publicacion', $publicacion->id)
+                    ->update(['Presupuesto' => $validated['Presupuesto']]);
+            }
+        }
+
+        $returnTo = $request->input('return_to', '/verperfil');
+        
+        // Log para debug
+        \Log::info('guardarPublicacion - return_to from body', [
+            'return_to' => $returnTo,
+            'full_url' => $request->fullUrl(),
+            'request_body' => $request->all(),
+        ]);
+
+        // Inertia maneja correctamente los redirects
+        return redirect($returnTo);
+    }
+
+    /**
      * @summary Sube una imagen y la asocia a una publicación existente.
      * @description
      * - Obtiene al usuario autenticado y verifica que haya iniciado sesión.

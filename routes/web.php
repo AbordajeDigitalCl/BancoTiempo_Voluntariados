@@ -114,8 +114,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/Editar-Publicacion/{id}', [\App\Http\Controllers\AdvertisementController::class, 'editarPublicacion'])
         ->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
-
+/*
     Route::post('/Editar-Publicacion/{id}', [\App\Http\Controllers\TestControllerCris::class, 'guardarPublicacion'])
+        ->middleware(['auth', 'verified']);
+*/
+    Route::post('/Editar-Publicacion/{id}', [\App\Http\Controllers\AdvertisementController::class, 'guardarPublicacion'])
         ->middleware(['auth', 'verified']);
 
     // RUTAS COMENTADAS: Sistema de calificaciones (En desarrollo)
@@ -327,7 +330,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::post('/Advertisement',[AdvertisementController::class, 'advertisementStore'])
     ->name('advertisement.store');
-    
+
     Route::get('/Advertisement/{id}/edit', [AdvertisementController::class, 'advertisementEdit'])->name('advertisement.edit');
     /*
     Route::patch('/Advertisement/{id}', function (Request $request, $id) {

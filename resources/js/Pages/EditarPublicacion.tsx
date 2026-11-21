@@ -41,8 +41,6 @@ function fileToDataURL(file: File) {
 }
 
 export default function EditarPublicacion({ auth, item }: { auth: any; item: Item | null }) {
-  console.log('IMÁGENES RECIBIDAS EN ITEM:', item?.images);
-  console.log('URLS RECIBIDAS EN ITEM:', item?.imageUrls);
   const initialImages = useMemo<string[]>(() => {
     if (!item) return [];
     const arr = item.imageUrls && Array.isArray(item.imageUrls) ? item.imageUrls : [];
@@ -74,7 +72,6 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
   const [imagenesExistentes, setImagenesExistentes] = useState<ImagenExistente[]>(
       item?.images ?? []
   );
-  console.log('ESTADO IMÁGENES EXISTENTES:', imagenesExistentes);
 
   const [imagenesNuevas, setImagenesNuevas] = useState<ImagenNueva[]>([]);
 
@@ -458,10 +455,6 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
       e.preventDefault();
 
       if (!item?.id) return;
-
-      console.log('ITEM:', item);
-      console.log('IMÁGENES EXISTENTES:', imagenesExistentes);
-      console.log('IMÁGENES NUEVAS:', imagenesNuevas);
       const datos = {
           ...data,
 
@@ -473,15 +466,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
           // Archivos nuevos, no Base64.
           images: imagenesNuevas.map(img => img.file),
       };
-      console.log(
-          'IDs de imágenes existentes:',
-          imagenesExistentes.map(img => img.id)
-      );
 
-      console.log(
-          'Archivos nuevos:',
-          imagenesNuevas.map(img => img.file)
-      );
       router.post(`/Advertisement/${item.id}`, datos, {
           preserveScroll: true,
           forceFormData: true,

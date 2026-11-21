@@ -101,7 +101,6 @@ export default function Dashboard({ auth, stats }: { auth: any; stats?: Dashboar
 
   const unreadMessages = Number(badges.unreadMessages ?? 0);
 
-  console.log("TEST");
 return (
   <AuthenticatedLayout user={auth.user}>
     <Head title="Banco de tiempo" />

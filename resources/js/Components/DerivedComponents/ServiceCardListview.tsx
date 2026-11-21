@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import ServiceCard from "./ServicioProductoCard";
 import { Servicio } from "@/mockData/datosMockPerfil";
+import { Publicacion } from "@/mockData/datosMockPerfil";
 
 interface ServiceCardListviewProps {
-  servicios: Servicio[];
+  //servicios: Servicio[];
+  servicios:Publicacion[];
   filtroTipo?: 'Servicio' | 'Producto' | null;
   filtroOfertaDemanda?: 'Oferta' | 'Demanda' | null;
   filtroOrden?: 'precioMayor' | 'precioMenor' | 'popular' | 'reciente' | null;

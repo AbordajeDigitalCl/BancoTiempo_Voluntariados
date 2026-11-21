@@ -15,6 +15,7 @@ type Ad = {
   type: 'Servicio' | 'Producto';
   mode: 'Oferta' | 'Demanda';
   status?: AdStatus;
+  user_id:number;
   author?: string;
   imageUrl?: string | null;
   imageUrls?: string[];
@@ -147,6 +148,12 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
       iconAnchor: [15, 30],
     });
   }, []);
+
+  const crearConversacion = (usuarioId: number) => {
+    router.post('/administrar-usuarios/crear-conversacion', {
+        usuario_id: usuarioId,
+    });
+  };
 
   useEffect(() => {
     if (!item) return;
@@ -425,10 +432,18 @@ export default function AdvertisementShow({ auth, item }: { auth: any; item: Ad 
               )}
 
               <div className="mt-5 flex flex-wrap gap-2 justify-end">
+                {/*
                 <Link href="/chat" className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50">
                   Chat
                 </Link>
-
+                */}
+                <button
+                  type="button"
+                  onClick={() => crearConversacion(item.user_id)}
+                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50"
+                >
+                  Chat
+                </button>
                 {isOwner ? (
                   <>
                     <button

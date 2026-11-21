@@ -2,6 +2,15 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { useMemo } from 'react';
 
+type LaravelPaginator<T> = {
+  data: T[];
+  current_page: number;
+  last_page: number;
+  prev_page_url:string | null;
+  next_page_url: string | null;
+  total: number;
+};
+
 type AdStatus = 'active' | 'paused' | 'finished';
 
 type Ad = {
@@ -17,6 +26,11 @@ type Ad = {
   imageUrls?: string[];
   created_at?: string | null;
 };
+
+type MyAdvertisementsProps = {
+  auth: any;
+  createdAds: LaravelPaginator<Ad>;
+}
 
 function OwnerStatusPill({ status }: { status: AdStatus }) {
   const label = status === 'active' ? 'Disponible' : status === 'finished' ? 'Agotado' : 'Desactivado';
@@ -34,7 +48,8 @@ function OwnerStatusPill({ status }: { status: AdStatus }) {
   );
 }
 
-export default function MyAdvertisements({ auth, createdAds }: any) {
+export default function MyAdvertisements({ auth, createdAds }: MyAdvertisementsProps) {
+  /*
   const myAds: Ad[] = useMemo(() => {
     const list = (createdAds ?? []).filter((ad: any) => ad.author === auth.user.name);
     const getTime = (x: any) => {
@@ -43,6 +58,10 @@ export default function MyAdvertisements({ auth, createdAds }: any) {
     };
     return list.sort((a: any, b: any) => getTime(b) - getTime(a));
   }, [createdAds, auth.user.name]);
+  */
+  //Ahora se recibe un objeto paginador
+  const myAds: Ad[] = createdAds.data ?? [];
+
 
   const pickImage = (ad: Ad) => {
     if (ad.imageUrls && ad.imageUrls.length > 0) return ad.imageUrls[0];
@@ -74,6 +93,7 @@ export default function MyAdvertisements({ auth, createdAds }: any) {
               No has creado publicaciones todavía.
             </div>
           ) : (
+            <>
             <div className="space-y-4">
               {myAds.map((ad) => (
                 <div key={ad.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -115,8 +135,38 @@ export default function MyAdvertisements({ auth, createdAds }: any) {
                 </div>
               ))}
             </div>
+            <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <button
+                onClick={() => {
+                  if (createdAds.prev_page_url) {
+                    router.get(createdAds.prev_page_url);
+                  }
+                }}
+                className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.prev_page_url ? 'invisible' : ''}`}
+              >
+                Anterior
+              </button>
+
+              <span className="text-sm text-gray-600">
+                Página {createdAds.current_page} de {createdAds.last_page}
+              </span>
+
+              <button
+                onClick={() => {
+                  if (createdAds.next_page_url) {
+                    router.get(createdAds.next_page_url);
+                  }
+                }}
+                className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.next_page_url ? 'invisible' : ''}`}
+              >
+                Siguiente
+              </button>
+            </div>
+          </>
           )}
+          
         </div>
+
       </div>
     </AuthenticatedLayout>
   );

@@ -9,6 +9,7 @@ interface DatosPublicacion {
     costo: number;
     tipo: string; // 'Servicio' o 'Producto'
     ofertaDemanda: string; // 'Oferta' o 'Demanda'
+    estado: string
 }
 
 
@@ -25,6 +26,7 @@ export function guardarPublicacion(id: number, datos: DatosPublicacion, returnTo
         Descripcion: datos.descripcion,
         Tipo_Beneficio: tipoBeneficio,
         Tipo_Publicacion: tipoPublicacion,
+        Estado: datos.estado,
         return_to: returnTo, // Incluir en el body en lugar de query param
     };
     

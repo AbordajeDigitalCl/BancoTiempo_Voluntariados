@@ -2,28 +2,73 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head } from '@inertiajs/react';
 import FilaConversacion from '@/Components/DerivedComponents/FilaConversacion';
 import AreaChat from '@/Components/DerivedComponents/AreaChat';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 import type { Conversacion } from '@/mockData/datosMockMensajes';
-import type { ConversacionDetalle } from '@/mockData/datosMockChatMensajes';
+import type { ConversacionDetalle, Mensaje} from '@/mockData/datosMockChatMensajes';
+import {router} from '@inertiajs/react';
+import axios from 'axios';
 
 const CONVERSACIONES_PER_PAGE = 10;
+
+const obtenerMensajesConversacion = async (conversacionId: number) => {
+    const response = await axios.get('/chat/mensajes', {
+        params: {conversacion_id: conversacionId},
+    });
+    return response.data;
+};
+
+
+type ChatMessageEvent = {
+    message_id: number;
+    conversation_id: number;
+    sender_id: number;
+    receiver_id: number;
+    preview: string;
+    is_image:boolean;
+    tipo_mensaje:number;
+    created_at: string;
+};
+
+const formatearFecha = (iso: string) => {
+    const d = new Date(iso);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+
+    return {
+        fecha: `${dd}/${mm}/${yyyy}`,
+        hora: `${hh}:${min}`
+    };
+        
+};
 
 interface ChatProps {
     auth: any;
     conversaciones: Conversacion[];
     mensajesPorConversacion: ConversacionDetalle[];
+    conversacionSeleccionadaId: number | null;
 }
 
-export default function Chat({ auth, conversaciones: conversacionesServer, mensajesPorConversacion }: ChatProps) {
-    const [conversacionSeleccionada, setConversacionSeleccionada] = useState<number | null>(null);
+export default function Chat({ auth, conversaciones: conversacionesServer, mensajesPorConversacion, conversacionSeleccionadaId }: ChatProps) {
+    const [conversacionSeleccionada, setConversacionSeleccionada] = useState<number | null>(conversacionSeleccionadaId);
     const [conversacionesConEstado, setConversacionesConEstado] = useState(conversacionesServer || []);
     const [conversacionesPaginadas, setConversacionesPaginadas] = useState((conversacionesServer || []).slice(0, CONVERSACIONES_PER_PAGE));
 
+    //estado local para mensajes en tiempo real
+    const [mensajesPorConversacionState, setMensajesPorConversacionState] = useState<ConversacionDetalle[]>(mensajesPorConversacion || []);
+
     const conversacionActual = conversacionesConEstado.find((c) => c.id === conversacionSeleccionada);
-    const mensajesActuales = mensajesPorConversacion.find(
+
+    //Se modificó para que lea el estado mensajesPorConversacionState en lugar de mensajesPorConversacion
+    const mensajesActuales = mensajesPorConversacionState.find(
         (m) => m.conversacionId === conversacionSeleccionada
     )?.mensajes || [];
+
+
 
     const { isLoading, hasMore, observerTarget, resetPagination } = useInfiniteScroll({
         itemsPerPage: CONVERSACIONES_PER_PAGE,
@@ -38,6 +83,31 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         },
     });
 
+    const marcarConversacionComoLeida = async (conversacionId: number) => {
+        try {
+            const response = await axios.post('/chat/marcar-leidos', {
+                conversacion_id: conversacionId,
+            });
+
+            const unreadTotal = Number(response?.data?.unread_total ?? 0);
+
+            window.dispatchEvent(
+                new CustomEvent('chat:unread-sync', {
+                    detail: {total: unreadTotal},
+                })
+            );
+            /*
+            router.reload({
+                only: ['unreadMessageCount', 'nav'],
+                preserveScroll:true,
+                preserveState: true,
+            });
+            */
+        } catch (error) {
+            console.error('Error al marcar mensajes como leidos', error);
+        }
+    };
+
     useEffect(() => {
         const conversacionesActualizadas = conversacionesConEstado.map(conv => {
             const paginada = conversacionesPaginadas.find(p => p.id === conv.id);
@@ -45,6 +115,7 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
         });
         setConversacionesPaginadas(conversacionesActualizadas.slice(0, conversacionesPaginadas.length));
     }, [conversacionesConEstado]);
+    
     const handleSeleccionarConversacion = (conversacionId: number) => {
         setConversacionSeleccionada(conversacionId);
         setConversacionesConEstado((prevState) =>
@@ -54,7 +125,13 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     : conv
             )
         );
+
+        //Persistencia en BD (read_at = now)
+        void marcarConversacionComoLeida(conversacionId);
     };
+
+
+
 
     /**
      * Actualizar conversación cuando se envía un mensaje o imagen
@@ -74,10 +151,186 @@ export default function Chat({ auth, conversaciones: conversacionesServer, mensa
                     }
                     : conv
             )
-        );
+        );        
     };
 
     const mostrarListaVacia = conversacionesPaginadas.length === 0;
+
+
+    const hydratedRef = useRef(false);
+
+    //Para actualizar estado local de las conversaciones
+    useEffect(()=> {
+        if(hydratedRef.current) return;
+        setMensajesPorConversacionState(mensajesPorConversacion || []);
+        hydratedRef.current = true;
+    }, [mensajesPorConversacion]);
+
+
+    /**
+     * Aquí se escucha el evento ChatMessageCreated para actualizar la lista de mensajes de una
+     * conversación en tiempo real.
+     * También se actualiza la vista previa del mensaje.
+     */
+    useEffect(() => {
+
+        if(!auth.user.id || !window.Echo || !conversacionSeleccionada) return;
+
+        const channelName = `App.Models.Conversation.${conversacionSeleccionada}`;
+        window.Echo.private(channelName).listen('.chat.message.created', (e:ChatMessageEvent) => {
+
+            const convId = Number(e.conversation_id);
+            const isOwnMessage = Number(e.sender_id) === Number(auth.user.id);
+            const isActive = convId === conversacionSeleccionada;
+            
+            
+            setConversacionesConEstado((prev) =>
+                prev.map((conv) => {
+                    if(conv.id !== convId) return conv;
+
+                    const fechaHoraUltimoMensaje = `${formatearFecha(e.created_at).fecha} ${formatearFecha(e.created_at).hora}`; 
+
+                    return {
+                        ...conv,
+                        ultimoMensaje: String(e.preview ?? ''),
+                        fechaUltimoMensaje: fechaHoraUltimoMensaje,
+                        esMensajeDelUsuarioPrincipal:false,
+                        tipoUltimoMensaje: e.tipo_mensaje,
+                        mensajesNoLeidos: isActive ? 0 : (conv.mensajesNoLeidos ?? 0) + 1,
+                    };
+                })
+            );
+            
+            const cargarMensajes = async () => {
+                try {
+                    const data = await obtenerMensajesConversacion(
+                        conversacionSeleccionada
+                    );
+
+                    setMensajesPorConversacionState((prev) => {
+                        const idx = prev.findIndex((c) => c.conversacionId === conversacionSeleccionada);
+                        if(idx === -1) {
+                            return [...prev, {
+                                conversacionId: conversacionSeleccionada,
+                                mensajes: data.mensajes ?? []
+                            }];
+                        }
+
+                        const copia = [...prev];
+                        copia[idx] = {...copia[idx], mensajes: data.mensajes ?? []};
+                        return copia;
+                    });
+
+
+                } catch (error) {
+                    console.error('Error al obtener mensajes de la conversacion: ', error);
+                }
+            };
+            void cargarMensajes();
+
+        });
+        
+        return () => {
+            window.Echo.leave(channelName);
+        };
+
+    }, [auth?.user?.id, conversacionSeleccionada]);
+
+    /**
+     * Aquí ser escucha el evento ChatMessageCreated para actualizar un badge que indica
+     * si hay mensajes no leídos.
+     */
+    useEffect(() => {
+        if(!auth?.user?.id || !window.Echo) return;
+
+        const channelName = `App.Models.User.${auth.user.id}`;
+
+        window.Echo.private(channelName).listen('.chat.message.created', (e: ChatMessageEvent) => {
+
+            const convId = Number(e.conversation_id);
+            const isOwnMessage = Number(e.sender_id) === Number(auth.user.id);
+            const isActive = convId === conversacionSeleccionada;
+
+            setConversacionesConEstado((prev) =>
+                prev.map((conv) => {
+                    if (conv.id !== convId) return conv;
+
+                    const fecha = formatearFecha(e.created_at);
+
+                    return {
+                        ...conv,
+                        ultimoMensaje: String(e.preview ?? ''),
+                        fechaUltimoMensaje: `${fecha.fecha} ${fecha.hora}`,
+                        tipoUltimoMensaje: Number(e.tipo_mensaje),
+                        esMensajeDelUsuarioPrincipal: isOwnMessage,
+                        mensajesNoLeidos: isActive || isOwnMessage
+                            ? 0
+                            : (conv.mensajesNoLeidos ?? 0) + 1,
+                    };
+                })
+            );
+            
+            if(convId === conversacionSeleccionada) {
+                void marcarConversacionComoLeida(convId);
+            }
+        });
+
+        return () => {
+            window.Echo.leave(channelName);
+        };
+    }, [auth?.user?.id, conversacionSeleccionada]);
+
+
+    /**
+     * Carga el historial de mensajes cada vez que se selecciona
+     * una conversación.
+     */
+    useEffect(() => {
+        if (!conversacionSeleccionada) return;
+
+        const cargarMensajes = async () => {
+            try {
+                const data = await obtenerMensajesConversacion(
+                    conversacionSeleccionada
+                );
+
+                setMensajesPorConversacionState((prev) => {
+                    const idx = prev.findIndex(
+                        (c) => c.conversacionId === conversacionSeleccionada
+                    );
+
+                    if (idx === -1) {
+                        return [
+                            ...prev,
+                            {
+                                conversacionId: conversacionSeleccionada,
+                                mensajes: data.mensajes ?? [],
+                            },
+                        ];
+                    }
+
+                    const copia = [...prev];
+
+                    copia[idx] = {
+                        ...copia[idx],
+                        mensajes: data.mensajes ?? [],
+                    };
+
+                    return copia;
+                });
+
+            } catch (error) {
+                console.error(
+                    'Error al cargar mensajes de la conversación:',
+                    error
+                );
+            }
+        };
+
+        void cargarMensajes();
+
+    }, [conversacionSeleccionada]);
+
 
     return (
         <AuthenticatedLayout user={auth.user}>

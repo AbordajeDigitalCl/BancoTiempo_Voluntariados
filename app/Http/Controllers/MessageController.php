@@ -29,6 +29,7 @@ class MessageController extends Controller
         ]);
 
         // notificar al otro usuario
+        /*
         $other = $conversation->otherUser($user->id);
         if ($other) {
             $other->notify(new NewMessageNotification([
@@ -38,6 +39,7 @@ class MessageController extends Controller
                 'sender_id' => $user->id,
             ]));
         }
+        */
 
         return redirect()->route('chat.show', ['conversation' => $conversation->id]);
     }

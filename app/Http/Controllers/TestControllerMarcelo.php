@@ -210,6 +210,7 @@ class TestControllerMarcelo extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse Redirect a '/Advertisement' autenticado.
      */
+    
     public function adminRegister(Request $request): RedirectResponse
     {
         $request->session()->put('is_admin', true);
@@ -245,7 +246,7 @@ class TestControllerMarcelo extends Controller
 
         return redirect()->intended('/Advertisement');
     }
-
+    
     /*
      |--------------------------------------------------------------------------
      | ADMIN LOGIN (ACCIÓN)
@@ -266,7 +267,8 @@ class TestControllerMarcelo extends Controller
      * @view resources/js/Pages/AdminLogin.tsx
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse Redirect a '/Advertisement' o back con error.
-     */
+     */ 
+       
     public function adminLogin(Request $request): RedirectResponse
     {
         $request->session()->put('is_admin', true);
@@ -288,7 +290,7 @@ class TestControllerMarcelo extends Controller
 
         return redirect()->intended('/Advertisement');
     }
-
+    
     /*
  /*
 |--------------------------------------------------------------------------
@@ -310,7 +312,16 @@ class TestControllerMarcelo extends Controller
  * MOTIVO: Centralizar toda la lógica de filtrado en un único lugar (el SP), en vez de
  *        tenerla duplicada entre PHP y SQL. Además permite reutilizar el mismo SP desde
  *        otros lugares (por ejemplo Cruds.php) sin repetir código.
- *
+ * MODIFICADO   (3er cambio)
+ * AHORA: Se llama al stored procedure `obtener_publicaciones_cercanas_filtradas` (creado en MySQL),
+ *        que recibe 6 filtros (q, type, distance, sort, latitud, longitud) como parámetros y
+ *        devuelve directamente el resultado ya filtrado y ordenado desde la BD.
+ *        El resultado crudo (array de stdClass) se hidrata con Advertisement::hydrate()
+ *        para volver a tener Eloquent Models y poder usar sus accessors/casts
+ *        (por ejemplo el cast de image_urls a array).
+ * MOTIVO: Se modificó el SP anterior `obtener_publicaciones`, ya que no incluía todos los parámetros
+ *        necesarios para la operación. El SP `obtener_publicaciones` se conservó en las migraciones para
+ *        revisión.
  * @source tabla `advertisements`
  * @view resources/js/Pages/Advertisement.tsx
  * @param  \Illuminate\Http\Request  $request (query params opcionales)
@@ -318,20 +329,38 @@ class TestControllerMarcelo extends Controller
  */
 public function advertisementIndex(Request $request): Response
 {
+
+
     $filters = $this->parseAdvertisementFilters($request);
+
+    $latitude = $request->query('userLocation.latiude');
+    $longitude = $request->query('userLocation.longitude');
+    
     $isAdmin = (bool) $request->session()->get('is_admin', false);
  
     // Se ejecuta el stored procedure `obtener_publicaciones` pasando los 4 filtros
     // ya sanitizados por parseAdvertisementFilters(). El SP hace todo el trabajo de
     // WHERE (búsqueda por texto, tipo, distancia/modalidad) y ORDER BY (newest/oldest)
     // directamente en MySQL, devolviendo solo las filas que corresponden.
-    $rows = \DB::select('call obtener_publicaciones(?, ?, ?, ?)', [
+    /*
+    $rows = \DB::select('call obtener_publicaciones_cercanas(?, ?, ?, ?)', [
         $filters['q'],
         $filters['type'],
         $filters['distance'],
         $filters['sort'],
     ]);
- 
+    */
+
+    
+    $rows = \DB::select('call obtener_publicaciones_cercanas_filtradas(?, ?, ?, ?, ?, ?)', [
+        $filters['q'],
+        $filters['type'],
+        $filters['distance'],
+        $filters['sort'],
+        $latitude,
+        $longitude
+    ]);
+    
 
     $query = Advertisement::hydrate($rows);
  
@@ -409,10 +438,15 @@ public function advertisementIndex(Request $request): Response
      */
     public function myAdvertisementsIndex(Request $request): Response
     {
+        $user_id = $request->user()->id;
+
+        //Para esta query se creó el index:  idx_publicacions_usuario_created, ya que sin ella
+        //la consulta arroja un error al ordenar las filas con latest().
         $createdAds = Advertisement::query()
+            ->where('id_usuario', $user_id)
             ->latest()
-            ->get()
-            ->map(function ($ad) {
+            ->paginate(10)
+            ->through(function ($ad) {
                 return [
                     'id' => $ad->id,
                     'title' => $ad->title,
@@ -592,7 +626,15 @@ public function advertisementIndex(Request $request): Response
      */
     public function dashboard(Request $request): Response
     {
-        $createdAds = Advertisement::query()->get()->map(function ($ad) {
+
+        $user_id = $request->user()->id;
+        
+        //Se agregó filtro por id_usuario, ya que previamente se obtenían las publicaciones
+        //de todos los usuarios
+        $createdAds = Advertisement::query()
+        ->where('id_usuario', $user_id)
+        ->get()
+        ->map(function ($ad) {
             return [
                 'id' => $ad->id,
                 'title' => $ad->title,
@@ -682,6 +724,14 @@ public function advertisementIndex(Request $request): Response
         $myDisabled = $countByStatus($myAds, 'paused');
  
         $adsActiveTotal = $countByStatus($ads, 'active');
+
+        $unreadMessageCount = 0;
+        if($user) {
+            $unreadMessageCount = \DB::table('mensajes')
+            ->where('id_usuario_destino', (int) $user->id)
+            ->whereNull('read_at')
+            ->count();
+        }
  
         return [
             'me' => [
@@ -695,7 +745,7 @@ public function advertisementIndex(Request $request): Response
                 'adsActiveTotal' => $adsActiveTotal,
             ],
             'badges' => [
-                'unreadMessages' => 0,
+                'unreadMessages' => $unreadMessageCount,
                 'unreadNotifications' => 0,
             ],
         ];

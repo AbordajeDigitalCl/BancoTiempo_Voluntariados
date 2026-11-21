@@ -37,4 +37,17 @@ class Advertisement extends Model
         'location_lat' => 'float',
         'location_lng' => 'float',
     ];
+
+    /**
+     * Se agrega este bloque para poder recuperar las imágenes asociadas
+     * a una publicación.
+     */
+    public function images() {
+        return $this->belongsToMany(
+            Imagen::class,
+            'inter__imagen__public',
+            'id_publicacion',
+            'id_imagen'
+        );
+    }
 }

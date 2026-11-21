@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Traits\Cruds;
 use App\Models\Tipo_Usuario;
 use Inertia\Inertia;
+use Carbon\Carbon;
 /*
 Todos los request public que se encuentran en este archivo:
 
@@ -282,7 +283,7 @@ class TestControllerCris extends Controller
     {
         $usuario_logueado = $request->user();
         $isAdminLogueado = (bool) $request->session()->get('is_admin', false);
-
+        
         // Determina qué usuario ver
         if ($id) {
             // Si el usuario intenta ver un perfil diferente al suyo y no es admin, error
@@ -315,6 +316,8 @@ class TestControllerCris extends Controller
        
         $publicaciones = [];
         if (!$esAdminUsuarioAVer) {
+
+            /*
             // Subquery para obtener la primera imagen de cada publicación
             $imagenSubquery = \DB::table('inter__imagen__public')
                 ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
@@ -340,7 +343,17 @@ class TestControllerCris extends Controller
                     'demandas.Presupuesto',
                     'imagen_primera.Direccion as imagenDireccion'
                 )
-                ->get()
+                */
+
+            $publicaciones = \DB::select(
+                'CALL obtener_publicaciones_perfil_por_usuario_id(?)',
+                [$usuarioAVer->id]
+            );
+
+            
+
+            $publicaciones = collect($publicaciones)
+                //->get()
                 ->map(fn($pub) => [
                     'id' => $pub->id,
                     'titulo' => $pub->Nombre,
@@ -350,7 +363,7 @@ class TestControllerCris extends Controller
                     'ofertaDemanda' => $pub->Precio !== null ? 'Oferta' : 'Demanda',
                     'imagen' => $pub->imagenDireccion ? '/imagen/' . $pub->imagenDireccion : 'https://picsum.photos/200?random=' . $pub->id,
                     'estado' => 'Activo',
-                    'fecha' => $pub->created_at->format('Y-m-d'),
+                    'fecha' => Carbon::parse($pub->created_at)->format('Y-m-d'),
                     'popularidad' => null,
                 ])
                 ->toArray();
@@ -386,6 +399,7 @@ class TestControllerCris extends Controller
         $isAdmin = (bool) $request->session()->get('is_admin', false);
         $returnTo = $request->query('return_to', '/verperfil');
         
+        /*
         // Subquery para obtener la primera imagen de la publicación
         $imagenSubquery = \DB::table('inter__imagen__public')
             ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
@@ -419,6 +433,16 @@ class TestControllerCris extends Controller
                 'imagen_primera.id as imagenId'
             )
             ->first();
+        */
+
+        $publicacion = collect(\DB::select(
+            'CALL obtener_publicacion_para_editar(?,?,?)',
+            [$id,
+            $user->id,
+            $isAdmin ? 1 : 0
+            ]
+        ))
+        ->first();
 
         if (!$publicacion) {
             abort(404);
@@ -480,6 +504,8 @@ class TestControllerCris extends Controller
         
         $publicacion = $query->first();
 
+        //dd($publicacion);
+
         if (!$publicacion) {
             abort(404);
         }
@@ -492,6 +518,7 @@ class TestControllerCris extends Controller
             'Descripcion' => ['required', 'string', 'max:255'],
             'Tipo_Beneficio' => ['required', 'integer', 'in:0,1'], // 0=Servicio, 1=Producto
             'Tipo_Publicacion' => ['required', 'integer', 'in:0,1'], // 0=Oferta, 1=Demanda
+            'Estado' => ['required', 'string', 'in:Activo,Desactivado,Agotado'],
             'Precio' => ['nullable', 'integer', 'min:0'], // Para Ofertas
             'Presupuesto' => ['nullable', 'integer', 'min:0'], // Para Demandas
         ];
@@ -524,12 +551,23 @@ class TestControllerCris extends Controller
         $cambioDeOfertaDemanda = $tipoPublicacionAnterior !== $tipoPublicacionNuevo;
         $cambioDeTipoBeneficio = (int) $publicacion->Tipo_Beneficio !== (int) $validated['Tipo_Beneficio'];
 
+        //Traduce los valores de status de la tabla publicacions en
+        //cadenas de texto en Español
+        $determinarEstado = fn($status) => match ($status) {
+            'Activo' => 'active',
+            'Desactivado' => 'paused',
+            'Agotado' => 'finished',
+            'Borrado' => 'deleted'
+        };
+        //dd($validated['Estado']);
+        //dd($determinarEstado($validated['Estado']));
         // Actualizar datos de la publicación
         $publicacion->update([
             'Nombre' => $validated['Nombre'],
             'Descripcion' => $validated['Descripcion'],
             'Tipo_Beneficio' => $validated['Tipo_Beneficio'], // Cambio entre Servicio/Producto
             'Tipo_Publicacion' => $tipoPublicacionNuevo, // Cambio entre Oferta/Demanda
+            'status' => $determinarEstado($validated['Estado'])
         ]);
 
         if ($cambioDeOfertaDemanda) {
@@ -594,6 +632,7 @@ class TestControllerCris extends Controller
             })
             ->get();
 
+        /*
         $conversacionesFormato = $conversaciones->map(function ($conv) use ($user) {
             // Identificar quién es el "otro usuario" en la conversación (no el logueado)
             $otroUsuarioId = $conv->user_one_id === $user->id ? $conv->user_two_id : $conv->user_one_id;
@@ -620,13 +659,15 @@ class TestControllerCris extends Controller
                     $query->where('id_usuario_origen', $conv->user_two_id)
                         ->where('id_usuario_destino', $conv->user_one_id);
                 })->orderBy('created_at', 'desc')->first();
-
+            
             $mensajesNoLeidos = \DB::table('mensajes')
                 ->where('id_usuario_destino', $user->id)
                 ->where(function ($query) use ($conv) {
                     $query->where('id_usuario_origen', $conv->user_one_id)
                         ->orWhere('id_usuario_origen', $conv->user_two_id);
-                })->count();
+                })
+                ->whereNull('read_at')
+                ->count();
 
             $fechaUltimo = $ultimoMensaje ? \Carbon\Carbon::parse($ultimoMensaje->created_at)->format('d/m/Y') : '';
 
@@ -636,13 +677,31 @@ class TestControllerCris extends Controller
                 'nombre' => $otroUsuario->name . ' ' . $otroUsuario->Apellido_Paterno,
                 'foto' => $fotoUrl,
                 'ultimoMensaje' => $ultimoMensaje ? $ultimoMensaje->Mensaje : '',
+                'tipoUltimoMensaje' => $ultimoMensaje ? $ultimoMensaje->Tipo_Mensaje: 3,
                 'esMensajeDelUsuarioPrincipal' => $ultimoMensaje ? $ultimoMensaje->id_usuario_origen === $user->id : false,
                 'fechaUltimoMensaje' => $fechaUltimo,
                 'mensajesNoLeidos' => $mensajesNoLeidos,
             ];
         })->values()->toArray();
+        */
+
+        $conversacionesFormato = \DB::select(
+            'CALL obtener_resumen_conversaciones_por_usuario_id(?)',
+            [$user->id]
+        );
+
+        // Se obtienen todos los mensajes con una sola consulta al SP
+        $mensajesPorConversacion = collect(
+            \DB::select(
+                'CALL obtener_mensajes_de_conversaciones_por_usuario_id(?)',
+                [$user->id]
+            )
+
+        )->groupBy('conversation_id');
 
         $mensajesAgrupados = [];
+
+        /*
         foreach ($conversaciones as $conv) {
             $mensajes = \DB::table('mensajes')
                 ->where(function ($query) use ($conv) {
@@ -680,11 +739,112 @@ class TestControllerCris extends Controller
                 'mensajes' => $mensajesFormato,
             ];
         }
+        */
+
+        foreach($conversaciones as $conv) {
+            $mensajes = $mensajesPorConversacion->get($conv->id, collect());
+
+            $mensajesFormato = $mensajes->map(function($msg) use ($user) {
+                $fechaMensaje = \Carbon\Carbon::parse($msg->created_at);
+
+                $esImagen = (int) $msg->Tipo_Mensaje === 1;
+
+                return [
+                    'id' => $msg->id,
+                    'contenido' => $esImagen ? '[Imagen compartida]' : $msg->Mensaje,
+                    'esDelUsuarioPrincipal' => (int) $msg->id_usuario_origen === (int) $user->id,
+                    'fecha' => $fechaMensaje->format('d/m/Y'),
+                    'hora' => $fechaMensaje->format('H:i:s'),
+                    'esImagen' => $esImagen,
+                    'imagenUrl' => $esImagen ? '/imagen/' . $msg->Mensaje : null,
+                ];
+            })->values()->toArray();
+
+            $mensajesAgrupados[] = [
+                'conversacionId' => $conv->id,
+                'mensajes' => $mensajesFormato,
+            ];
+        }
 
         return Inertia::render('Chat', [
             'conversaciones' => $conversacionesFormato,
             'mensajesPorConversacion' => $mensajesAgrupados,
         ]);
+    }
+
+    // Obtener mensajes de una conversación en particular
+    public function obtenerMensajesConversacion(Request $request) {
+
+        
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'conversacion_id' => ['required', 'integer', 'exists:conversations,id'],
+        ]);
+
+        $conversacionId = (int) $validated['conversacion_id'];
+
+        
+        $conversacion = \DB::table('conversations')
+        ->where('id', $conversacionId)
+        ->first();      
+
+        if(!$conversacion) {
+            abort(404, 'Conversacion no encontrada');
+        }
+
+        $esParticipante = 
+        ((int) $conversacion->user_one_id === (int) $user->id)
+        ||
+        ((int) $conversacion->user_two_id === (int) $user->id);
+
+        if(!$esParticipante) {
+            abort(403, 'No tienes acceso a esta conversacion');
+        }
+
+        
+        /*
+        $mensajes = \DB::table('mensajes')
+        ->where(function ($query) use ($conversacion) {
+            $query->where('id_usuario_origen', $conversacion->user_one_id)
+            ->where('id_usuario_destino', $conversacion->user_two_id);            
+        })
+        ->orWhere(function ($query) use ($conversacion) {
+            $query->where('id_usuario_origen', $conversacion->user_two_id)
+            ->where('id_usuario_destino', $conversacion->user_one_id);
+        })
+        ->orderBy('created_at', 'asc')
+        ->get()
+        */
+        $mensajes_raw = \DB::select(
+            'CALL obtener_mensajes_conversacion(?,?)',
+            [$conversacion->user_one_id,
+            $conversacion->user_two_id
+            ]
+        );
+
+        $mensajes = collect($mensajes_raw)
+        ->map(function($msg) use ($user) {
+            $fecha = \Carbon\Carbon::parse($msg->created_at);
+
+            return [
+                'id' => (int) $msg->id,
+                'contenido' => (int) $msg->Tipo_Mensaje === 1 ? '[Imagen compartida]' : (string) $msg->Mensaje,
+                'esDelUsuarioPrincipal' => (int) $msg->id_usuario_origen === (int) $user->id,
+                'fecha' => $fecha->format('d/m/Y'),
+                'hora' => $fecha->format('H:i:s'),
+                'esImagen' => (int) $msg->Tipo_Mensaje === 1,
+                'imagenUrl' => (int) $msg->Tipo_Mensaje === 1 ? '/imagen/' . $msg->Mensaje : null,
+            ];
+        })
+        ->values();
+
+        return response()->json([
+            'success' => true,
+            'conversacion_id' => $conversacionId,
+            'mensajes' => $mensajes,
+        ]);
+
     }
 
     // Se envía mensaje y redirige a /chat
@@ -719,7 +879,21 @@ class TestControllerCris extends Controller
             'Tipo_Mensaje' => 0, // Solo mensajes de texto
             'created_at' => now(),
             'updated_at' => now(),
+            'read_at'=>null,
         ]);
+
+        
+
+        //evento de notificacion de mensajes no leídos
+        event(new \App\Events\ChatMessageCreated(
+            messageId: (int) $mensajeId,
+            conversationId: (int) $conversacion->id,
+            senderId: (int) $user->id,
+            receiverId: (int) $otroUsuarioId,
+            preview: (string) $validated['contenido'],
+            isImage: false,
+            createdAt: now()->toISOString(),
+        ));
 
         // Obtener fecha y hora actuales
         $ahora = now();
@@ -750,10 +924,13 @@ class TestControllerCris extends Controller
     {
         $user = $request->user();
 
+        
         $validated = $request->validate([
             'conversacion_id' => ['required', 'integer'],
             'imagen_base64' => ['required', 'string'], 
         ]);
+
+        
 
         $conversacion = \App\Models\Conversation::find($validated['conversacion_id']);
 
@@ -821,7 +998,20 @@ class TestControllerCris extends Controller
             'Tipo_Mensaje' => 1, // 1 = imagen
             'created_at' => now(),
             'updated_at' => now(),
+            'read_at'=> null,
         ]);
+
+        //evento de notificacion de mensajes no leídos
+        event(new \App\Events\ChatMessageCreated(
+            messageId: (int) $mensajeId,
+            conversationId: (int) $conversacion->id,
+            senderId: (int) $user->id,
+            receiverId: (int) $otroUsuarioId,
+            //preview: (string) $validated['contenido'],
+            preview: 'Imagen',
+            isImage: true,
+            createdAt: now()->toISOString(),
+        ));
 
         
         $ahora = now();
@@ -853,6 +1043,8 @@ class TestControllerCris extends Controller
         if (!$isAdmin) {
             abort(403, 'Solo administradores pueden acceder a esta página');
         }
+
+        /*
         $usuarios = \DB::table('users')
             ->orderBy('id', 'asc')
             ->get()
@@ -886,7 +1078,55 @@ class TestControllerCris extends Controller
                 ];
             })
             ->toArray();
+        */
 
+        $usuarios = \DB::table('users as u')
+        ->select([
+            'u.id',
+            'u.name',
+            'u.Apellido_Paterno',
+            'u.Apellido_Materno',
+            'u.Ciudad',
+            'u.Direccion',
+            'u.email',
+        ])
+        ->selectSub(
+            \DB::table('imagens as i')
+            ->select('i.Direccion')
+            ->where('i.Tipo', 0)
+            ->orderByDesc('i.id')
+            ->limit(1),
+            'fotoDireccion'
+        )
+        ->selectRaw('
+            EXISTS(
+                SELECT 1
+                FROM Tipo_Usuario tu
+                WHERE tu.id_usuario = u.id
+            ) AS esAdmin
+        ')
+        ->orderBy('u.id', 'asc')
+        ->get()
+        ->map(function ($user) {
+            $fotoUrl = $user->fotoDireccion
+                ? '/imagen/' . $user->fotoDireccion
+                : 'https://picsum.photos/200?random=' . $user->id;
+
+            return [
+                'id' => $user->id,
+                'nombre' => $user->name ?? '',
+                'apellidoPaterno' => $user->Apellido_Paterno ?? '',
+                'apellidoMaterno' => $user->Apellido_Materno ?? '',
+                'ciudad' => $user->Ciudad ?? '',
+                'direccion' => $user->Direccion ?? '',
+                'email' => $user->email ?? '',
+                'foto' => $fotoUrl,
+                'esAdmin' => (int) $user->esAdmin,
+            ];
+        })
+        ->toArray();
+
+            
         return Inertia::render('AdministrarUsuarios', [
             'usuarios' => $usuarios,
             'isAdmin' => $isAdmin,
@@ -912,6 +1152,7 @@ class TestControllerCris extends Controller
         }
 
         // Buscar si ya existe una conversación
+        /*
         $conversacionExistente = \DB::table('conversations')
             ->where(function ($query) use ($user, $otroUsuarioId) {
                 $query->where('user_one_id', $user->id)
@@ -922,6 +1163,16 @@ class TestControllerCris extends Controller
                     ->where('user_two_id', $user->id);
             })
             ->first();
+        */
+
+        $conversacionExistente = \DB::SELECT(
+            'CALL existe_conversacion_por_participantes_id(?, ?)',
+            [
+                $user->id,
+                $otroUsuarioId
+            ]
+        );
+        
 
         if (!$conversacionExistente) {
             // Crear nueva conversación
@@ -1157,12 +1408,17 @@ class TestControllerCris extends Controller
             ->update(['Tipo' => 1]);
 
         // Verificar cuántas imágenes ya tiene esta publicación, máximo 5.
+        /*
         $conteoImagenes = \DB::table('inter__imagen__public')
             ->where('id_publicacion', $publicacion_id)
             ->join('imagens', 'inter__imagen__public.id_imagen', '=', 'imagens.id')
             ->where('imagens.Tipo', 1)  // Solo buscar imágenes de tipo publicación
             ->count();
-        
+        */
+        $conteoImagenes = \DB::select(
+            'CALL contar_imagenes_publicacion_por_tipo(?)',
+            [$publicacion_id]
+        );
         
         if ($conteoImagenes >= 5) {
            
@@ -1258,6 +1514,63 @@ class TestControllerCris extends Controller
         }
         
         return response()->file($path);
+    }
+
+    //metodo marcar leidos
+    public function marcarLeidos(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'conversacion_id'=>['required', 'integer', 'exists:conversations,id'],
+        ]);
+        
+        $conversacionId = (int) $validated['conversacion_id'];
+
+        $conversacion = \DB::table('conversations')
+        ->where('id', $conversacionId)
+        ->first();
+
+        if(!$conversacion) {
+            abort(404, 'Converasacion no encontrada');
+        }
+
+        $esParticipante = 
+        ((int) $conversacion->user_one_id === (int) $user->id || 
+        (int) $conversacion->user_two_id === (int) $user->id);
+
+        if(!$esParticipante) {
+            abort(403, 'No tienes acceso a esta conversacion');
+        }
+
+        //Identificar al otro participante
+        $otroUsuarioId = ((int) $conversacion->user_one_id === (int) $user->id)
+        ? (int) $conversacion->user_two_id : (int) $conversacion->user_one_id;
+
+        $ahora = now();
+
+        $updatedCount = \DB::table('mensajes')
+        ->where('id_usuario_origen', $otroUsuarioId)
+        ->where('id_usuario_destino', (int) $user->id)
+        ->whereNull('read_at')
+        ->update([
+            'read_at'=>$ahora,
+            'updated_at'=> $ahora,
+        ]);
+
+
+        //conteo global de no leidos (badge total)
+        $unreadTotal = \DB::table('mensajes')
+        ->where('id_usuario_destino', (int) $user->id)
+        ->whereNull('read_at')
+        ->count();
+
+        return response()->json([
+            'success' => true,
+            'conversation_id' => $conversacionId,
+            'updated_count' => $updatedCount,
+            'unread_total' => $unreadTotal,
+        ]);
     }
 
     // Método para eliminar una imagen de una publicación

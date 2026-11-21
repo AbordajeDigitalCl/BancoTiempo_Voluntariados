@@ -15,6 +15,7 @@ class ConversationSeeder extends Seeder
      */
     public function run(): void
     {
+        
         $jose = DB::table('users')->where('email', 'jose@test.com')->first();
         $juan = DB::table('users')->where('email', 'juan@test.com')->first();
 
@@ -55,5 +56,7 @@ class ConversationSeeder extends Seeder
         ]);
 
         $this->command->info('Se creó 1 conversación con 2 mensajes de prueba entre Jose y Juan.');
+    
     }
+        
 }

@@ -1,8 +1,18 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, router } from '@inertiajs/react';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
+
+interface ImagenExistente {
+    id: number;
+    url: string;
+}
+
+interface ImagenNueva {
+    file: File;
+    preview: string;
+}
 
 type Item = {
   id: number;
@@ -14,6 +24,7 @@ type Item = {
   author?: string;
   imageUrl?: string | null;
   imageUrls?: string[];
+  images?:ImagenExistente[];
   location_id?: number | null;
   location_lat?: number | null;
   location_lng?: number | null;
@@ -38,7 +49,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
     return [];
   }, [item]);
 
-  const { data, setData, post, processing, errors } = useForm({
+  const { data, setData, post, processing, errors} = useForm({
     _method: 'patch',
     title: item?.title ?? '',
     description: item?.description ?? '',
@@ -54,6 +65,30 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [imgErr, setImgErr] = useState<string>('');
+
+  /*Esto es una prueba para cambiar cómo se trabaja con las imágenes */
+
+
+  const [imagenesExistentes, setImagenesExistentes] = useState<ImagenExistente[]>(
+      item?.images ?? []
+  );
+
+  const [imagenesNuevas, setImagenesNuevas] = useState<ImagenNueva[]>([]);
+
+  const imagenesNuevasRef = useRef<ImagenNueva[]>([]);
+
+  useEffect(() => {
+      imagenesNuevasRef.current = imagenesNuevas;
+  }, [imagenesNuevas]);
+
+  useEffect(() => {
+      return () => {
+          imagenesNuevasRef.current.forEach(imagen => {
+              URL.revokeObjectURL(imagen.preview);
+          });
+      };
+  }, []);
+
 
   const [openMap, setOpenMap] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
@@ -271,11 +306,90 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
     }
   }, [data.location_lat, data.location_lng, openMap, pinIcon]);
 
+  /*
   function removeImage(idx: number) {
     const next = data.imageUrls.filter((_, i) => i !== idx);
     setData('imageUrls', next);
   }
+  */
 
+  function removeImage(tipo: 'existente' | 'nueva', idx: number) {
+    if (tipo === 'existente') {
+        setImagenesExistentes(prev =>
+            prev.filter((_, i) => i !== idx)
+        );
+    } else {
+        const imagen = imagenesNuevas[idx];
+
+        if (imagen) {
+            URL.revokeObjectURL(imagen.preview);
+        }
+
+        setImagenesNuevas(prev =>
+            prev.filter((_, i) => i !== idx)
+        );
+    }
+  }
+
+  async function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
+      setImgErr('');
+
+      const files = Array.from(e.target.files ?? []);
+
+      if (!files.length) return;
+
+      const totalImagenes = imagenesExistentes.length + imagenesNuevas.length;
+      const remaining = 5 - totalImagenes;
+
+      if (remaining <= 0) {
+          setImgErr('Máximo 5 imágenes.');
+
+          if (inputRef.current) {
+              inputRef.current.value = '';
+          }
+
+          return;
+      }
+
+      const take = files.slice(0, remaining);
+
+      for (const f of take) {
+          if (!f.type.startsWith('image/')) {
+              setImgErr('Solo se permiten imágenes.');
+
+              if (inputRef.current) {
+                  inputRef.current.value = '';
+              }
+
+              return;
+          }
+
+          const maxBytes = 2 * 1024 * 1024;
+
+          if (f.size > maxBytes) {
+              setImgErr('Una imagen supera el tamaño máximo (2MB).');
+
+              if (inputRef.current) {
+                  inputRef.current.value = '';
+              }
+
+              return;
+          }
+      }
+
+      const nuevas = take.map(file => ({
+          file,
+          preview: URL.createObjectURL(file),
+      }));
+
+      setImagenesNuevas(prev => [...prev, ...nuevas]);
+
+      if (inputRef.current) {
+          inputRef.current.value = '';
+      }
+  }
+
+  /*
   async function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
     setImgErr('');
     const files = Array.from(e.target.files ?? []);
@@ -313,7 +427,9 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
       if (inputRef.current) inputRef.current.value = '';
     }
   }
+  */
 
+  /*
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!item?.id) return;
@@ -332,6 +448,30 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
       },
       onSuccess: () => {},
     });
+  }
+  */
+
+  function submit(e: React.FormEvent) {
+      e.preventDefault();
+
+      if (!item?.id) return;
+      const datos = {
+          ...data,
+
+          _method: 'patch',
+
+          // IDs de las imágenes existentes que queremos conservar.
+          existingImageIds: imagenesExistentes.map(img => img.id),
+
+          // Archivos nuevos, no Base64.
+          images: imagenesNuevas.map(img => img.file),
+      };
+
+      router.post(`/Advertisement/${item.id}`, datos, {
+          preserveScroll: true,
+          forceFormData: true,
+          onSuccess: () => {},
+      });
   }
 
   if (!item) {
@@ -481,11 +621,12 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
               <div className="pt-2">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs text-gray-600">Imágenes (máx. 5)</label>
-                  <span className="text-xs text-gray-500">{data.imageUrls.length}/5</span>
+                  <span className="text-xs text-gray-500">{imagenesExistentes.length + imagenesNuevas.length}/5</span>
                 </div>
 
-                {data.imageUrls.length > 0 && (
+                {imagenesExistentes.length + imagenesNuevas.length > 0 && (
                   <div className="mt-2 grid grid-cols-3 gap-2">
+                    {/*
                     {data.imageUrls.map((src, idx) => (
                       <div key={idx} className="relative rounded-lg overflow-hidden border border-gray-200">
                         <img src={src} alt={`img-${idx}`} className="w-full h-20 object-cover" />
@@ -498,6 +639,50 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
                         </button>
                       </div>
                     ))}
+                   */}
+                    {/* Imágenes que ya existen en el servidor */}
+                    {imagenesExistentes.map((imagen, idx) => (
+                        <div
+                            key={`existente-${imagen.id}`}
+                            className="relative rounded-lg overflow-hidden border border-gray-200"
+                        >
+                            <img
+                                src={imagen.url}
+                                alt={`Imagen existente ${idx + 1}`}
+                                className="w-full h-20 object-cover"
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() => removeImage('existente', idx)}
+                                className="absolute top-1 right-1 rounded-md bg-white/90 border border-gray-200 px-2 py-1 text-[11px] hover:bg-white"
+                            >
+                                Quitar
+                            </button>
+                        </div>
+                    ))}
+
+                    {/* Imágenes nuevas seleccionadas desde el ordenador */}
+                    {imagenesNuevas.map((imagen, idx) => (
+                        <div
+                            key={`nueva-${idx}`}
+                            className="relative rounded-lg overflow-hidden border border-gray-200"
+                        >
+                            <img
+                                src={imagen.preview}
+                                alt={`Imagen nueva ${idx + 1}`}
+                                className="w-full h-20 object-cover"
+                            />
+
+                            <button
+                                type="button"
+                                onClick={() => removeImage('nueva', idx)}
+                                className="absolute top-1 right-1 rounded-md bg-white/90 border border-gray-200 px-2 py-1 text-[11px] hover:bg-white"
+                            >
+                                Quitar
+                            </button>
+                        </div>
+                    ))}
                   </div>
                 )}
 
@@ -508,7 +693,7 @@ export default function EditarPublicacion({ auth, item }: { auth: any; item: Ite
                     accept="image/*"
                     multiple
                     onChange={onPickFiles}
-                    disabled={data.imageUrls.length >= 5}
+                    disabled={imagenesExistentes.length + imagenesNuevas.length >= 5}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm bg-white"
                   />
                   {imgErr ? <p className="text-xs text-red-500 mt-1">{imgErr}</p> : null}

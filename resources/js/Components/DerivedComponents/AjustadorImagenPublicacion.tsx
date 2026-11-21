@@ -85,7 +85,18 @@ export default function AjustadorImagenPublicacion({ imagenFile, onConfirm, onCa
     const cropY = cropBox.y * scaleFactor;
     const cropSize = cropBox.size * scaleFactor;
 
-    ctx.clearRect(cropX, cropY, cropSize, cropSize);
+    //ctx.clearRect(cropX, cropY, cropSize, cropSize);
+    ctx.drawImage(
+    imagenCargada,
+    cropBox.x,
+    cropBox.y,
+    cropBox.size,
+    cropBox.size,
+    cropX,
+    cropY,
+    cropSize,
+    cropSize
+    );
 
     // Borde blanco grueso del crop box
     ctx.strokeStyle = '#ffffff';
@@ -425,6 +436,8 @@ export default function AjustadorImagenPublicacion({ imagenFile, onConfirm, onCa
       cropBox.size
     );
 
+    
+
     // Convertir canvas a File
     cropCanvas.toBlob((blob) => {
       if (blob) {
@@ -433,6 +446,8 @@ export default function AjustadorImagenPublicacion({ imagenFile, onConfirm, onCa
       }
     }, 'image/jpeg', 0.95);
   };
+
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">

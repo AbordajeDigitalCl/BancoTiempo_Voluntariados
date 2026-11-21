@@ -62,7 +62,7 @@ Route::get('/post', [
 ])->middleware('auth:sanctum');
 
 Route::post('/post', [
-    TestControllerCris::class, 'crearPublicacion'
+    PublicacionController::class, 'crearPublicacion'
 ])->middleware('auth:sanctum');
 
 Route::get('/oferta/{ofertaId}', [

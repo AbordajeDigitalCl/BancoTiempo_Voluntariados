@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import * as L from 'leaflet';
 
@@ -26,6 +26,34 @@ type Ad = {
   location_lat?: number | null;
   location_lng?: number | null;
 };
+
+type Coordinates = {
+  latitude: number,
+  longitude: number
+};
+
+type LaravelPaginator<T> = {
+  data: T[];
+  current_page: number;
+  last_page: number;
+  prev_page_url:string | null;
+  next_page_url: string | null;
+  total: number;
+};
+
+type AdvertisementProps = {
+  auth: any,
+  createdAds: LaravelPaginator<Ad>,
+  filters: any,
+  isAdmin: any
+};
+
+type LocationStatus =
+    | 'checking'
+    | 'granted'
+    | 'denied'
+    | 'error'
+    | 'unavailable';
 
 function OwnerStatusPill({ status }: { status: AdStatus }) {
   const label = status === 'active' ? 'Disponible' : status === 'finished' ? 'Agotado' : 'Desactivado';
@@ -110,8 +138,168 @@ function MiniMap({ lat, lng }: { lat: number; lng: number }) {
   return <div ref={divRef} className="w-full h-28 rounded-lg border border-gray-200 overflow-hidden" />;
 }
 
-export default function Advertisement({ auth, createdAds, filters, isAdmin }: any) {
+export default function Advertisement({ auth, createdAds, filters, isAdmin }: AdvertisementProps) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);  
+
+
+  const [locationStatus, setLocationStatus] =
+      useState<LocationStatus>('checking');
+
+
+  const getUserLocation = useCallback(() => {
+
+    if (!navigator.geolocation) {
+        setLocationStatus('unavailable');
+        setLocationError('Tu navegador no admite la geolocalización.');
+        return;
+    }
+
+    setLocationStatus('checking');
+    setLocationError(null);
+
+    navigator.geolocation.getCurrentPosition(
+
+        (position) => {
+
+            const { latitude, longitude } = position.coords;
+
+            setUserLocation({
+                latitude,
+                longitude
+            });
+
+            setLocationStatus('granted');
+            setLocationError(null);
+        },
+
+        (error) => {
+
+            setUserLocation(null);
+
+            if (error.code === error.PERMISSION_DENIED) {
+
+                setLocationStatus('denied');
+
+                setLocationError(
+                    'El acceso a la ubicación está bloqueado. ' +
+                    'Actívalo desde la configuración de tu navegador.'
+                );
+
+            } else if (error.code === error.POSITION_UNAVAILABLE) {
+
+                setLocationStatus('error');
+
+                setLocationError(
+                    'No se pudo determinar tu ubicación.'
+                );
+
+            } else if (error.code === error.TIMEOUT) {
+
+                setLocationStatus('error');
+
+                setLocationError(
+                    'La solicitud tardó demasiado. Inténtalo de nuevo.'
+                );
+            }
+
+        },
+
+        {
+            timeout: 10000,
+            maximumAge: 60000
+        }
+    );
+
+  }, []);
+
+  useEffect(() => {
+
+    let permissionStatus: PermissionStatus | null = null;
+    let cancelled = false;
+
+    if (!navigator.geolocation) {
+
+        setLocationStatus('unavailable');
+
+        setLocationError(
+            'Tu navegador no admite la geolocalización.'
+        );
+
+        return;
+    }
+
+    const handlePermissionChange = () => {
+
+        if (!permissionStatus) return;
+
+        if (permissionStatus.state === 'granted') {
+
+            getUserLocation();
+
+        } else if (permissionStatus.state === 'denied') {
+
+            setUserLocation(null);
+            setLocationStatus('denied');
+
+            setLocationError(
+                'El acceso a la ubicación está bloqueado. ' +
+                'Actívalo desde la configuración del navegador.'
+            );
+
+        }
+
+    };
+
+    navigator.permissions.query({
+        name: 'geolocation'
+    }).then((permission) => {
+
+        if (cancelled) return;
+
+        permissionStatus = permission;
+
+        permissionStatus.addEventListener(
+            'change',
+            handlePermissionChange
+        );
+
+        if (permission.state === 'denied') {
+
+            setLocationStatus('denied');
+
+        } else {
+
+            // Si está concedido, obtenemos las coordenadas.
+            // Si está pendiente, el navegador puede mostrar
+            // su solicitud de autorización.
+            getUserLocation();
+
+        }
+
+    }).catch(() => {
+
+        // Si Permissions API no está disponible o falla,
+        // intentamos obtener la ubicación directamente.
+        if (!cancelled) {
+            getUserLocation();
+        }
+
+    });
+
+    return () => {
+
+        cancelled = true;
+
+        permissionStatus?.removeEventListener(
+            'change',
+            handlePermissionChange
+        );
+
+    };
+
+  }, [getUserLocation]);
 
   const initial = useMemo(() => {
     const fromUrl = safeParseFromUrl();
@@ -140,7 +328,7 @@ export default function Advertisement({ auth, createdAds, filters, isAdmin }: an
   const firstRunRef = useRef(true);
 
   const ads: Ad[] = useMemo(() => {
-    return (createdAds ?? []).map((x: any) => {
+    return (createdAds?.data ?? []).map((x: any) => {
       const normalizedImageUrls: string[] = (x.imageUrls ?? x.image_urls ?? x.images ?? []) as string[];
 
       return {
@@ -205,9 +393,18 @@ const filteredAds: Ad[] = useMemo(() => {
     router.patch(`/Advertisement/${id}/status`, { status }, { preserveScroll: true });
     closeMenu();
   }
-
+  /*
+  * Se modificó este método para que envié también las coordenadas del usuario, obtenidas del navegador.
+  * Anteriormente solo enviaba los datos de los filtros como params
+  */
   function syncToUrlAndServer(nextQ: string, nextType: string, nextSort: string, nextDistance: string) {
-    const params = buildParams(nextQ, nextType, nextSort, nextDistance);
+    const filterParams = buildParams(nextQ, nextType, nextSort, nextDistance);
+    const params = {
+      ...filterParams,
+      userLocation
+    };
+
+
 
     router.get('/Advertisement', params, {
       preserveState: true,
@@ -215,6 +412,31 @@ const filteredAds: Ad[] = useMemo(() => {
       replace: true,
     });
   }
+
+  function cancelarDebounce() {
+    if (debounceRef.current !== null) {
+        window.clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+    }
+  }
+
+  function cambiarPagina(url: string | null) {
+      if (!url) return;
+
+      // Cancelamos cualquier petición de filtros que todavía
+      // esté esperando a que termine el debounce.
+      cancelarDebounce();
+
+      // Navegamos a la página solicitada.
+      router.get(url, {}, {
+          preserveState: true,
+          preserveScroll: true,
+      });
+  }
+
+  useEffect(() => {
+    getUserLocation()
+  }, []);
 
   useEffect(() => {
     if (firstRunRef.current) {
@@ -230,12 +452,34 @@ const filteredAds: Ad[] = useMemo(() => {
     return () => {
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [q, typeFilter, sort, distance]);
+  }, [q, typeFilter, sort, distance, userLocation]);
 
   return (
     <AuthenticatedLayout user={auth.user}>
       <Head title="Publicaciones" />
+      {locationStatus === 'denied' && (
+          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4 text-yellow-800">
 
+              <p>
+                  Para utilizar correctamente las funciones de ubicación
+                  de esta aplicación, necesitas permitir el acceso a tu ubicación.
+              </p>
+
+              <p className="mt-2 text-sm">
+                  Puedes activarlo desde la configuración de permisos
+                  del sitio en tu navegador.
+              </p>
+
+              <button
+                  type="button"
+                  onClick={getUserLocation}
+                  className="mt-3 rounded-lg bg-yellow-600 px-4 py-2 text-sm text-white hover:bg-yellow-700"
+              >
+                  Ya habilité la ubicación. Volver a intentar
+              </button>
+
+          </div>
+      )}
       <div className="w-full flex justify-center px-4 py-6" onClick={() => closeMenu()}>
         <div className="w-full max-w-4xl space-y-4" onClick={(e) => e.stopPropagation()}>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -342,6 +586,7 @@ const filteredAds: Ad[] = useMemo(() => {
               </div>
             </div>
           </div>
+          <>
           <div className="space-y-4">
             {filteredAds.length === 0 ? (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-sm text-gray-600">
@@ -484,7 +729,52 @@ const filteredAds: Ad[] = useMemo(() => {
               })
             )}
           </div>
+          <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              {/*
+              <button
+                onClick={() => {
+                  if (createdAds.prev_page_url) {
+                    router.get(createdAds.prev_page_url);
+                  }
+                }}
+                className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.prev_page_url ? 'invisible' : ''}`}
+              >
+                Anterior
+              </button>
+              */}
+              <button
+              onClick={() => cambiarPagina(createdAds.prev_page_url)}
+              className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.prev_page_url ? 'invisible' : ''}`}
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-600">
+                Página {createdAds.current_page} de {createdAds.last_page}
+              </span>
+              {/*
+              <button
+               
+                onClick={() => {
+                  if (createdAds.next_page_url) {
+                    router.get(createdAds.next_page_url);
+                  }
+                }}
+                
+                className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.next_page_url ? 'invisible' : ''}`}
+              >
+                Siguiente
+              </button>
+              */}
+              <button
+              onClick={() => cambiarPagina(createdAds.next_page_url)}
+              className={`rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 ${!createdAds.next_page_url ? 'invisible' : ''}`}
+              >
+                Siguiente
+              </button>
+          </div>
+          </>
         </div>
+        
       </div>
     </AuthenticatedLayout>
   );

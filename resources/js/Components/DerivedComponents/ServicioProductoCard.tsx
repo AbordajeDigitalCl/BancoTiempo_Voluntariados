@@ -1,13 +1,15 @@
-import { Servicio } from '@/mockData/datosMockPerfil';
+//import { Servicio } from '@/mockData/datosMockPerfil';
+import { Publicacion } from '@/mockData/datosMockPerfil';
 import { getStateColors, STATE_COLORS } from '@/constants/coloresEstado';
 import { Link } from '@inertiajs/react';
 import { obtenerTextoEstado } from '@/services/estadosPublicaciones';
 import { obtenerImagenesPublicacion } from '@/services/servicioImagenesPublicacion';
 import { useEffect, useState } from 'react';
 import GaleriaImagenesPublicacion from './GaleriaImagenesPublicacion';
+import { cambiarVisibilidadPublicacion } from '@/services/publicacionesVisibilidad';
 
 interface ServicioProductoCardProps {
-    servicio: Servicio;
+    servicio: Publicacion;
     returnTo?: string;
 }
 
@@ -22,6 +24,12 @@ export default function ServicioProductoCard({ servicio, returnTo = '/verperfil'
     // Estado para las imágenes de la publicación
     const [imagenes, setImagenes] = useState<any[]>([]);
     const [cargandoImagenes, setCargandoImagenes] = useState(true);
+
+    //---Estados para la visibilidad de la publicación: visible, actualizandoVisibilidad
+    // Estado actual de visibilidad de la publicación
+    const [visible, setVisible] = useState(servicio.visible);
+    // Indica si se está procesando el cambio
+    const [actualizandoVisibilidad, setActualizandoVisibilidad] = useState(false);
 
     const handleImagenClick = (imagen: any) => {
         // Mostrar la imagen clickeada en grande
@@ -59,6 +67,23 @@ export default function ServicioProductoCard({ servicio, returnTo = '/verperfil'
         backgroundColor: hex
     };
 
+    const handleCambiarVisibilidad = async () => {
+        try {
+            setActualizandoVisibilidad(true);
+
+            const resultado = await cambiarVisibilidadPublicacion(servicio.id);
+
+            // Actualizar la interfaz con el resultado del servidor
+            setVisible(resultado.visible);
+
+        } catch (error) {
+            console.error('Error al cambiar la visibilidad:', error);
+            alert('No se pudo cambiar la visibilidad de la publicación');
+        } finally {
+            setActualizandoVisibilidad(false);
+        }
+    };
+
     return (
       <div className="w-full max-w-4xl mx-auto p-4 bg-white flex flex-col md:flex-row gap-4" style={cardStyle}>
         <div className="w-full md:w-1/3 md:flex-shrink-0 h-48 md:h-64 relative">
@@ -75,7 +100,7 @@ export default function ServicioProductoCard({ servicio, returnTo = '/verperfil'
           />
         </div>
 
-        <div className="flex-1 flex flex-col justify-between w-full gap-3">
+        <div className="flex-1 flex flex-col justify-between w-full gap-3">          
         <div className="flex items-start justify-between">
           <div className="flex items-center">
             <div className="flex flex-col items-center mr-2">
@@ -143,8 +168,21 @@ export default function ServicioProductoCard({ servicio, returnTo = '/verperfil'
               )}
               <span className="text-xs">{servicio.ofertaDemanda}</span>
             </div>
+              {/* Tag de visibilidad */}
+            <div className="flex justify-end">
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                          visible
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-600'
+                      }`}
+                  >
+                      {visible ? 'Visible' : 'Invisible'}
+              </span>
+            </div>
           </div>
         </div>
+
 
         <h3 className="text-lg font-bold text-left">
           {servicio.titulo}
@@ -173,6 +211,51 @@ export default function ServicioProductoCard({ servicio, returnTo = '/verperfil'
               </svg>
               <span className="text-xs">Editar</span>
             </Link>
+            {/*Botón de visibilidad */}
+            <button
+                type="button"
+                onClick={() => handleCambiarVisibilidad()}
+                className="flex flex-col items-start hover:opacity-75 transition"
+            >
+                {visible ? (
+                    <>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-6 h-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M3 3l18 18M10.58 10.58a3 3 0 004.24 4.24M9.88 5.09A10.94 10.94 0 0112 4.5c5 0 9.27 3.11 10.5 7.5a11.5 11.5 0 01-4.16 5.52M6.23 6.23A11.5 11.5 0 001.5 12c1.23 4.39 5.5 7.5 10.5 7.5"
+                            />
+                        </svg>
+                        <span className="text-xs">Ocultar</span>
+                    </>
+                ) : (
+                    <>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-6 h-6"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M1.5 12s3.75-7.5 10.5-7.5S22.5 12 22.5 12 18.75 19.5 12 19.5 1.5 12 1.5 12z"
+                            />
+                            <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <span className="text-xs">Mostrar</span>
+                    </>
+                )}
+            </button>
             <div className="flex flex-col items-start">
               <span className="text-xs text-gray-500">{new Date(servicio.fecha).toLocaleDateString('es-ES')}</span>
             </div>

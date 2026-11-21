@@ -8,7 +8,24 @@ export interface Servicio {
     imagen: string;
     estado: 'Activo' | 'Desactivado' | 'Agotado';
     fecha: string;
+    visible: boolean;
     imagenId?: number; // Optional image ID from server
+}
+
+export interface Publicacion {
+    id: number;
+    titulo: string;
+    descripcion: string;
+    costo: string;
+    tipo: 'Servicio' | 'Producto';
+    ofertaDemanda: 'Oferta' | 'Demanda';
+    imagen: string;
+    estado: 'Activo' | 'Desactivado' | 'Agotado';
+    visible: boolean;
+    fecha: string;
+    // Placeholder para popularidad.
+    imagenId?: number;
+    popularidad?: number | null;
 }
 
 export interface PerfilData {
@@ -40,7 +57,7 @@ export const mockProfileData: PerfilData = {
     fechaExpiracion: "30/04/2025",
 };
 
-
+/*
 export const mockServiciosData: Servicio[] = [
     {
         id: 1,
@@ -98,3 +115,4 @@ export const mockServiciosData: Servicio[] = [
         fecha: "2025-01-30",
     },
 ];
+*/

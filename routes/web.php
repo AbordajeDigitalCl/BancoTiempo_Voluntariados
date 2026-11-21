@@ -7,6 +7,8 @@ use App\Models\User;
 use App\Models\Advertisement;
 use App\Http\Controllers\TestControllerMarcelo;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\AdvertisementController;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -42,16 +44,16 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    Route::get('/dashboard', [TestControllerMarcelo::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'dashboard'])->name('dashboard');
 
 
-    Route::get('/EditarPerfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil']);
+    Route::get('/EditarPerfil/{id?}', [\App\Http\Controllers\PerfilController::class, 'editarPerfil']);
 
     Route::get('/EditarPerfil', [\App\Http\Controllers\TestControllerCris::class, 'editarPerfil'])
         ->middleware(['auth', 'verified'])->name('editarperfil');
 
 
-    Route::post('/EditarPerfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'guardarPerfil'])
+    Route::post('/EditarPerfil/{id?}', [\App\Http\Controllers\PerfilController::class, 'guardarPerfil'])
         ->middleware(['auth', 'verified']);
 
     // MODIFICADO: Ruta de upload movida de routes/api.php a routes/web.php porque las rutas API no reconocen autenticación por sesión (solo Sanctum tokens).
@@ -62,16 +64,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // MODIFICADO: Endpoint adicional en TestControllerCris.php para subir imagen con usuario_id específico.
     // Permite editar imágenes de otros usuarios como admin, y devuelve CSRF token actualizado para evitar error 419.
     // Se aplican los mismos middleware que las otras rutas del grupo (auth, verified, csrf automático)
-    Route::post('/subir-imagen/{usuario_id}', [\App\Http\Controllers\TestControllerCris::class, 'subirImagen'])
+    Route::post('/subir-imagen/{usuario_id}', [\App\Http\Controllers\PerfilController::class, 'subirImagen'])
         ->name('subir-imagen');
 
     // NUEVO: Endpoint para subir imagen a una publicación
-    Route::post('/subir-imagen-publicacion/{publicacion_id}', [\App\Http\Controllers\TestControllerCris::class, 'subirImagenPublicacion'])
+    Route::post('/subir-imagen-publicacion/{publicacion_id}', [\App\Http\Controllers\AdvertisementController::class, 'subirImagenPublicacion'])
         ->name('subir-imagen-publicacion');
 
     // NUEVO: Endpoint para eliminar una imagen de una publicación
     // Solo desasocia la imagen
-    Route::delete('/eliminar-imagen-publicacion/{publicacion_id}/{imagen_id}', [\App\Http\Controllers\TestControllerCris::class, 'eliminarImagenPublicacion'])
+    Route::delete('/eliminar-imagen-publicacion/{publicacion_id}/{imagen_id}', [\App\Http\Controllers\AdvertisementController::class, 'eliminarImagenPublicacion'])
         ->name('eliminar-imagen-publicacion');
 
     // NUEVO: Endpoint alternativo para servir imágenes (backup si /api/file/ no funciona)
@@ -91,29 +93,32 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return response()->json(['csrf_token' => csrf_token()]);
     })->name('refresh-csrf');
 
-    Route::get('/Advertisement', [TestControllerMarcelo::class, 'advertisementIndex'])->name('advertisement');
+    Route::get('/Advertisement', [AdvertisementController::class, 'advertisementIndex'])->name('advertisement');
 
     Route::get('/MenuHeader', function () {
         return Inertia::render('MenuHeader');
     })->middleware(['auth', 'verified'])->name('menuheader');
 
-    Route::get('/Administrar-Usuarios', [\App\Http\Controllers\TestControllerCris::class, 'administrarUsuarios'])
+    Route::get('/Administrar-Usuarios', [\App\Http\Controllers\UserAdminController::class, 'administrarUsuarios'])
         ->middleware(['auth', 'verified'])->name('administrar-usuarios');
 
-    Route::post('/administrar-usuarios/crear-conversacion', [\App\Http\Controllers\TestControllerCris::class, 'crearOBuscarConversacion'])
+    Route::post('/administrar-usuarios/crear-conversacion', [\App\Http\Controllers\ConversacionController::class, 'crearOBuscarConversacion'])
         ->middleware(['auth', 'verified']);
 
-    Route::delete('/administrar-usuarios/eliminar-usuario', [\App\Http\Controllers\TestControllerCris::class, 'eliminarUsuario'])
+    Route::delete('/administrar-usuarios/eliminar-usuario', [\App\Http\Controllers\UserAdminController::class, 'eliminarUsuario'])
         ->middleware(['auth', 'verified']);
 
     Route::get('/Editar-Publicacion', function () {
         return Inertia::render('SeleccionarPublicacionEditarCRIS');
     })->middleware(['auth', 'verified'])->name('editar-publicacion');
 
-    Route::get('/Editar-Publicacion/{id}', [\App\Http\Controllers\TestControllerCris::class, 'editarPublicacion'])
+    Route::get('/Editar-Publicacion/{id}', [\App\Http\Controllers\AdvertisementController::class, 'editarPublicacion'])
         ->middleware(['auth', 'verified'])->name('editar-publicacion-detalle');
-
+/*
     Route::post('/Editar-Publicacion/{id}', [\App\Http\Controllers\TestControllerCris::class, 'guardarPublicacion'])
+        ->middleware(['auth', 'verified']);
+*/
+    Route::post('/Editar-Publicacion/{id}', [\App\Http\Controllers\AdvertisementController::class, 'guardarPublicacion'])
         ->middleware(['auth', 'verified']);
 
     // RUTAS COMENTADAS: Sistema de calificaciones (En desarrollo)
@@ -128,10 +133,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Route::post('/asociar-calificaciones/{publicacion_id}', [\App\Http\Controllers\TestControllerCris::class, 'asociarcalificaciones'])
     //     ->middleware(['auth', 'verified'])->name('calificaciones-post');
 
-    Route::get('/Advertisement/create', [TestControllerMarcelo::class, 'advertisementCreate'])
+    Route::get('/Advertisement/create', [AdvertisementController::class, 'advertisementCreate'])
         ->name('advertisement.create');
 
-    Route::get('/MyAdvertisements', [TestControllerMarcelo::class, 'myAdvertisementsIndex'])->name('myadvertisements');
+    Route::get('/MyAdvertisements', [AdvertisementController::class, 'myAdvertisementsIndex'])
+    ->name('myadvertisements')
+    ->middleware(['auth', 'verified']);
 
     Route::get('/geo/reverse', function (Request $request) {
         $data = $request->validate([
@@ -162,9 +169,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
     })->name('geo.reverse');
 
+    /*
     Route::post('/Advertisement', function (Request $request) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
-
+        
         $data = $request->validate([
             'title' => ['required', 'string', 'max:80'],
             'description' => ['required', 'string', 'max:1000'],
@@ -179,11 +187,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'location_lng' => ['nullable', 'numeric', 'min:-180', 'max:180'],
             'location_address' => ['nullable', 'string', 'max:500'],
         ]);
-
+        
         $imgs = $data['imageUrls'] ?? [];
         $imgs = array_values(array_filter($imgs, fn ($x) => is_string($x) && trim($x) !== ''));
         $imgs = array_slice($imgs, 0, 5);
-
+        
         $targetUserId = $request->user()->id;
         $targetAuthor = $request->user()->name;
 
@@ -194,7 +202,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 $targetAuthor = $u->name;
             }
         }
-
+        
         Advertisement::create([
             'title' => $data['title'],
             'description' => $data['description'],
@@ -203,28 +211,128 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'mode' => $data['mode'],
             'status' => 'active',
             'author' => $targetAuthor,
-// La tabla publicacions usa id_usuario en lugar de user_id, por eso se camabio.
-            'id_usuario' => $targetUserId,
-// publicacions requiere Nombre y Descripcion como campos obligatorios
-// Se mapean desde title y description del formulario
-            'Nombre' => $data['title'],
-            'Descripcion' => $data['description'],
-// publicacions requiere Tipo_Publicacion y Tipo_Beneficio como campos obligatorios
-// Oferta=0, Demanda=1 / Servicio=0, Producto=1
-            'Tipo_Publicacion' => $data['mode'] === 'Oferta' ? 0 : 1,
-            'Tipo_Beneficio' => $data['type'] === 'Servicio' ? 0 : 1,
-            'image_urls' => $imgs,
-            'location_id' => $data['location_id'] ?? null,
-            'location_lat' => $data['location_lat'] ?? null,
-            'location_lng' => $data['location_lng'] ?? null,
-            'location_address' => $data['location_address'] ?? null,
-]);
+        // La tabla publicacions usa id_usuario en lugar de user_id, por eso se camabio.
+                    'id_usuario' => $targetUserId,
+        // publicacions requiere Nombre y Descripcion como campos obligatorios
+        // Se mapean desde title y description del formulario
+                    'Nombre' => $data['title'],
+                    'Descripcion' => $data['description'],
+        // publicacions requiere Tipo_Publicacion y Tipo_Beneficio como campos obligatorios
+        // Oferta=0, Demanda=1 / Servicio=0, Producto=1
+                    'Tipo_Publicacion' => $data['mode'] === 'Oferta' ? 0 : 1,
+                    'Tipo_Beneficio' => $data['type'] === 'Servicio' ? 0 : 1,
+                    //'image_urls' => $imgs,
+                    'images' => ['nullable', 'array', 'max:5'],
+                    'images.*' => ['image', 'mimes:jpeg,png,jpg,gif,webp', 'max:2048'],
+                    'location_id' => $data['location_id'] ?? null,
+                    'location_lat' => $data['location_lat'] ?? null,
+                    'location_lng' => $data['location_lng'] ?? null,
+                    'location_address' => $data['location_address'] ?? null,
+        ]);
+
+        return redirect()->route('myadvertisements');
+        
+
+        // Obtener los archivos recibidos.
+        $newImages = $request->file('images', []);
+
+        // Registrar los archivos guardados por si ocurre un error.
+        $archivosGuardados = [];
+
+        try {
+            DB::transaction(function () use (
+                $data,
+                $newImages,
+                $targetUserId,
+                $targetAuthor,
+                $request,
+                &$archivosGuardados
+            ) {
+
+                // 1. Crear la publicación.
+                $ad = Advertisement::create([
+                    'title' => $data['title'],
+                    'description' => $data['description'],
+                    'hours' => (int) $data['hours'],
+                    'type' => $data['type'],
+                    'mode' => $data['mode'],
+                    'status' => 'active',
+                    'author' => $targetAuthor,
+
+                    'id_usuario' => $targetUserId,
+
+                    'Nombre' => $data['title'],
+                    'Descripcion' => $data['description'],
+
+                    'Tipo_Publicacion' => $data['mode'] === 'Oferta' ? 0 : 1,
+                    'Tipo_Beneficio' => $data['type'] === 'Servicio' ? 0 : 1,
+
+                    'location_id' => $data['location_id'] ?? null,
+                    'location_lat' => $data['location_lat'] ?? null,
+                    'location_lng' => $data['location_lng'] ?? null,
+                    'location_address' => $data['location_address'] ?? null,
+                ]);
+
+                // 2. Guardar las imágenes y asociarlas a la publicación.
+                foreach ($newImages as $image) {
+
+                    // Generar un nombre único para el archivo.
+                    $filename = Str::uuid() . '.' . $image->extension();
+
+                    // Guardar en storage/app/uploads.
+                    $path = Storage::disk('local')->putFileAs(
+                        'uploads',
+                        $image,
+                        $filename
+                    );
+
+                    if (!$path) {
+                        throw new \RuntimeException(
+                            'No se pudo guardar una imagen.'
+                        );
+                    }
+
+                    $archivosGuardados[] = $path;
+
+                    // Crear el registro en la tabla imagens.
+                    $imagenGuardada = saveImagen(
+                        $filename,
+                        $targetUserId
+                    );
+
+                    // Cambiar Tipo de 0 a 1.
+                    $imagenGuardada->Tipo = 1;
+                    $imagenGuardada->save();
+
+                    // Crear la asociación con la publicación.
+                    DB::table('inter__imagen__public')->insert([
+                        'id_publicacion' => $ad->id,
+                        'id_imagen' => $imagenGuardada->id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+            });
+
+        } catch (\Throwable $e) {
+
+            // Si falla la transacción, eliminar los archivos guardados.
+            foreach ($archivosGuardados as $path) {
+                Storage::disk('local')->delete($path);
+            }
+
+            throw $e;
+        }
 
         return redirect()->route('myadvertisements');
     })->name('advertisement.store');
+    */
+    
+    Route::post('/Advertisement',[AdvertisementController::class, 'advertisementStore'])
+    ->name('advertisement.store');
 
-    Route::get('/Advertisement/{id}/edit', [TestControllerMarcelo::class, 'advertisementEdit'])->name('advertisement.edit');
-
+    Route::get('/Advertisement/{id}/edit', [AdvertisementController::class, 'advertisementEdit'])->name('advertisement.edit');
+    /*
     Route::patch('/Advertisement/{id}', function (Request $request, $id) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
 
@@ -274,6 +382,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return redirect()->route('myadvertisements');
     })->name('advertisement.update');
+    */
+    Route::patch('/Advertisement/{id}', [AdvertisementController::class, 'advertisementUpdate'])
+    ->name('advertisement.update');
 
     Route::patch('/Advertisement/{id}/status', function (Request $request, $id) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
@@ -299,7 +410,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return redirect()->back();
     })->name('advertisement.status');
-
+/*
     Route::delete('/Advertisement/{id}', function (Request $request, $id) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
 
@@ -314,10 +425,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return redirect()->back();
         }
 
-        $ad->delete();
+        //$ad->delete();
+        $ad->status = 'deleted';
+        $ad->save();
 
         return redirect()->back();
     })->name('advertisement.destroy');
+*/
+    Route::delete(
+        '/Advertisement/{id}',
+        [AdvertisementController::class, 'eliminarPublicacion']
+    )->middleware(['auth', 'verified'])
+    ->name('advertisement.destroy');
 
     Route::post('/Advertisement/{id}/report', function (Request $request, $id) {
         $ad = Advertisement::find($id);
@@ -336,18 +455,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()->back();
     })->name('advertisement.report');
 
-    Route::get('/Advertisement/{id}', [TestControllerMarcelo::class, 'advertisementShow'])->name('advertisement.show');
+    Route::get('/Advertisement/{id}', [AdvertisementController::class, 'advertisementShow'])->name('advertisement.show');
 
-    Route::get('/chat', [\App\Http\Controllers\TestControllerCris::class, 'chat'])
+    Route::patch(
+        '/publicaciones/{id}/visibilidad',
+        [AdvertisementController::class, 'cambiarVisibilidad']
+    )->middleware(['auth', 'verified']);
+
+    Route::get('/chat', [\App\Http\Controllers\ChatController::class, 'chat'])
         ->middleware(['auth', 'verified'])->name('chat');
 
-    Route::post('/chat/enviar-mensaje', [\App\Http\Controllers\TestControllerCris::class, 'enviarMensaje'])
+    Route::post('/chat/enviar-mensaje', [\App\Http\Controllers\MensajeController::class, 'enviarMensaje'])
         ->middleware(['auth', 'verified']);
 
-    Route::post('/chat/enviar-mensaje-imagen', [\App\Http\Controllers\TestControllerCris::class, 'enviarMensajeConImagen'])
+    Route::post('/chat/enviar-mensaje-imagen', [\App\Http\Controllers\MensajeController::class, 'enviarMensajeConImagen'])
         ->middleware(['auth', 'verified']);
 
-    Route::get('/verperfil/{id?}', [\App\Http\Controllers\TestControllerCris::class, 'verPerfil'])
+    Route::post('/chat/marcar-leidos', [\App\Http\Controllers\MensajeController::class, 'marcarLeidos'])
+    ->middleware(['auth', 'verified'])
+    ->name('chat.marcar-leidos');
+
+    //Ruta para obtener mensajes de una conversación para el mostrar el chat en tiempo real
+    Route::get('/chat/mensajes', [\App\Http\Controllers\MensajeController::class, 'obtenerMensajesConversacion'])
+    ->name('chat.mensajes');
+
+    Route::get('/verperfil/{id?}', [\App\Http\Controllers\PerfilController::class, 'verPerfil'])
         ->middleware(['auth', 'verified'])->name('verperfil');
 
     Route::get('/perfil-Admin/{id?}', function ($id = null) {

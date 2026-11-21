@@ -11,12 +11,30 @@ export default function FilaConversacion({
     seleccionada = false,
     onSeleccionar,
 }: FilaConversacionProps) {
-    
+    /*
     const mensajeTruncado =
         conversacion.ultimoMensaje.length > 35
             ? `${conversacion.ultimoMensaje.substring(0, 35)}...`
             : conversacion.ultimoMensaje;
-
+    */
+   // Se agregó esta función para mostrar la palabra 'Imagen' en caso de que
+   // el último mensaje sea una imágen, y una versión truncada del mensaje
+   // en caso de que el mensaje sea solo texto.
+    const mostrarNombreMensaje = () => {
+        switch(conversacion.tipoUltimoMensaje) {
+            case 0:
+                return conversacion.ultimoMensaje.length > 35 ?
+                `${conversacion.ultimoMensaje.substring(0, 35)}...`
+                : conversacion.ultimoMensaje;
+                break;
+            case 1:
+                return '📷 Imagen';
+                break;
+            default:
+                return '';
+                break;
+        }
+    };
     return (
         <div
             onClick={() =>onSeleccionar?.(conversacion.id)}
@@ -43,6 +61,11 @@ export default function FilaConversacion({
                     <span className="text-gray-500 text-xs flex-shrink-0">
                         {conversacion.fechaUltimoMensaje}
                     </span>
+                    {conversacion.mensajesNoLeidos > 0 && (
+                        <span className="inline-flex min-w-5 h-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-[11px] font-semibold text-white">
+                            {conversacion.mensajesNoLeidos}
+                        </span>
+                    )}
                 </div>
 
                
@@ -53,8 +76,8 @@ export default function FilaConversacion({
                             : 'text-gray-700 font-medium'
                     }`}
                 >
-                    {conversacion.esMensajeDelUsuarioPrincipal && 'Tú: '}
-                    {mensajeTruncado}
+                    {conversacion.esMensajeDelUsuarioPrincipal == true && 'Tú: '}
+                    {mostrarNombreMensaje()}
                 </p>
             </div>
         </div>

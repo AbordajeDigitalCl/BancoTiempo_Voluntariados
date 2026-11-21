@@ -325,7 +325,7 @@ return new class extends Migration
                 ) img
                     ON p.id = img.id_publicacion
                 WHERE p.id_usuario = p_usuario_id
-                AND p.visible = 1;
+                AND p.status != 'deleted';
             END
         ");
 

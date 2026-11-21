@@ -203,6 +203,7 @@ class AdvertisementController extends Controller
         //la consulta arroja un error al ordenar las filas con latest().
         $createdAds = Advertisement::query()
             ->where('id_usuario', $user_id)
+            ->where('status', '!=', 'deleted')
             ->with('images:id,Direccion')
             ->latest()
             ->paginate(10) 
@@ -1072,7 +1073,7 @@ class AdvertisementController extends Controller
 
         //$ad->delete();
         $ad->status = 'deleted';
-        $ad.save();
+        $ad->save();
 
         return redirect()->back();
     }

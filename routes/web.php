@@ -306,7 +306,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         return redirect()->back();
     })->name('advertisement.status');
-
+/*
     Route::delete('/Advertisement/{id}', function (Request $request, $id) {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
 
@@ -323,11 +323,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         //$ad->delete();
         $ad->status = 'deleted';
-        $ad-save();
-        
+        $ad->save();
+
         return redirect()->back();
     })->name('advertisement.destroy');
-
+*/
     Route::delete(
         '/Advertisement/{id}',
         [AdvertisementController::class, 'eliminarPublicacion']

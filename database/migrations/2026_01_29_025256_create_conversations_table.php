@@ -24,19 +24,33 @@ return new class extends Migration
                 IN p_user_one_id BIGINT UNSIGNED,
                 IN p_user_two_id BIGINT UNSIGNED
             )
-            BEGIN
-	            SELECT EXISTS(
-		            SELECT 1
-                    FROM conversations
-                    WHERE (
-			            user_one_id = p_user_one_id AND
-                        user_two_id = p_user_two_id
-                    ) OR (
-			            user_one_id = p_user_two_id AND
-                        user_two_id = p_user_one_id
-                    )
-                ) AS existe;
-            END
+BEGIN
+    SELECT
+        EXISTS(
+            SELECT 1
+            FROM conversations
+            WHERE (
+                user_one_id = p_user_one_id
+                AND user_two_id = p_user_two_id
+            ) OR (
+                user_one_id = p_user_two_id
+                AND user_two_id = p_user_one_id
+            )
+        ) AS existe,
+
+        (
+            SELECT id
+            FROM conversations
+            WHERE (
+                user_one_id = p_user_one_id
+                AND user_two_id = p_user_two_id
+            ) OR (
+                user_one_id = p_user_two_id
+                AND user_two_id = p_user_one_id
+            )
+            LIMIT 1
+        ) AS id;
+END
         ");
         DB::unprepared('DROP PROCEDURE IF EXISTS obtener_resumen_conversaciones_por_usuario_id');
         DB::unprepared("

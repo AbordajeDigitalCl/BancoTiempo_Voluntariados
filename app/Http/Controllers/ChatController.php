@@ -40,6 +40,8 @@ class ChatController extends Controller
     {
         $user = $request->user();
 
+        $requestedConversationId = $request->query('conversacion');
+
         $conversaciones = \DB::table('conversations')
             ->where(function ($query) use ($user) {
                 $query->where('user_one_id', $user->id)
@@ -47,6 +49,22 @@ class ChatController extends Controller
             })
             ->get();
 
+
+        $conversacionSeleccionadaId = null;
+
+        if (
+            $requestedConversationId !== null &&
+            filter_var($requestedConversationId, FILTER_VALIDATE_INT) !== false
+        ) {
+            $conversacion = $conversaciones->firstWhere(
+                'id',
+                (int) $requestedConversationId
+            );
+
+            if ($conversacion) {
+                $conversacionSeleccionadaId = (int) $conversacion->id;
+            }
+        }
         /*
         $conversacionesFormato = $conversaciones->map(function ($conv) use ($user) {
             // Identificar quién es el "otro usuario" en la conversación (no el logueado)
@@ -184,6 +202,7 @@ class ChatController extends Controller
         return Inertia::render('Chat', [
             'conversaciones' => $conversacionesFormato,
             'mensajesPorConversacion' => $mensajesAgrupados,
+            'conversacionSeleccionadaId' => $conversacionSeleccionadaId,
         ]);
     }
 }

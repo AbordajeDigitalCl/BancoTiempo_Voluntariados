@@ -50,10 +50,11 @@ interface ChatProps {
     auth: any;
     conversaciones: Conversacion[];
     mensajesPorConversacion: ConversacionDetalle[];
+    conversacionSeleccionadaId: number | null;
 }
 
-export default function Chat({ auth, conversaciones: conversacionesServer, mensajesPorConversacion }: ChatProps) {
-    const [conversacionSeleccionada, setConversacionSeleccionada] = useState<number | null>(null);
+export default function Chat({ auth, conversaciones: conversacionesServer, mensajesPorConversacion, conversacionSeleccionadaId }: ChatProps) {
+    const [conversacionSeleccionada, setConversacionSeleccionada] = useState<number | null>(conversacionSeleccionadaId);
     const [conversacionesConEstado, setConversacionesConEstado] = useState(conversacionesServer || []);
     const [conversacionesPaginadas, setConversacionesPaginadas] = useState((conversacionesServer || []).slice(0, CONVERSACIONES_PER_PAGE));
 

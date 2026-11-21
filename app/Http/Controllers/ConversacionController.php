@@ -70,11 +70,15 @@ class ConversacionController extends Controller
             ]
         );
         
+        $conversacionId = $conversacionExistente[0]->id;
+
         $conversacionExiste = (bool) $conversacionExistente[0]->existe;
         
-        if (!$conversacionExiste) {
+        if ($conversacionExiste) {
+            $conversacionId = (int) $conversacionExistente[0]->id;
+        } else {
             // Crear nueva conversación
-            \DB::table('conversations')->insert([
+            $conversacionId = \DB::table('conversations')->insertGetId([
                 'user_one_id' => $user->id,
                 'user_two_id' => $otroUsuarioId,
                 'created_at' => now(),
@@ -83,7 +87,10 @@ class ConversacionController extends Controller
         }
 
         
-        return redirect('/chat');
+        //return redirect('/chat');
+        return redirect()->route('chat', [
+            'conversacion' => $conversacionId,
+        ]);
     }
 
 

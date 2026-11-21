@@ -231,6 +231,7 @@ return new class extends Migration
 				    p_q = ''
                     OR p.Nombre LIKE CONCAT('%', p_q, '%')
                     OR p.Descripcion LIKE CONCAT('%', p_q,'%')
+                    OR p.author LIKE CONCAT ('%', p_q,'%')
                 )
                 AND (
 				    p_type = 'all'

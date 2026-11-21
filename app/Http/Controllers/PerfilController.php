@@ -5,9 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Inertia\Inertia;
+use App\Traits\Cruds;
+use App\Models\Tipo_Usuario;
+
 
 class PerfilController extends Controller
 {
+    use Cruds;
     /**
      * @summary Muestra el formulario de edición de perfil.
      * @description Permite al usuario autenticado editar su propio perfil o,

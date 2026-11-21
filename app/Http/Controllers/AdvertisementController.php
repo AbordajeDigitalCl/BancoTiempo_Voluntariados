@@ -565,7 +565,33 @@ class AdvertisementController extends Controller
         return redirect()->route('myadvertisements');
     }
 
-
+    /**
+     * Crea una nueva publicación y procesa las imágenes asociadas.
+     *
+     * - Comprueba si el usuario tiene permisos administrativos mediante la sesión.
+     * - Valida los datos recibidos, incluyendo los archivos de imagen, las coordenadas
+     *   geográficas y la información de ubicación.
+     * - Determina el propietario de la publicación. Si el usuario es administrador
+     *   y proporciona un `user_id` válido, utiliza los datos de ese usuario.
+     * - Inicia una transacción de base de datos para garantizar que la creación de
+     *   la publicación, los registros de imágenes y sus asociaciones se completen
+     *   correctamente.
+     * - Crea el registro de la publicación, asignando sus datos generales, su estado
+     *   inicial (`active`), su propietario y los campos correspondientes de la tabla
+     *   `publicacions`.
+     * - Procesa cada imagen recibida: genera un nombre único mediante UUID, guarda
+     *   el archivo en `storage/app/uploads` y crea su registro en la tabla `imagens`
+     *   mediante el método `saveImagen()`.
+     * - Actualiza el campo `Tipo` de cada imagen a `1` y establece su asociación
+     *   con la publicación mediante la tabla pivote `inter__imagen__public`.
+     * - Si ocurre un error durante el proceso, revierte la transacción y elimina
+     *   los archivos que alcanzaron a guardarse en el almacenamiento.
+     * - Redirige al usuario a la ruta `myadvertisements` una vez completada
+     *   correctamente la operación.
+     *
+     * @param  \Illuminate\Http\Request  $request  Petición HTTP con los datos de la publicación y los archivos de imagen.
+     * @return \Illuminate\Http\RedirectResponse  Redirección al listado de publicaciones del usuario.
+     */
     public function advertisementStore(Request $request): RedirectResponse
     {
         $isAdmin = (bool) $request->session()->get('is_admin', false);
